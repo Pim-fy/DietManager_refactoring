@@ -44,9 +44,9 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private UserRole role;
 
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     // cascade: User를 저장, 삭제 시 연결된 UserProfile도 함께 저장, 삭제.
     // orphanRemoval: User와 연결이 끊긴 UserProfile을 고아 객체로 보고 삭제.
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private UserProfile profile;
 
     public User(String email, String passwordHash, String userName) {
@@ -89,5 +89,3 @@ public class User extends BaseTimeEntity {
 
     
 }
-
-

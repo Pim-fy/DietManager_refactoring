@@ -11,6 +11,9 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 
+/**
+ * 모든 엔티티의 생성 시간과 수정 시간을 자동으로 추적하고 기록(JPA Auditing)하는 공통 클래스
+ */
 @Getter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
