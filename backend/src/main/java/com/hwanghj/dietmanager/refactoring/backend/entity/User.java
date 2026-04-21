@@ -37,7 +37,7 @@ public class User extends BaseTimeEntity {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(name = "user_name", nullable = false, unique = true)
+    @Column(name = "user_name", nullable = false, unique = true, length = 30)
     private String userName;
 
     @Enumerated(EnumType.STRING)
