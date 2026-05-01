@@ -3,6 +3,7 @@ package com.hwanghj.dietmanager.refactoring.backend.service;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.entity.User;
@@ -21,6 +22,7 @@ public class UserService {
     }
 
     // 회원가입
+    @Transactional
     public UserRegisterDto.Response register(UserRegisterDto.Request request) {
         // 기존 사용중인 아이디 여부 확인
         if(userRepository.existsByEmail(request.getEmail())) {
@@ -47,11 +49,9 @@ public class UserService {
         // User에 UserProfile 연결
         user.assignProfile(userProfile);
 
-        // User저장. 연결된 UserProfile도 자동으로 같이 저장됨.
-        userRepository.save(user);
-
         // save 시점의 DB 중복 예외 처리
         try {
+            // User저장. 연결된 UserProfile도 자동으로 같이 저장됨.
             userRepository.save(user);
         // DataIntegrityViolationException: DB 무결성 제약조건이 깨졌을 때 Spring이 던지는 예외.
         } catch(DataIntegrityViolationException e) {
@@ -60,6 +60,7 @@ public class UserService {
 
         // 응답 반환
         return new UserRegisterDto.Response("회원가입이 완료되었습니다.");
+        
     }
 
     // 비밀번호 해싱

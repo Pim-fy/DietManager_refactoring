@@ -2,6 +2,7 @@ package com.hwanghj.dietmanager.refactoring.backend.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -18,5 +19,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
             .body(response);
-    }   
+    }
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
+        ErrorResponse response = ErrorResponse.of("VALIDATION_ERROR", "입력값 검증에 실패했습니다.");
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(response);
+    }
 }
