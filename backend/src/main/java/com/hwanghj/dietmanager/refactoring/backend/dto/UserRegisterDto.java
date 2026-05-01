@@ -4,14 +4,11 @@ import java.time.LocalDate;
 
 import com.hwanghj.dietmanager.refactoring.backend.common.Gender;
 import com.hwanghj.dietmanager.refactoring.backend.common.GoalType;
-import com.hwanghj.dietmanager.refactoring.backend.common.UserRole;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
-import jakarta.validation.constraints.PastOrPresent;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -20,7 +17,7 @@ import lombok.NoArgsConstructor;
 /**
  * 회원가입 요청/응답 DTO
  */
-public class UserSignUpDto {
+public class UserRegisterDto {
 
     /**
      * 회원가입 요청 DTO        <br>
@@ -53,19 +50,20 @@ public class UserSignUpDto {
         @NotNull(message = "목표 유형은 필수입니다.")
         private GoalType goalType;
 
-        // PastOrPresent: 날짜가 과거이거나 오늘인지 검사
-        @PastOrPresent(message = "측정일은 오늘 또는 과거 날짜여야 합니다.")
-        @NotNull(message = "측정일은 필수입니다.")
-        private LocalDate measuredDate;
+        // 회원가입 로직에서 제거.
+        // // PastOrPresent: 날짜가 과거이거나 오늘인지 검사
+        // @PastOrPresent(message = "측정일은 오늘 또는 과거 날짜여야 합니다.")
+        // @NotNull(message = "측정일은 필수입니다.")
+        // private LocalDate measuredDate;
 
-        // Positive: 숫자가 0보다 큰 양수인지 검사
-        @Positive(message = "키는 0보다 커야 합니다.")
-        @NotNull(message = "키는 필수입니다.")
-        private Double height;
+        // // Positive: 숫자가 0보다 큰 양수인지 검사
+        // @Positive(message = "키는 0보다 커야 합니다.")
+        // @NotNull(message = "키는 필수입니다.")
+        // private Double height;
 
-        @Positive(message = "몸무게는 0보다 커야 합니다.")
-        @NotNull(message = "몸무게는 필수입니다.")
-        private Double weight;
+        // @Positive(message = "몸무게는 0보다 커야 합니다.")
+        // @NotNull(message = "몸무게는 필수입니다.")
+        // private Double weight;
     }
 
     /**
@@ -73,17 +71,10 @@ public class UserSignUpDto {
      */
     @Getter
     public static class Response {
+        private final String message;
 
-        private final Long userId;
-        private final String email;
-        private final String userName;
-        private final UserRole role;
-
-        public Response(Long userId, String email, String userName, UserRole role) {
-            this.userId = userId;
-            this.email = email;
-            this.userName = userName;
-            this.role = role;
+        public Response(String message) {
+            this.message = message;
         }
     }
 }
