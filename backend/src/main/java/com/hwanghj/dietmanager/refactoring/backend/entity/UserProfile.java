@@ -18,6 +18,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -49,6 +50,7 @@ public class UserProfile extends BaseTimeEntity{
     @Column(name = "goal_type", nullable = false)
     private GoalType goalType;
 
+    @Builder
     public UserProfile(Gender gender, LocalDate birthDate, GoalType goalType) {
         this.gender = gender;
         this.birthDate = birthDate;

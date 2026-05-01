@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -37,7 +38,7 @@ public class User extends BaseTimeEntity {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(name = "user_name", nullable = false, unique = true, length = 30)
+    @Column(name = "user_name", nullable = false, unique = false, length = 30)
     private String userName;
 
     @Enumerated(EnumType.STRING)
@@ -49,6 +50,7 @@ public class User extends BaseTimeEntity {
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private UserProfile profile;
 
+    @Builder
     public User(String email, String passwordHash, String userName) {
         this.email = email;
         updatePassword(passwordHash);
