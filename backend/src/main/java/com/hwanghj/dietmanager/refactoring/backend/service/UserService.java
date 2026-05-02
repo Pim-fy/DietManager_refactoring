@@ -5,10 +5,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.entity.UserProfile;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserRepository;
 
 @Service
@@ -63,15 +65,42 @@ public class UserService {
         
     }
 
-    // 비밀번호 해싱
-    private String hashedPassword(String rawPassword) {
-        return passwordEncoder.encode(rawPassword);
+
+    // 로그인
+    @Transactional(readOnly = true)
+    public UserLoginDto.Response login(UserLoginDto.Request request) {
+        // 요청 DTO 검증.
+            // 컨트롤러에서 Valid 어노테이션으로 실행함.
+        
+        // 사용자 조회, user객체 생성.
+        User user = userRepository
+                        .findByEmail(request.getEmail())            // email로 사용자 조회.
+                        .orElseThrow(InvalidLoginException::new);   // 등록된 사용자가 없는 경우 로그인 실패 예외 발생.
+        
+        // 비밀번호 검증.
+        // passwordEncoder 내부에서 원본 Password를 해싱된 비밀번호와 같은 조건으로 검증.
+        if(!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())){
+            throw new InvalidLoginException();      // 두 비밀번호가 다르면 로그인 실패 예외 발생.
+        }
+
+        // 성공 응답 반환.
+        return UserLoginDto.Response
+            .builder()
+            .userId(user.getId())
+            .email(user.getEmail())
+            .userName(user.getUserName())
+            .role(user.getRole())
+            .build();
+
     }
 
-    // 회원가입
-    // 로그인
     // 계정 정보 조회/수정
     // 비밀번호 변경
     // 프로필 조회/수정
     // 신체 측정값 저장/조회
+
+    // 비밀번호 해싱
+    private String hashedPassword(String rawPassword) {
+        return passwordEncoder.encode(rawPassword);
+    }
 }
