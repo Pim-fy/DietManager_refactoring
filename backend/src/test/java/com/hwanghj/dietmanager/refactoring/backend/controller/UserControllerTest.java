@@ -16,9 +16,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.hwanghj.dietmanager.refactoring.backend.common.UserRole;
+import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.GlobalExceptionHandler;
+import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.service.UserService;
 
 // 회원가입 컨트롤러 테스트 코드.
@@ -50,6 +53,8 @@ class UserControllerTest {
                 .build();
     }
     
+    // 회원가입 컨트롤러 테스트.
+
     // 테스트1: 정상 회원가입 요청 테스트.
     // 정상적인 회원가입 요청을 보내면 201 created와 함께 성공 메시지 반환하는지 확인.
     @Test
@@ -151,6 +156,82 @@ class UserControllerTest {
                   "gender": "MALE",
                   "birthDate": "1995-01-01",
                   "goalType": "LOSE_WEIGHT"
+                }
+                """;
+    }
+
+    // 로그인 컨트롤러 테스트.
+
+    // 테스트1: 로그인 성공.
+    @Test
+    void loginReturnsOkWhenRequestIsValid() throws Exception{
+        // given: userService.login 호출 시 성공 응답 DTO 반환 상황 생성.
+        when(userService.login(any(UserLoginDto.Request.class)))
+            .thenReturn(UserLoginDto.Response
+                .builder()
+                .userId(1L)
+                .email("test@example.com")
+                .userName("홍길동")
+                .role(UserRole.USER)
+                .build());
+        
+        // when + then
+        // when: 로그인 API 요청.
+        mockMvc.perform(post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)    // when: 요청 본문이 JSON 형식이라고 지정.
+                .content(validLoginRequestJson()))  // when: 요청 body에는 정상 JSON 입력.
+            .andExpect(status().isOk()) // then: 응답 HTTP 상태 코드가 200 OK인지 확인.
+            .andExpect(jsonPath("$.userId").value(1L))  // then: 응답 데이터의 값 확인.
+            .andExpect(jsonPath("$.email").value("test@example.com")) 
+            .andExpect(jsonPath("$.userName").value("홍길동"))
+            .andExpect(jsonPath("$.role").value("USER"));
+        
+        // then: 컨트롤러가 실제로 서비스를 호출했는지 확인. 요청의 컨트롤러 -> 서비스 전달 확인 부분.
+        verify(userService).login(any(UserLoginDto.Request.class));
+    }
+
+    // 테스트2: 요청 DTO 검증 실패.
+    @Test
+    void loginReturnsBadRequestWhenRequestIsInvalid() throws Exception{
+        // when + then
+        // when: 로그인 API 요청.
+        mockMvc.perform(post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)    // when: 요청 본문 JSON 형식 지정.
+                // when: 요청 body에 DTO 조건 위배 내용 작성.
+                .content("""                               
+                        {
+                            "email": "wrong-email",
+                            "password": ""
+                        }
+                        """))
+            .andExpect(status().isBadRequest()) // then: 응답 HTTP 상태 코드 400 Bad Request 확인.
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))    // then: 응답 데이터 값 확인.
+            .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."));
+    }
+
+    // 테스트3: 로그인 실패.
+    @Test
+    void loginReturnsUnauthorizedWhenCredentialsAreInvalid() throws Exception {
+        // given: 로그인 정보 불일치 상황 설정.
+        when(userService.login(any(UserLoginDto.Request.class)))
+            .thenThrow(new InvalidLoginException());
+        
+        // when + then
+        // when: 로그인 API 요청.
+        mockMvc.perform(post("/api/users/login")
+            .contentType(MediaType.APPLICATION_JSON)    // when: 요청 본문 JSON 형식 지정.
+            .content(validLoginRequestJson()))  // when: 요청 body에 정상 요청 JSON 입력.
+        .andExpect(status().isUnauthorized())   // then: 응답 HTTP 상태 코드 401 Unauthorized 확인.
+        .andExpect(jsonPath("$.code").value("INVALID_LOGIN"))   // then: 응답 데이터 값 확인.
+        .andExpect(jsonPath("$.message").value("이메일 또는 비밀번호가 일치하지 않습니다."));
+    }
+
+    // 정상 요청 JSON 생성 메서드.
+    private String validLoginRequestJson() {
+        return """
+                {
+                    "email": "test@example.com",
+                    "password": "password123"
                 }
                 """;
     }

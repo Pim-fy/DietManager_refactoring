@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,9 +22,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.hwanghj.dietmanager.refactoring.backend.common.Gender;
 import com.hwanghj.dietmanager.refactoring.backend.common.GoalType;
 import com.hwanghj.dietmanager.refactoring.backend.common.UserRole;
+import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserRepository;
 
 // 회원가입 서비스 로직 검증.
@@ -51,6 +54,8 @@ class UserServiceTest {
         // UserService 객체 생성
         userService = new UserService(userRepository, passwordEncoder);
     }
+
+    // 회원가입 로직 테스트.
 
     // 테스트1: 정상 회원가입 흐름 검증 테스트.
     // 정상적인 회원가입 요청이 들어왔을 때 User와 UserProfile이 제대로 만들어지는지 확인.
@@ -195,5 +200,112 @@ class UserServiceTest {
                 .birthDate(LocalDate.of(1995, 1, 1))
                 .goalType(GoalType.LOSE_WEIGHT)
                 .build();
+    }
+
+    // 로그인 로직 테스트.
+
+    // 테스트1: 로그인 성공.
+    @Test
+    void loginReturnsUserInfoWhenCredentialsAreValid() throws Exception{
+        // given
+
+        // 테스트용 요청 DTO 생성.
+        UserLoginDto.Request request = createLoginRequest();
+
+        // user 객체 생성.
+        User user = User
+            .builder()
+            .email("test@example.com")
+            .passwordHash("hashed-password")
+            .userName("홍길동")
+            .build();
+
+        // request의 email과 동일 email이 DB에 존재하는 상황 생성.
+        when(userRepository.findByEmail("test@example.com"))
+            .thenReturn(Optional.of(user));
+        
+        // requset의 원본 password를 동일 조건으로 해싱한 값이 DB에 저장된 해싱된 비밀번호와 일치하는 상황 생성.
+        when(passwordEncoder.matches("password123", "hashed-password"))
+            .thenReturn(true);
+            
+        // when: 테스트 진행.
+
+        // 로그인 로직 실행.
+        UserLoginDto.Response response = userService.login(request);
+
+        // then: 테스트 검증.
+
+        // 응답의 email이 기대값과 동일한지 확인.
+        assertThat(response.getEmail()).isEqualTo("test@example.com");
+        // 응답의 userName이 기대값과 동일한지 확인.
+        assertThat(response.getUserName()).isEqualTo("홍길동");
+        // 응답의 UserRole이 기본값인 USER가 맞는지 확인.
+        assertThat(response.getRole()).isEqualTo(UserRole.USER);
+        
+    }
+    // 테스트2: DB에 존재하지 않는 이메일로 로그인 시도.
+    @Test 
+    void loginThrowsInvalidLoginExceptionWhenEmailDoesNotExist() throws Exception{
+        // given
+
+        // 로그인 요청 DTO 생성.
+        UserLoginDto.Request request = createLoginRequest();
+
+        // DB에 존재하지 않는 이메일 로그인 시도 상황 설정.
+        when(userRepository.findByEmail("test@example.com"))
+            .thenReturn(Optional.empty());
+
+        // when + then.
+
+        // when: 로그인 API에 로그인 요청.
+        assertThatThrownBy(() -> userService.login(request))
+            // then: 발생한 예외 타입이 InvalidLoginException인지 확인.
+            .isInstanceOf(InvalidLoginException.class)
+            // then: 예외 메시지가 기대값인지 확인.
+            .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다.");
+        
+        // then: 비밀번호 검증 로직 실행 확인
+        // passwordEncoder.matches()가 한번도 실행되지 않았는지 확인.
+            // never()이 0번 호출을 의미.   
+        verify(passwordEncoder, never()).matches(any(), any());
+    }
+
+    // 테스트3: 비밀번호 불일치.
+    @Test
+    void loginThrowsInvalidLoginExceptionWhenPasswordDoesNotMatch() throws Exception{
+        // given
+
+        // 로그인 요청 DTO 생성.
+        UserLoginDto.Request request = createLoginRequest();
+
+        // user 객체 생성.
+        User user = User
+            .builder()
+            .email("test@example.com")
+            .passwordHash("hashed-password")
+            .userName("홍길동")
+            .build();
+        
+        // DB에 존재하는 이메일 로그인 시도 상황 설정.
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+
+        // 비밀번호 불일치 상황 설정.
+        when(passwordEncoder.matches("password123", "hashed-password")).thenReturn(false);
+
+        // when + then
+
+        // when: 로그인 API에 로그인 요청.
+        assertThatThrownBy(() -> userService.login(request))
+            .isInstanceOf(InvalidLoginException.class)  // then: 발생한 예외 타입이 InvalidLoginException인지 확인.
+            .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다.");   // then: 예외 메시지가 기대값인지 확인.
+    }
+
+    // 로그인 요청 DTO 생성.
+    private UserLoginDto.Request createLoginRequest() {
+        return UserLoginDto.Request
+            .builder()
+            .email("test@example.com")
+            .password("password123")
+            .build();
     }
 }
