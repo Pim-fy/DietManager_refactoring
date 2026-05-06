@@ -37,4 +37,32 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.UNAUTHORIZED)            // 401 Unauthorized. 인증 실패 또는 인증 정보 없음.
                 .body(response);
     }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException e) {
+        ErrorResponse response = ErrorResponse.of("USER_NOT_FOUND", e.getMessage());
+
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)   // 404 Not Found. 서버는 살아있지만, 요청한 리소스를 찾을 수 없음.
+            .body(response);
+    }
+
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPasswordException(InvalidPasswordException e) {
+        ErrorResponse response = ErrorResponse.of("INVALID_PASSWORD", e.getMessage());
+
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST) // 400 Bad Request. 클라이언트의 요청 자체가 잘못됨.
+            .body(response);
+    }
+
+    @ExceptionHandler(UserProfileNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserProfileNotFoundException(UserProfileNotFoundException e) {
+        ErrorResponse response = ErrorResponse.of("USER_PROFILE_NOT_FOUND", e.getMessage());
+
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)   // 404 Not Found. 서버는 살아있지만, 요청한 리소스를 찾을 수 없음.
+            .body(response);
+    }
+
 }

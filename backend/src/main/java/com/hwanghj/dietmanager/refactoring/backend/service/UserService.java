@@ -13,6 +13,7 @@ import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.entity.UserProfile;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.security.JwtTokenProvider;
 
@@ -109,7 +110,8 @@ public class UserService {
         // user 객체 생성.
         User user = userRepository
             .findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+            .orElseThrow(UserNotFoundException::new);
+            // .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         return toAccountResponse(user);
     }
@@ -119,7 +121,8 @@ public class UserService {
     public UserAccountModifyDto.Response modifyAccount(
             Long userId, UserAccountModifyDto.Request request) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(UserNotFoundException::new);
+            // .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         if(!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateEmailException();

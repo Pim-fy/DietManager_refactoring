@@ -31,6 +31,7 @@ import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.security.JwtTokenProvider;
 
@@ -373,7 +374,8 @@ class UserServiceTest {
 
         // when + then
         assertThatThrownBy(() -> userService.findAccount(1L))
-            .isInstanceOf(IllegalArgumentException.class)
+            .isInstanceOf(UserNotFoundException.class)
+            // .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("사용자를 찾을 수 없습니다.");
 
         // then
@@ -501,7 +503,8 @@ class UserServiceTest {
 
         // when + then
         assertThatThrownBy(() -> userService.modifyAccount(1L, request))
-            .isInstanceOf(IllegalArgumentException.class)
+            .isInstanceOf(UserNotFoundException.class)
+            // .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("사용자를 찾을 수 없습니다.");
 
         verify(userRepository).findById(1L);
