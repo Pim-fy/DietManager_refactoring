@@ -3,6 +3,7 @@ package com.hwanghj.dietmanager.refactoring.backend.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,16 +19,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.hwanghj.dietmanager.refactoring.backend.common.Gender;
 import com.hwanghj.dietmanager.refactoring.backend.common.GoalType;
 import com.hwanghj.dietmanager.refactoring.backend.common.UserRole;
+import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
+import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserRepository;
+import com.hwanghj.dietmanager.refactoring.backend.security.JwtTokenProvider;
 
 // 회원가입 서비스 로직 검증.
 // Spring 전체를 띄우지 않고 가짜 객체인 mock으로 대체
@@ -45,6 +50,9 @@ class UserServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private JwtTokenProvider jwtTokenProvider;
+
     // 테스트 대상인 UserService 생성
     private UserService userService;
 
@@ -52,7 +60,7 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         // UserService 객체 생성
-        userService = new UserService(userRepository, passwordEncoder);
+        userService = new UserService(userRepository, passwordEncoder, jwtTokenProvider);
     }
 
     // 회원가입 로직 테스트.
@@ -224,6 +232,10 @@ class UserServiceTest {
         when(userRepository.findByEmail("test@example.com"))
             .thenReturn(Optional.of(user));
         
+        // given: 지정한 형태의 토큰 반황 상황 설정.
+        when(jwtTokenProvider.createAccessToken(user))
+            .thenReturn("access-token");
+        
         // requset의 원본 password를 동일 조건으로 해싱한 값이 DB에 저장된 해싱된 비밀번호와 일치하는 상황 생성.
         when(passwordEncoder.matches("password123", "hashed-password"))
             .thenReturn(true);
@@ -241,6 +253,11 @@ class UserServiceTest {
         assertThat(response.getUserName()).isEqualTo("홍길동");
         // 응답의 UserRole이 기본값인 USER가 맞는지 확인.
         assertThat(response.getRole()).isEqualTo(UserRole.USER);
+        // then: 응답의 토큰 확인.
+        assertThat(response.getAccessToken()).isEqualTo("access-token");
+
+        // then: 토큰 생성 로직 실행 확인.
+        verify(jwtTokenProvider).createAccessToken(user);
         
     }
     // 테스트2: DB에 존재하지 않는 이메일로 로그인 시도.
@@ -268,6 +285,8 @@ class UserServiceTest {
         // passwordEncoder.matches()가 한번도 실행되지 않았는지 확인.
             // never()이 0번 호출을 의미.   
         verify(passwordEncoder, never()).matches(any(), any());
+        // then: 토큰 생성 로직이 한번도 실행되지 않았는지 확인.
+        verify(jwtTokenProvider, never()).createAccessToken(any(User.class));
     }
 
     // 테스트3: 비밀번호 불일치.
@@ -298,6 +317,9 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.login(request))
             .isInstanceOf(InvalidLoginException.class)  // then: 발생한 예외 타입이 InvalidLoginException인지 확인.
             .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다.");   // then: 예외 메시지가 기대값인지 확인.
+
+        // then: 토큰 생성 로직이 한번도 실행되지 않았는지 확인.
+        verify(jwtTokenProvider, never()).createAccessToken(any(User.class));
     }
 
     // 로그인 요청 DTO 생성.
@@ -306,6 +328,192 @@ class UserServiceTest {
             .builder()
             .email("test@example.com")
             .password("password123")
+            .build();
+    }
+
+
+    // 계정 조회 서비스 테스트.
+
+    // 테스트1 : 계정 조회 성공.
+    @Test
+    void findAcocuntReturnsAccountWhenUserExists() {
+        // given: user 객체 생성.
+        User user = User
+            .builder()
+            .email("test@example.com")
+            .passwordHash("hashed-password")
+            .userName("홍길동")
+            .build();
+        
+        // given: 테스트용으로 private 필드인 id값을 강제로 넣음.
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        // given: 로그인 성공 설정.
+        when(userRepository.findById(1L))
+            .thenReturn(Optional.of(user));
+
+        // when: 테스트 실행.
+        UserAccountFindDto.Response response = userService.findAccount(1L);
+
+        // then: 응답 값 검증.
+        assertThat(response.getUserId()).isEqualTo(1L);
+        assertThat(response.getEmail()).isEqualTo("test@example.com");
+        assertThat(response.getUserName()).isEqualTo("홍길동");
+        assertThat(response.getRole()).isEqualTo(UserRole.USER);
+
+        // then: 계정 조회 로직 실행 확인.
+        verify(userRepository).findById(1L);
+    }
+
+    // 테스트2: 계정 조회 실패.
+    @Test
+    void findAccountthrowsExceptioniWhenUserDoesNotExist() {
+        // given: 조회된 결과가 없음을 설정.
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when + then
+        assertThatThrownBy(() -> userService.findAccount(1L))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("사용자를 찾을 수 없습니다.");
+
+        // then
+        verify(userRepository).findById(1L);
+    }
+
+    // 계정 정보 수정 서비스 테스트.
+
+    // 테스트1: 이메일과 사용자 이름 수정 성공.
+    @Test
+    void modifyAccountUpdatesAccountWhenRequestIsValid() {
+        // given: 기존 user 객체 생성.
+        User user = User
+            .builder()
+            .email("test@example.com")
+            .passwordHash("hashed-password")
+            .userName("홍길동")
+            .build();
+
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        // given: 계정 수정 요청 DTO 생성.
+        UserAccountModifyDto.Request request = createModifyAccountRequest(
+            "new@example.com",
+            "김철수");
+
+        // given: userId로 사용자 조회 성공.
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        // given: 변경할 이메일이 중복되지 않은 상황.
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+
+        // when: 계정 정보 수정 실행.
+        UserAccountModifyDto.Response response = userService.modifyAccount(1L, request);
+
+        // then: 응답 값 검증.
+        assertThat(response.getUserId()).isEqualTo(1L);
+        assertThat(response.getEmail()).isEqualTo("new@example.com");
+        assertThat(response.getUserName()).isEqualTo("김철수");
+        assertThat(response.getRole()).isEqualTo(UserRole.USER);
+
+        // then: 엔터티 값 변경 확인.
+        assertThat(user.getEmail()).isEqualTo("new@example.com");
+        assertThat(user.getUserName()).isEqualTo("김철수");
+
+        // then: 조회와 중복 검사 실행 확인.
+        verify(userRepository).findById(1L);
+        verify(userRepository).existsByEmail("new@example.com");
+    }
+
+    // 테스트2: 이메일이 기존과 같으면 이메일 중복 검사를 하지 않고 사용자 이름만 수정.
+    @Test
+    void modifyAccountDoesNotCheckDuplicateEmailWhenEmailIsNotChanged() {
+        // given: 기존 user 객체 생성.
+        User user = User
+            .builder()
+            .email("test@example.com")
+            .passwordHash("hashed-password")
+            .userName("홍길동")
+            .build();
+
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        // given: 이메일은 그대로, 사용자 이름만 변경하는 요청.
+        UserAccountModifyDto.Request request = createModifyAccountRequest(
+            "test@example.com",
+            "김철수");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        // when
+        UserAccountModifyDto.Response response = userService.modifyAccount(1L, request);
+
+        // then
+        assertThat(response.getEmail()).isEqualTo("test@example.com");
+        assertThat(response.getUserName()).isEqualTo("김철수");
+        assertThat(user.getEmail()).isEqualTo("test@example.com");
+        assertThat(user.getUserName()).isEqualTo("김철수");
+
+        verify(userRepository).findById(1L);
+        verify(userRepository, never()).existsByEmail(anyString());
+    }
+
+    // 테스트3: 변경하려는 이메일이 이미 사용 중이면 DuplicateEmailException 발생.
+    @Test
+    void modifyAccountThrowsDuplicateEmailExceptionWhenNewEmailAlreadyExists() {
+        // given
+        User user = User
+            .builder()
+            .email("test@example.com")
+            .passwordHash("hashed-password")
+            .userName("홍길동")
+            .build();
+
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        UserAccountModifyDto.Request request = createModifyAccountRequest(
+            "new@example.com",
+            "김철수");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(true);
+
+        // when + then
+        assertThatThrownBy(() -> userService.modifyAccount(1L, request))
+            .isInstanceOf(DuplicateEmailException.class)
+            .hasMessage("이미 사용 중인 이메일입니다.");
+
+        // then: 예외 발생 시 기존 값 유지 확인.
+        assertThat(user.getEmail()).isEqualTo("test@example.com");
+        assertThat(user.getUserName()).isEqualTo("홍길동");
+
+        verify(userRepository).findById(1L);
+        verify(userRepository).existsByEmail("new@example.com");
+    }
+
+    // 테스트4: 사용자가 존재하지 않으면 IllegalArgumentException 발생.
+    @Test
+    void modifyAccountThrowsExceptionWhenUserDoesNotExist() {
+        // given
+        UserAccountModifyDto.Request request = createModifyAccountRequest(
+            "new@example.com",
+            "김철수");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when + then
+        assertThatThrownBy(() -> userService.modifyAccount(1L, request))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("사용자를 찾을 수 없습니다.");
+
+        verify(userRepository).findById(1L);
+        verify(userRepository, never()).existsByEmail(anyString());
+    }
+
+    // 계정 정보 수정 요청 DTO 생성.
+    private UserAccountModifyDto.Request createModifyAccountRequest(String email, String userName) {
+        return UserAccountModifyDto.Request
+            .builder()
+            .email(email)
+            .userName(userName)
             .build();
     }
 }

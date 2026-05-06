@@ -45,5 +45,6 @@ public class UserLoginDto {
         private final String email;
         private final String userName;
         private final UserRole role;
+        private final String accessToken;
     }
 }

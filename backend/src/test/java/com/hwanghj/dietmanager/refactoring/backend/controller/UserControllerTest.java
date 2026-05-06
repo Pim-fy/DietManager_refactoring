@@ -1,8 +1,11 @@
 package com.hwanghj.dietmanager.refactoring.backend.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -13,15 +16,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.hwanghj.dietmanager.refactoring.backend.common.UserRole;
+import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
+import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
+import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.GlobalExceptionHandler;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
+import com.hwanghj.dietmanager.refactoring.backend.security.CustomUserDetails;
 import com.hwanghj.dietmanager.refactoring.backend.service.UserService;
 
 // 회원가입 컨트롤러 테스트 코드.
@@ -47,6 +58,8 @@ class UserControllerTest {
                 // UserController만 단독 테스트 대상으로 등록.
                 // 컨트롤러에 userService를 넣어줌.
                 .standaloneSetup(new UserController(userService))
+                // Spring Security의 @AuthenticationPrincipal 처리기가 자동으로 붙지 않을 수 있기 때문.
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 // 테스트 중 예외 발생 시 실제처럼 GlobalExceptionHandler가 처리하게 등록함.
                     // DuplicateEmailException, MethodArgumentNotValidException 검증 위함.
                 .setControllerAdvice(new GlobalExceptionHandler())
@@ -173,6 +186,7 @@ class UserControllerTest {
                 .email("test@example.com")
                 .userName("홍길동")
                 .role(UserRole.USER)
+                .accessToken("access-token")
                 .build());
         
         // when + then
@@ -184,7 +198,8 @@ class UserControllerTest {
             .andExpect(jsonPath("$.userId").value(1L))  // then: 응답 데이터의 값 확인.
             .andExpect(jsonPath("$.email").value("test@example.com")) 
             .andExpect(jsonPath("$.userName").value("홍길동"))
-            .andExpect(jsonPath("$.role").value("USER"));
+            .andExpect(jsonPath("$.role").value("USER"))
+            .andExpect(jsonPath("$.accessToken").value("access-token"));
         
         // then: 컨트롤러가 실제로 서비스를 호출했는지 확인. 요청의 컨트롤러 -> 서비스 전달 확인 부분.
         verify(userService).login(any(UserLoginDto.Request.class));
@@ -235,4 +250,145 @@ class UserControllerTest {
                 }
                 """;
     }
+
+
+    // 계정 조회 컨트롤러 테스트.
+    // 테스트 1: 
+    @Test
+    void findAccountReturnsOkWhenAuthenticated() throws Exception {
+        // given: 
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        // given:
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails, 
+                null, 
+                userDetails.getAuthorities());
+
+        // given: @AuthenticationPrincipal이 읽을 인증 정보를 SecurityContext에 직접 등록.
+        SecurityContextHolder.getContext().setAuthentication(auth);
+                
+        // given: 조회 성공 설정.
+        when(userService.findAccount(1L))
+            .thenReturn(UserAccountFindDto.Response
+                .builder()
+                .userId(1L)
+                .email("test@example.com")
+                .userName("홍길동")
+                .role(UserRole.USER)
+                .build());
+        
+        // when + then
+        mockMvc.perform(get("/api/users/account"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.userId").value(1L))
+            .andExpect(jsonPath("$.email").value("test@example.com"))
+            .andExpect(jsonPath("$.userName").value("홍길동"))
+            .andExpect(jsonPath("$.role").value("USER"));
+            
+        
+        // then
+        verify(userService).findAccount(1L);
+
+        // then: 다른 테스트에 인증 정보가 남지 않도록 정리.
+        SecurityContextHolder.clearContext();
+    }
+
+    // 계정 정보 수정 컨트롤러 테스트.
+
+    // 테스트1: 인증된 사용자가 정상 요청 시 계정 정보 수정 성공.
+    @Test
+    void modifyAccountReturnsOkWhenAuthenticated() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        // given: @AuthenticationPrincipal이 읽을 인증 정보를 SecurityContext에 직접 등록.
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // given: 수정 성공 설정.
+        when(userService.modifyAccount(eq(1L), any(UserAccountModifyDto.Request.class)))
+            .thenReturn(UserAccountModifyDto.Response
+                .builder()
+                .userId(1L)
+                .email("new@example.com")
+                .userName("김철수")
+                .role(UserRole.USER)
+                .build());
+
+        // when + then
+        mockMvc.perform(patch("/api/users/account")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validModifyAccountRequestJson()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.userId").value(1L))
+            .andExpect(jsonPath("$.email").value("new@example.com"))
+            .andExpect(jsonPath("$.userName").value("김철수"))
+            .andExpect(jsonPath("$.role").value("USER"));
+
+        // then
+        verify(userService).modifyAccount(eq(1L), any(UserAccountModifyDto.Request.class));
+
+        // then: 다른 테스트에 인증 정보가 남지 않도록 정리.
+        SecurityContextHolder.clearContext();
+    }
+
+    // 테스트2: 계정 수정 요청 DTO 검증 실패.
+    @Test
+    void modifyAccountReturnsBadRequestWhenRequestIsInvalid() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // when + then
+        mockMvc.perform(patch("/api/users/account")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "email": "wrong-email",
+                            "userName": ""
+                        }
+                        """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    // 정상 계정 수정 요청 JSON 생성 메서드.
+    private String validModifyAccountRequestJson() {
+        return """
+                {
+                    "email": "new@example.com",
+                    "userName": "김철수"
+                }
+                """;
+    }
+
+
+    // CustomDetails 생성 헬퍼 메서드.
+    private CustomUserDetails createCustomUserDetails(Long userId) {
+        User user = User
+            .builder()
+            .email("test@example.com")
+            .passwordHash("hashed-password")
+            .userName("홍길동")
+            .build();
+        
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        return new CustomUserDetails(user);
+    }
+
 }
