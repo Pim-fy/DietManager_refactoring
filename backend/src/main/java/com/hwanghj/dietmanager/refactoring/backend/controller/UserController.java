@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hwanghj.dietmanager.refactoring.backend.dto.PasswordChangeDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
@@ -56,4 +57,12 @@ public class UserController {
         return ResponseEntity.ok(
             userService.modifyAccount(userDetails.getUserId(), request));
     }
+
+    @PatchMapping("/password")
+    public ResponseEntity<PasswordChangeDto.Response> changePassword(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Valid @RequestBody PasswordChangeDto.Request request) {
+            return ResponseEntity.ok(userService.changePassword(userDetails.getUserId(), request));
+    }
+
 }
