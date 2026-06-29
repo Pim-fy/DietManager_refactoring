@@ -24,7 +24,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/users/register", "/api/users/login").permitAll() // 토큰 필요하지 않음.
-                .requestMatchers("/api/users/account").authenticated()  // 토큰 필요
+                .requestMatchers("/api/users/account", "/api/users/password").authenticated()  // 토큰 필요
                 .anyRequest().permitAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

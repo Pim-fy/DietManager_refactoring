@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.hwanghj.dietmanager.refactoring.backend.common.UserRole;
+import com.hwanghj.dietmanager.refactoring.backend.dto.PasswordChangeDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
@@ -32,6 +33,7 @@ import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.GlobalExceptionHandler;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidPasswordException;
 import com.hwanghj.dietmanager.refactoring.backend.security.CustomUserDetails;
 import com.hwanghj.dietmanager.refactoring.backend.service.UserService;
 
@@ -376,6 +378,89 @@ class UserControllerTest {
                 """;
     }
 
+    // 비밀번호 변경 컨트롤러 테스트
+    // 테스트1: 비밀번호 변경 성공
+    @Test
+    void changePasswordReturnsOkWhenAuthenticated() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userService.changePassword(eq(1L), any(PasswordChangeDto.Request.class))).thenReturn(new PasswordChangeDto.Response("비밀번호가 변경되었습니다."));
+
+        // when + then
+        mockMvc.perform(patch("/api/users/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validPasswordChangeRequestJson()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("비밀번호가 변경되었습니다."));
+
+        verify(userService).changePassword(eq(1L), any(PasswordChangeDto.Request.class));
+
+        SecurityContextHolder.clearContext();
+    }
+    // 테스트2: 요청값 검증 실패
+    @Test
+    void changePasswordReturnsBadRequestWhenRequestIsInvalid() throws Exception {
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // when + then
+        mockMvc.perform(patch("/api/users/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "currentPassword": "", 
+                            "newPassword": "123"
+                        }
+                        """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."));
+        
+        SecurityContextHolder.clearContext();
+    }
+
+    // 테스트3: 현재 비밀번호 불일치
+    @Test
+    void changePasswordReturnsBadRequestWhenCurrentPasswordDoesNotMatch() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userService.changePassword(eq(1L), any(PasswordChangeDto.Request.class)))
+            .thenThrow(new InvalidPasswordException());
+
+        // when + then
+        mockMvc.perform(patch("/api/users/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validPasswordChangeRequestJson()))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INVALID_PASSWORD"))
+            .andExpect(jsonPath("$.message").value("현재 비밀번호가 일치하지 않습니다."));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    // 정상 비밀번호 변경 요청 JSON 생성 메서드
+    private String validPasswordChangeRequestJson() {
+        return """
+                {
+                    "currentPassword": "old-password", 
+                    "newPassword": "new-password123"
+                }
+                """;
+    }
+
 
     // CustomDetails 생성 헬퍼 메서드.
     private CustomUserDetails createCustomUserDetails(Long userId) {
@@ -390,5 +475,7 @@ class UserControllerTest {
 
         return new CustomUserDetails(user);
     }
+
+    
 
 }

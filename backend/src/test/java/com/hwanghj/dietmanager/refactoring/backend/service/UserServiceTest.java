@@ -24,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.hwanghj.dietmanager.refactoring.backend.common.Gender;
 import com.hwanghj.dietmanager.refactoring.backend.common.GoalType;
 import com.hwanghj.dietmanager.refactoring.backend.common.UserRole;
+import com.hwanghj.dietmanager.refactoring.backend.dto.PasswordChangeDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
@@ -31,6 +32,7 @@ import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidPasswordException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.security.JwtTokenProvider;
@@ -517,6 +519,98 @@ class UserServiceTest {
             .builder()
             .email(email)
             .userName(userName)
+            .build();
+    }
+
+    // 비밀번호 변경
+    // 테스트1: 비밀번호 변경 성공
+    @Test
+    void changePasswordUpdatesPasswordWhenCurrentPasswordMatches() {
+        // given
+        User user = User.builder()
+            .email("test@example.com")
+            .passwordHash("old-hashed-password")
+            .userName("홍길동")
+            .build();
+
+        // given: 비밀번호 변경 요청 DTO 생성
+        PasswordChangeDto.Request request = createPasswordChangeRequest("old-password", "new-password123");
+
+        // given: userId로 사용자 조회 성공. id가 1L인 사용자가 존재.
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        // given: 현재 비밀번호를 올바르게 입력.
+        when(passwordEncoder.matches("old-password", "old-hashed-password")).thenReturn(true);
+        // given: 새 비밀번호 해싱.
+        when(passwordEncoder.encode("new-password123")).thenReturn("new-hashed-password");
+
+        // when: 비밀번호 변경 서비스 메서드 실행.
+        PasswordChangeDto.Response response = userService.changePassword(1L, request);
+
+        // then: 응답 메시지가 기대값과 같은지 확인
+        assertThat(response.getMessage()).isEqualTo("비밀번호가 변경되었습니다.");
+        // then: 비밀번호 해시가 새 해시값으로 바뀌었는지 확인
+        assertThat(user.getPasswordHash()).isEqualTo("new-hashed-password");
+
+        // then: userId로 사용자를 조회했는지 확인.
+        verify(userRepository).findById(1L);
+        // then: 입력한 비밀번호와 저장된 해시값을 비교했는지 확인.
+        verify(passwordEncoder).matches("old-password", "old-hashed-password");
+        // then: 새 비밀번호 저장 전 해싱했는지 확인.
+        verify(passwordEncoder).encode("new-password123");
+    }
+
+    // 테스트2: 사용자가 존재하지 않을 때 예외 발생
+    @Test
+    void changePasswordThrowsUserNotFoundExceptionWhenUserDoesNotExist() {
+        // given: 비밀번호 변경 요청 DTO 생성
+        PasswordChangeDto.Request request = createPasswordChangeRequest("old-password", "new-password123");
+
+        // given: ID로 조회 시 사용자 없음
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when + then
+        assertThatThrownBy(() -> userService.changePassword(1L, request))       // when: 비밀번호 변경 서비스 메서드 실행
+            .isInstanceOf(UserNotFoundException.class)      // then: 발생한 예외의 타입이 UserNotFoundException 인지 확인
+            .hasMessage("사용자를 찾을 수 없습니다.");      // then: 발생한 예외의 메시지가 "사용자를 찾을 수 없습니다." 인지 확인
+        
+        verify(userRepository).findById(1L);
+        verify(passwordEncoder, never()).matches(anyString(), anyString());
+        verify(passwordEncoder, never()).encode(anyString());
+    }
+
+    // 테스트3: 현재 비밀번호가 일치하지 않을 때 예외 발생
+    @Test
+    void changePasswordThrowsInvalidPasswordExceptionWhenCurrentPasswordDoesNotMatch() {
+        // given
+        User user = User.builder()
+            .email("test@example.com")
+            .passwordHash("old-hashed-password")
+            .userName("홍길동")
+            .build();
+
+        PasswordChangeDto.Request request = createPasswordChangeRequest("wrong-password", "new-password");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong-password", "old-hashed-password")).thenReturn(false);
+
+        // when + then
+        assertThatThrownBy(() -> userService.changePassword(1L, request))
+            .isInstanceOf(InvalidPasswordException.class)
+            .hasMessage("현재 비밀번호가 일치하지 않습니다.");
+        
+        assertThat(user.getPasswordHash()).isEqualTo("old-hashed-password");
+
+        verify(userRepository).findById(1L);
+        verify(passwordEncoder).matches("wrong-password", "old-hashed-password");
+        verify(passwordEncoder, never()).encode(anyString());
+
+    }
+    
+    // 비밀번호 변경 요청 DTO 생성
+    private PasswordChangeDto.Request createPasswordChangeRequest(String currentPassword,String newPassword) {
+        return PasswordChangeDto.Request.builder()
+            .currentPassword(currentPassword)
+            .newPassword(newPassword)
             .build();
     }
 }

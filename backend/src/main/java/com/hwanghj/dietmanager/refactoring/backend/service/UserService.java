@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hwanghj.dietmanager.refactoring.backend.dto.PasswordChangeDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
@@ -13,6 +14,7 @@ import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.entity.UserProfile;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidPasswordException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.security.JwtTokenProvider;
@@ -134,6 +136,20 @@ public class UserService {
 
     }
 
+    // 비밀번호 변경
+    @Transactional
+    public PasswordChangeDto.Response changePassword(
+            Long userId, PasswordChangeDto.Request request) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(UserNotFoundException::new);
+        if(!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new InvalidPasswordException();
+        }
+        String hashedPassword = hashedPassword(request.getNewPassword());
+        user.updatePassword(hashedPassword);
+        return new PasswordChangeDto.Response("비밀번호가 변경되었습니다.");
+    }
+
     // 로그인 응답 헬퍼 메서드.
     private UserAccountFindDto.Response toAccountResponse(User user) {
         return UserAccountFindDto.Response
@@ -156,15 +172,15 @@ public class UserService {
             .build();
     }
 
-    // 비밀번호 변경 메서드.
-
-
-    // 비밀번호 변경
-    // 프로필 조회/수정
-    // 신체 측정값 저장/조회
-
     // 비밀번호 해싱
     private String hashedPassword(String rawPassword) {
         return passwordEncoder.encode(rawPassword);
     }
+
+
+
+
+
+    // 프로필 조회/수정
+    // 신체 측정값 저장/조회
 }
