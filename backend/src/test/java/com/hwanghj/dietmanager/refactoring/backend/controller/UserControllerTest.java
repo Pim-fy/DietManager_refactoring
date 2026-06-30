@@ -10,6 +10,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,17 +25,21 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.hwanghj.dietmanager.refactoring.backend.common.Gender;
+import com.hwanghj.dietmanager.refactoring.backend.common.GoalType;
 import com.hwanghj.dietmanager.refactoring.backend.common.UserRole;
 import com.hwanghj.dietmanager.refactoring.backend.dto.PasswordChangeDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
+import com.hwanghj.dietmanager.refactoring.backend.dto.UserProfileDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.GlobalExceptionHandler;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidPasswordException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.UserProfileNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.security.CustomUserDetails;
 import com.hwanghj.dietmanager.refactoring.backend.service.UserService;
 
@@ -457,6 +463,173 @@ class UserControllerTest {
                 {
                     "currentPassword": "old-password", 
                     "newPassword": "new-password123"
+                }
+                """;
+    }
+
+    // 프로필 조회 컨트롤러 테스트.
+
+    // 테스트1: 인증된 사용자가 프로필 조회 성공.
+    @Test
+    void findProfileReturnsOkWhenAuthenticated() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userService.findProfile(1L))
+            .thenReturn(UserProfileDto.Response.builder()
+                .userId(1L)
+                .gender(Gender.MALE)
+                .birthDate(LocalDate.of(1995, 1, 1))
+                .goalType(GoalType.LOSE_WEIGHT)
+                .build());
+
+        // when + then
+        mockMvc.perform(get("/api/users/profile"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.userId").value(1L))
+            .andExpect(jsonPath("$.gender").value("MALE"))
+            .andExpect(jsonPath("$.birthDate").value("1995-01-01"))
+            .andExpect(jsonPath("$.goalType").value("LOSE_WEIGHT"));
+
+        verify(userService).findProfile(1L);
+
+        SecurityContextHolder.clearContext();
+    }
+
+    // 테스트2: 프로필이 없으면 404 응답.
+    @Test
+    void findProfileReturnsNotFoundWhenProfileDoesNotExist() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userService.findProfile(1L))
+            .thenThrow(new UserProfileNotFoundException());
+
+        // when + then
+        mockMvc.perform(get("/api/users/profile"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("USER_PROFILE_NOT_FOUND"))
+            .andExpect(jsonPath("$.message").value("사용자 프로필을 찾을 수 없습니다."));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    // 프로필 수정 컨트롤러 테스트.
+
+    // 테스트1: 인증된 사용자가 정상 요청 시 프로필 수정 성공.
+    @Test
+    void modifyProfileReturnsOkWhenAuthenticated() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userService.modifyProfile(eq(1L), any(UserProfileDto.Request.class)))
+            .thenReturn(UserProfileDto.Response.builder()
+                .userId(1L)
+                .gender(Gender.FEMALE)
+                .birthDate(LocalDate.of(1998, 5, 10))
+                .goalType(GoalType.MAINTAIN_WEIGHT)
+                .build());
+
+        // when + then
+        mockMvc.perform(patch("/api/users/profile")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validModifyProfileRequestJson()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.userId").value(1L))
+            .andExpect(jsonPath("$.gender").value("FEMALE"))
+            .andExpect(jsonPath("$.birthDate").value("1998-05-10"))
+            .andExpect(jsonPath("$.goalType").value("MAINTAIN_WEIGHT"));
+
+        verify(userService).modifyProfile(eq(1L), any(UserProfileDto.Request.class));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    // 테스트2: 프로필 수정 요청 DTO 검증 실패.
+    @Test
+    void modifyProfileReturnsBadRequestWhenRequestIsInvalid() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // when + then
+        mockMvc.perform(patch("/api/users/profile")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "gender": null,
+                            "birthDate": "2999-01-01",
+                            "goalType": null
+                        }
+                        """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    // 테스트3: 수정할 프로필이 없으면 404 응답.
+    @Test
+    void modifyProfileReturnsNotFoundWhenProfileDoesNotExist() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userService.modifyProfile(eq(1L), any(UserProfileDto.Request.class)))
+            .thenThrow(new UserProfileNotFoundException());
+
+        // when + then
+        mockMvc.perform(patch("/api/users/profile")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validModifyProfileRequestJson()))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("USER_PROFILE_NOT_FOUND"))
+            .andExpect(jsonPath("$.message").value("사용자 프로필을 찾을 수 없습니다."));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    // 정상 프로필 수정 요청 JSON 생성 메서드.
+    private String validModifyProfileRequestJson() {
+        return """
+                {
+                    "gender": "FEMALE",
+                    "birthDate": "1998-05-10",
+                    "goalType": "MAINTAIN_WEIGHT"
                 }
                 """;
     }

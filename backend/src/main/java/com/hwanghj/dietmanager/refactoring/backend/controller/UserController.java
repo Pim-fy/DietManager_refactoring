@@ -14,6 +14,7 @@ import com.hwanghj.dietmanager.refactoring.backend.dto.PasswordChangeDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
+import com.hwanghj.dietmanager.refactoring.backend.dto.UserProfileDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.security.CustomUserDetails;
 import com.hwanghj.dietmanager.refactoring.backend.service.UserService;
@@ -64,5 +65,20 @@ public class UserController {
         @Valid @RequestBody PasswordChangeDto.Request request) {
             return ResponseEntity.ok(userService.changePassword(userDetails.getUserId(), request));
     }
+
+    @GetMapping("/profile")
+    public ResponseEntity<UserProfileDto.Response> findProfile(@AuthenticationPrincipal CustomUserDetails userDetails){
+        return ResponseEntity.ok(
+            userService.findProfile(userDetails.getUserId()));
+    }
+
+    @PatchMapping("/profile")
+    public ResponseEntity<UserProfileDto.Response> modifyProfile(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody UserProfileDto.Request request){
+        return ResponseEntity.ok(
+            userService.modifyProfile(userDetails.getUserId(), request));
+    }
+        
 
 }

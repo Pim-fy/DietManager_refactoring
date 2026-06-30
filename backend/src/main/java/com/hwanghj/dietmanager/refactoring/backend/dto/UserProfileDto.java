@@ -8,6 +8,8 @@ import com.hwanghj.dietmanager.refactoring.backend.common.GoalType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -21,6 +23,8 @@ public class UserProfileDto {
      */
     @Getter
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @Builder
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Request {
 
         @NotNull(message = "성별은 필수입니다.")
@@ -38,18 +42,12 @@ public class UserProfileDto {
      * 사용자 프로필 응답 DTO
      */
     @Getter
+    @Builder
     public static class Response {
 
         private final Long userId;
         private final Gender gender;
         private final LocalDate birthDate;
         private final GoalType goalType;
-
-        public Response(Long userId, Gender gender, LocalDate birthDate, GoalType goalType) {
-            this.userId = userId;
-            this.gender = gender;
-            this.birthDate = birthDate;
-            this.goalType = goalType;
-        }
     }
 }

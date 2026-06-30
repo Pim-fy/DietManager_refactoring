@@ -28,12 +28,16 @@ import com.hwanghj.dietmanager.refactoring.backend.dto.PasswordChangeDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
+import com.hwanghj.dietmanager.refactoring.backend.dto.UserProfileDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.entity.User;
+import com.hwanghj.dietmanager.refactoring.backend.entity.UserProfile;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidPasswordException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.UserNotFoundException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.UserProfileNotFoundException;
+import com.hwanghj.dietmanager.refactoring.backend.repository.UserProfileRepository;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.security.JwtTokenProvider;
 
@@ -48,6 +52,9 @@ class UserServiceTest {
     // 실제 DB를 사용하지 않고, 가짜 객체를 만듦
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserProfileRepository userProfileRepository;
     
     // 실제 BCrypt 해싱을 하지 않고, 원하는 해싱 결과를 반환하도록 제어하기 위한 mock
     @Mock
@@ -63,7 +70,7 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         // UserService 객체 생성
-        userService = new UserService(userRepository, passwordEncoder, jwtTokenProvider);
+        userService = new UserService(userRepository, passwordEncoder, jwtTokenProvider, userProfileRepository);
     }
 
     // 회원가입 로직 테스트.
@@ -611,6 +618,132 @@ class UserServiceTest {
         return PasswordChangeDto.Request.builder()
             .currentPassword(currentPassword)
             .newPassword(newPassword)
+            .build();
+    }
+
+    // 프로필 조회 서비스 테스트.
+
+    // 테스트1: 프로필 조회 성공.
+    @Test
+    void findProfileReturnsProfileWhenProfileExists() {
+        // given
+        User user = User.builder()
+            .email("test@example.com")
+            .passwordHash("hashed-password")
+            .userName("홍길동")
+            .build();
+
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        UserProfile profile = UserProfile.builder()
+            .gender(Gender.MALE)
+            .birthDate(LocalDate.of(1995, 1, 1))
+            .goalType(GoalType.LOSE_WEIGHT)
+            .build();
+
+        user.assignProfile(profile);
+
+        when(userProfileRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
+
+        // when
+        UserProfileDto.Response response = userService.findProfile(1L);
+
+        // then
+        assertThat(response.getUserId()).isEqualTo(1L);
+        assertThat(response.getGender()).isEqualTo(Gender.MALE);
+        assertThat(response.getBirthDate()).isEqualTo(LocalDate.of(1995, 1, 1));
+        assertThat(response.getGoalType()).isEqualTo(GoalType.LOSE_WEIGHT);
+
+        verify(userProfileRepository).findByUserId(1L);
+    }
+
+    // 테스트2: 프로필이 존재하지 않으면 예외 발생.
+    @Test
+    void findProfileThrowsUserProfileNotFoundExceptionWhenProfileDoesNotExist() {
+        // given
+        when(userProfileRepository.findByUserId(1L)).thenReturn(Optional.empty());
+
+        // when + then
+        assertThatThrownBy(() -> userService.findProfile(1L))
+            .isInstanceOf(UserProfileNotFoundException.class)
+            .hasMessage("사용자 프로필을 찾을 수 없습니다.");
+
+        verify(userProfileRepository).findByUserId(1L);
+    }
+
+    // 프로필 수정 서비스 테스트.
+
+    // 테스트1: 프로필 수정 성공.
+    @Test
+    void modifyProfileUpdatesProfileWhenProfileExists() {
+        // given
+        User user = User.builder()
+            .email("test@example.com")
+            .passwordHash("hashed-password")
+            .userName("홍길동")
+            .build();
+
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        UserProfile profile = UserProfile.builder()
+            .gender(Gender.MALE)
+            .birthDate(LocalDate.of(1995, 1, 1))
+            .goalType(GoalType.LOSE_WEIGHT)
+            .build();
+
+        user.assignProfile(profile);
+
+        UserProfileDto.Request request = createProfileRequest(
+            Gender.FEMALE,
+            LocalDate.of(1998, 5, 10),
+            GoalType.MAINTAIN_WEIGHT);
+
+        when(userProfileRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
+
+        // when
+        UserProfileDto.Response response = userService.modifyProfile(1L, request);
+
+        // then
+        assertThat(response.getUserId()).isEqualTo(1L);
+        assertThat(response.getGender()).isEqualTo(Gender.FEMALE);
+        assertThat(response.getBirthDate()).isEqualTo(LocalDate.of(1998, 5, 10));
+        assertThat(response.getGoalType()).isEqualTo(GoalType.MAINTAIN_WEIGHT);
+
+        assertThat(profile.getGender()).isEqualTo(Gender.FEMALE);
+        assertThat(profile.getBirthDate()).isEqualTo(LocalDate.of(1998, 5, 10));
+        assertThat(profile.getGoalType()).isEqualTo(GoalType.MAINTAIN_WEIGHT);
+
+        verify(userProfileRepository).findByUserId(1L);
+    }
+
+    // 테스트2: 수정할 프로필이 존재하지 않으면 예외 발생.
+    @Test
+    void modifyProfileThrowsUserProfileNotFoundExceptionWhenProfileDoesNotExist() {
+        // given
+        UserProfileDto.Request request = createProfileRequest(
+            Gender.FEMALE,
+            LocalDate.of(1998, 5, 10),
+            GoalType.MAINTAIN_WEIGHT);
+
+        when(userProfileRepository.findByUserId(1L)).thenReturn(Optional.empty());
+
+        // when + then
+        assertThatThrownBy(() -> userService.modifyProfile(1L, request))
+            .isInstanceOf(UserProfileNotFoundException.class)
+            .hasMessage("사용자 프로필을 찾을 수 없습니다.");
+
+        verify(userProfileRepository).findByUserId(1L);
+    }
+
+    // 프로필 수정 요청 DTO 생성.
+    private UserProfileDto.Request createProfileRequest(
+            Gender gender,
+            LocalDate birthDate,
+            GoalType goalType) {
+        return UserProfileDto.Request.builder()
+            .gender(gender)
+            .birthDate(birthDate)
+            .goalType(goalType)
             .build();
     }
 }
