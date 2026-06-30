@@ -9,6 +9,7 @@ import com.hwanghj.dietmanager.refactoring.backend.dto.PasswordChangeDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
+import com.hwanghj.dietmanager.refactoring.backend.dto.UserProfileDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.entity.UserProfile;
@@ -16,6 +17,8 @@ import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailExcep
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidPasswordException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.UserNotFoundException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.UserProfileNotFoundException;
+import com.hwanghj.dietmanager.refactoring.backend.repository.UserProfileRepository;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.security.JwtTokenProvider;
 
@@ -24,11 +27,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserProfileRepository userProfileRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
+    public UserService(
+            UserRepository userRepository, 
+            PasswordEncoder passwordEncoder, 
+            JwtTokenProvider jwtTokenProvider,
+            UserProfileRepository userProfileRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.userProfileRepository = userProfileRepository;
     }
 
     // 회원가입
@@ -150,6 +159,37 @@ public class UserService {
         return new PasswordChangeDto.Response("비밀번호가 변경되었습니다.");
     }
 
+    // 프로필 조회
+    @Transactional(readOnly = true)
+    public UserProfileDto.Response findProfile(Long userId){
+        UserProfile userProfile = userProfileRepository
+            .findByUserId(userId)
+            .orElseThrow(UserProfileNotFoundException::new);
+            // == .orElseThrow(() -> new UserProfileNotFoundException());
+        
+        return toProfileResponse(userProfile);
+    }
+
+    // 프로필 수정
+    @Transactional
+    public UserProfileDto.Response modifyProfile(
+            Long userId,
+            UserProfileDto.Request request){
+        UserProfile userProfile = userProfileRepository
+            .findByUserId(userId)
+            .orElseThrow(UserProfileNotFoundException::new);
+
+        userProfile.updateProfile(
+            request.getGender(), 
+            request.getBirthDate(), 
+            request.getGoalType());
+        
+        return toProfileResponse(userProfile);
+    }
+
+
+    // 헬퍼 메서드.
+
     // 로그인 응답 헬퍼 메서드.
     private UserAccountFindDto.Response toAccountResponse(User user) {
         return UserAccountFindDto.Response
@@ -175,6 +215,17 @@ public class UserService {
     // 비밀번호 해싱
     private String hashedPassword(String rawPassword) {
         return passwordEncoder.encode(rawPassword);
+    }
+
+    // 프로필 응답 헬퍼 메서드.
+    private UserProfileDto.Response toProfileResponse(UserProfile userProfile){
+        return UserProfileDto.Response
+            .builder()
+            .userId(userProfile.getUser().getId())
+            .gender(userProfile.getGender())
+            .birthDate(userProfile.getBirthDate())
+            .goalType(userProfile.getGoalType())
+            .build();
     }
 
 
