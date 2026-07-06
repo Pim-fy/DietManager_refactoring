@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -19,6 +21,8 @@ public class BodyMeasurementDto {
      */
     @Getter
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @Builder
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Request {
 
         @PastOrPresent(message = "측정일은 오늘 또는 과거 날짜여야 합니다.")
@@ -38,6 +42,7 @@ public class BodyMeasurementDto {
      * 신체 측정값 응답 DTO
      */
     @Getter
+    @Builder
     public static class Response {
 
         private final Long measurementId;

@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.hwanghj.dietmanager.refactoring.backend.common.Gender;
 import com.hwanghj.dietmanager.refactoring.backend.common.GoalType;
 import com.hwanghj.dietmanager.refactoring.backend.common.UserRole;
+import com.hwanghj.dietmanager.refactoring.backend.dto.BodyMeasurementDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.PasswordChangeDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
@@ -35,10 +37,12 @@ import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserProfileDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.entity.User;
+import com.hwanghj.dietmanager.refactoring.backend.exception.BodyMeasurementNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.GlobalExceptionHandler;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidPasswordException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.UserProfileNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.security.CustomUserDetails;
 import com.hwanghj.dietmanager.refactoring.backend.service.UserService;
@@ -632,6 +636,220 @@ class UserControllerTest {
                     "goalType": "MAINTAIN_WEIGHT"
                 }
                 """;
+    }
+
+    // 신체 측정값 저장 컨트롤러 테스트.
+
+    // 테스트1: 인증된 사용자가 정상 요청 시 신체 측정값 저장 성공.
+    @Test
+    void addBodyMeasurementReturnsOkWhenAuthenticated() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userService.addBodyMeasurement(eq(1L), any(BodyMeasurementDto.Request.class)))
+            .thenReturn(BodyMeasurementDto.Response.builder()
+                .measurementId(10L)
+                .measuredDate(LocalDate.of(2026, 7, 1))
+                .height(175.5)
+                .weight(70.2)
+                .build());
+
+        // when + then
+        mockMvc.perform(post("/api/users/body-measurements")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validBodyMeasurementRequestJson()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.measurementId").value(10L))
+            .andExpect(jsonPath("$.measuredDate").value("2026-07-01"))
+            .andExpect(jsonPath("$.height").value(175.5))
+            .andExpect(jsonPath("$.weight").value(70.2));
+
+        verify(userService).addBodyMeasurement(eq(1L), any(BodyMeasurementDto.Request.class));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    // 테스트2: 신체 측정값 저장 요청 DTO 검증 실패.
+    @Test
+    void addBodyMeasurementReturnsBadRequestWhenRequestIsInvalid() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // when + then
+        mockMvc.perform(post("/api/users/body-measurements")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "measuredDate": "2999-01-01",
+                            "height": 0,
+                            "weight": null
+                        }
+                        """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.message").value("입력값 검증에 실패했습니다."));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    // 테스트3: 사용자가 존재하지 않으면 404 응답.
+    @Test
+    void addBodyMeasurementReturnsNotFoundWhenUserDoesNotExist() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userService.addBodyMeasurement(eq(1L), any(BodyMeasurementDto.Request.class)))
+            .thenThrow(new UserNotFoundException());
+
+        // when + then
+        mockMvc.perform(post("/api/users/body-measurements")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validBodyMeasurementRequestJson()))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"))
+            .andExpect(jsonPath("$.message").value("사용자를 찾을 수 없습니다."));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    // 정상 신체 측정값 저장 요청 JSON 생성 메서드.
+    private String validBodyMeasurementRequestJson() {
+        return """
+                {
+                    "measuredDate": "2026-07-01",
+                    "height": 175.5,
+                    "weight": 70.2
+                }
+                """;
+    }
+
+    // 최신 신체 측정값 조회 컨트롤러 테스트.
+
+    // 테스트1: 인증된 사용자가 최신 신체 측정값 조회 성공.
+    @Test
+    void findLatestBodyMeasurementReturnsOkWhenAuthenticated() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userService.findLatestBodyMeasurement(1L))
+            .thenReturn(BodyMeasurementDto.Response.builder()
+                .measurementId(10L)
+                .measuredDate(LocalDate.of(2026, 7, 2))
+                .height(175.5)
+                .weight(70.0)
+                .build());
+
+        // when + then
+        mockMvc.perform(get("/api/users/body-measurements/latest"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.measurementId").value(10L))
+            .andExpect(jsonPath("$.measuredDate").value("2026-07-02"))
+            .andExpect(jsonPath("$.height").value(175.5))
+            .andExpect(jsonPath("$.weight").value(70.0));
+
+        verify(userService).findLatestBodyMeasurement(1L);
+
+        SecurityContextHolder.clearContext();
+    }
+
+    // 테스트2: 최신 신체 측정값이 없으면 404 응답.
+    @Test
+    void findLatestBodyMeasurementReturnsNotFoundWhenMeasurementDoesNotExist() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userService.findLatestBodyMeasurement(1L))
+            .thenThrow(new BodyMeasurementNotFoundException());
+
+        // when + then
+        mockMvc.perform(get("/api/users/body-measurements/latest"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("BODY_MEASUREMENT_NOT_FOUND"))
+            .andExpect(jsonPath("$.message").value("신체 측정값을 찾을 수 없습니다."));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    // 전체 신체 측정 이력 조회 컨트롤러 테스트.
+
+    // 테스트1: 인증된 사용자가 전체 신체 측정 이력 조회 성공.
+    @Test
+    void findBodyMeasurementsReturnsOkWhenAuthenticated() throws Exception {
+        // given
+        CustomUserDetails userDetails = createCustomUserDetails(1L);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userService.findBodyMeasurements(1L))
+            .thenReturn(List.of(
+                BodyMeasurementDto.Response.builder()
+                    .measurementId(11L)
+                    .measuredDate(LocalDate.of(2026, 7, 2))
+                    .height(175.5)
+                    .weight(70.0)
+                    .build(),
+                BodyMeasurementDto.Response.builder()
+                    .measurementId(10L)
+                    .measuredDate(LocalDate.of(2026, 7, 1))
+                    .height(175.5)
+                    .weight(70.2)
+                    .build()));
+
+        // when + then
+        mockMvc.perform(get("/api/users/body-measurements"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].measurementId").value(11L))
+            .andExpect(jsonPath("$[0].measuredDate").value("2026-07-02"))
+            .andExpect(jsonPath("$[0].height").value(175.5))
+            .andExpect(jsonPath("$[0].weight").value(70.0))
+            .andExpect(jsonPath("$[1].measurementId").value(10L))
+            .andExpect(jsonPath("$[1].measuredDate").value("2026-07-01"))
+            .andExpect(jsonPath("$[1].height").value(175.5))
+            .andExpect(jsonPath("$[1].weight").value(70.2));
+
+        verify(userService).findBodyMeasurements(1L);
+
+        SecurityContextHolder.clearContext();
     }
 
 
