@@ -27,7 +27,8 @@ public class SecurityConfig {
                 .requestMatchers(
                         "/api/users/account", 
                         "/api/users/password",
-                        "/api/users/profile"
+                        "/api/users/profile",
+                        "/api/users/body-measurements/**"   
                     ).authenticated()  // 토큰 필요
                 .anyRequest().permitAll()
             )

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,19 +25,23 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.hwanghj.dietmanager.refactoring.backend.common.Gender;
 import com.hwanghj.dietmanager.refactoring.backend.common.GoalType;
 import com.hwanghj.dietmanager.refactoring.backend.common.UserRole;
+import com.hwanghj.dietmanager.refactoring.backend.dto.BodyMeasurementDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.PasswordChangeDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserProfileDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
+import com.hwanghj.dietmanager.refactoring.backend.entity.BodyMeasurement;
 import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.entity.UserProfile;
+import com.hwanghj.dietmanager.refactoring.backend.exception.BodyMeasurementNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidPasswordException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.UserProfileNotFoundException;
+import com.hwanghj.dietmanager.refactoring.backend.repository.BodyMeasurementRepository;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserProfileRepository;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.security.JwtTokenProvider;
@@ -55,6 +60,9 @@ class UserServiceTest {
 
     @Mock
     private UserProfileRepository userProfileRepository;
+
+    @Mock
+    private BodyMeasurementRepository bodyMeasurementRepository;
     
     // 실제 BCrypt 해싱을 하지 않고, 원하는 해싱 결과를 반환하도록 제어하기 위한 mock
     @Mock
@@ -70,7 +78,12 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         // UserService 객체 생성
-        userService = new UserService(userRepository, passwordEncoder, jwtTokenProvider, userProfileRepository);
+        userService = new UserService(
+            userRepository,
+            passwordEncoder,
+            jwtTokenProvider,
+            userProfileRepository,
+            bodyMeasurementRepository);
     }
 
     // 회원가입 로직 테스트.
@@ -745,5 +758,224 @@ class UserServiceTest {
             .birthDate(birthDate)
             .goalType(goalType)
             .build();
+    }
+
+    // 신체 측정값 저장 서비스 테스트.
+
+    // 테스트1: 신체 측정값 저장 성공.
+    @Test
+    void addBodyMeasurementSavesMeasurementWhenUserExists() {
+        // given
+        User user = User.builder()
+            .email("test@example.com")
+            .passwordHash("hashed-password")
+            .userName("홍길동")
+            .build();
+
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        BodyMeasurementDto.Request request = createBodyMeasurementRequest(
+            LocalDate.of(2026, 7, 1),
+            175.5,
+            70.2);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(bodyMeasurementRepository.save(any(BodyMeasurement.class)))
+            .thenAnswer(invocation -> {
+                BodyMeasurement bodyMeasurement = invocation.getArgument(0);
+                ReflectionTestUtils.setField(bodyMeasurement, "id", 10L);
+                return bodyMeasurement;
+            });
+
+        // when
+        BodyMeasurementDto.Response response = userService.addBodyMeasurement(1L, request);
+
+        // then
+        assertThat(response.getMeasurementId()).isEqualTo(10L);
+        assertThat(response.getMeasuredDate()).isEqualTo(LocalDate.of(2026, 7, 1));
+        assertThat(response.getHeight()).isEqualTo(175.5);
+        assertThat(response.getWeight()).isEqualTo(70.2);
+
+        ArgumentCaptor<BodyMeasurement> bodyMeasurementCaptor =
+            ArgumentCaptor.forClass(BodyMeasurement.class);
+
+        verify(userRepository).findById(1L);
+        verify(bodyMeasurementRepository).save(bodyMeasurementCaptor.capture());
+
+        BodyMeasurement savedBodyMeasurement = bodyMeasurementCaptor.getValue();
+
+        assertThat(savedBodyMeasurement.getUser()).isSameAs(user);
+        assertThat(savedBodyMeasurement.getMeasuredDate()).isEqualTo(LocalDate.of(2026, 7, 1));
+        assertThat(savedBodyMeasurement.getHeight()).isEqualTo(175.5);
+        assertThat(savedBodyMeasurement.getWeight()).isEqualTo(70.2);
+    }
+
+    // 테스트2: 사용자가 존재하지 않으면 신체 측정값을 저장하지 않고 예외 발생.
+    @Test
+    void addBodyMeasurementThrowsUserNotFoundExceptionWhenUserDoesNotExist() {
+        // given
+        BodyMeasurementDto.Request request = createBodyMeasurementRequest(
+            LocalDate.of(2026, 7, 1),
+            175.5,
+            70.2);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when + then
+        assertThatThrownBy(() -> userService.addBodyMeasurement(1L, request))
+            .isInstanceOf(UserNotFoundException.class)
+            .hasMessage("사용자를 찾을 수 없습니다.");
+
+        verify(userRepository).findById(1L);
+        verify(bodyMeasurementRepository, never()).save(any(BodyMeasurement.class));
+    }
+
+    // 최신 신체 측정값 조회 서비스 테스트.
+
+    // 테스트1: 최신 신체 측정값 조회 성공.
+    @Test
+    void findLatestBodyMeasurementReturnsLatestMeasurementWhenMeasurementExists() {
+        // given
+        User user = createUserWithId(1L);
+
+        BodyMeasurement bodyMeasurement = createBodyMeasurement(
+            10L,
+            user,
+            LocalDate.of(2026, 7, 1),
+            175.5,
+            70.2);
+
+        when(bodyMeasurementRepository.findTopByUserIdOrderByMeasuredDateDesc(1L))
+            .thenReturn(Optional.of(bodyMeasurement));
+
+        // when
+        BodyMeasurementDto.Response response = userService.findLatestBodyMeasurement(1L);
+
+        // then
+        assertThat(response.getMeasurementId()).isEqualTo(10L);
+        assertThat(response.getMeasuredDate()).isEqualTo(LocalDate.of(2026, 7, 1));
+        assertThat(response.getHeight()).isEqualTo(175.5);
+        assertThat(response.getWeight()).isEqualTo(70.2);
+
+        verify(bodyMeasurementRepository).findTopByUserIdOrderByMeasuredDateDesc(1L);
+    }
+
+    // 테스트2: 신체 측정값이 없으면 예외 발생.
+    @Test
+    void findLatestBodyMeasurementThrowsBodyMeasurementNotFoundExceptionWhenMeasurementDoesNotExist() {
+        // given
+        when(bodyMeasurementRepository.findTopByUserIdOrderByMeasuredDateDesc(1L))
+            .thenReturn(Optional.empty());
+
+        // when + then
+        assertThatThrownBy(() -> userService.findLatestBodyMeasurement(1L))
+            .isInstanceOf(BodyMeasurementNotFoundException.class)
+            .hasMessage("신체 측정값을 찾을 수 없습니다.");
+
+        verify(bodyMeasurementRepository).findTopByUserIdOrderByMeasuredDateDesc(1L);
+    }
+
+    // 전체 신체 측정 이력 조회 서비스 테스트.
+
+    // 테스트1: 전체 신체 측정 이력 조회 성공.
+    @Test
+    void findBodyMeasurementsReturnsMeasurementsWhenMeasurementsExist() {
+        // given
+        User user = createUserWithId(1L);
+
+        BodyMeasurement latestMeasurement = createBodyMeasurement(
+            11L,
+            user,
+            LocalDate.of(2026, 7, 2),
+            175.5,
+            70.0);
+
+        BodyMeasurement previousMeasurement = createBodyMeasurement(
+            10L,
+            user,
+            LocalDate.of(2026, 7, 1),
+            175.5,
+            70.2);
+
+        when(bodyMeasurementRepository.findByUserIdOrderByMeasuredDateDesc(1L))
+            .thenReturn(List.of(latestMeasurement, previousMeasurement));
+
+        // when
+        List<BodyMeasurementDto.Response> responses = userService.findBodyMeasurements(1L);
+
+        // then
+        assertThat(responses).hasSize(2);
+
+        assertThat(responses.get(0).getMeasurementId()).isEqualTo(11L);
+        assertThat(responses.get(0).getMeasuredDate()).isEqualTo(LocalDate.of(2026, 7, 2));
+        assertThat(responses.get(0).getHeight()).isEqualTo(175.5);
+        assertThat(responses.get(0).getWeight()).isEqualTo(70.0);
+
+        assertThat(responses.get(1).getMeasurementId()).isEqualTo(10L);
+        assertThat(responses.get(1).getMeasuredDate()).isEqualTo(LocalDate.of(2026, 7, 1));
+        assertThat(responses.get(1).getHeight()).isEqualTo(175.5);
+        assertThat(responses.get(1).getWeight()).isEqualTo(70.2);
+
+        verify(bodyMeasurementRepository).findByUserIdOrderByMeasuredDateDesc(1L);
+    }
+
+    // 테스트2: 신체 측정 이력이 없으면 빈 리스트 반환.
+    @Test
+    void findBodyMeasurementsReturnsEmptyListWhenMeasurementsDoNotExist() {
+        // given
+        when(bodyMeasurementRepository.findByUserIdOrderByMeasuredDateDesc(1L))
+            .thenReturn(List.of());
+
+        // when
+        List<BodyMeasurementDto.Response> responses = userService.findBodyMeasurements(1L);
+
+        // then
+        assertThat(responses).isEmpty();
+
+        verify(bodyMeasurementRepository).findByUserIdOrderByMeasuredDateDesc(1L);
+    }
+
+    // 신체 측정값 저장 요청 DTO 생성.
+    private BodyMeasurementDto.Request createBodyMeasurementRequest(
+            LocalDate measuredDate,
+            Double height,
+            Double weight) {
+        return BodyMeasurementDto.Request.builder()
+            .measuredDate(measuredDate)
+            .height(height)
+            .weight(weight)
+            .build();
+    }
+
+    // 테스트용 User 생성.
+    private User createUserWithId(Long userId) {
+        User user = User.builder()
+            .email("test@example.com")
+            .passwordHash("hashed-password")
+            .userName("홍길동")
+            .build();
+
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        return user;
+    }
+
+    // 테스트용 BodyMeasurement 생성.
+    private BodyMeasurement createBodyMeasurement(
+            Long measurementId,
+            User user,
+            LocalDate measuredDate,
+            Double height,
+            Double weight) {
+        BodyMeasurement bodyMeasurement = BodyMeasurement.builder()
+            .user(user)
+            .measuredDate(measuredDate)
+            .height(height)
+            .weight(weight)
+            .build();
+
+        ReflectionTestUtils.setField(bodyMeasurement, "id", measurementId);
+
+        return bodyMeasurement;
     }
 }

@@ -65,4 +65,13 @@ public class GlobalExceptionHandler {
             .body(response);
     }
 
+    @ExceptionHandler(BodyMeasurementNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleBodyMeasurementNotFoundException(BodyMeasurementNotFoundException e) {
+        ErrorResponse response = ErrorResponse.of("BODY_MEASUREMENT_NOT_FOUND", e.getMessage());
+
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)   // 404 Not Found. 서버는 살아있지만, 요청한 리소스를 찾을 수 없음.
+            .body(response);
+    }
+
 }

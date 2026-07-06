@@ -1,23 +1,29 @@
 package com.hwanghj.dietmanager.refactoring.backend.service;
 
+import java.util.List;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hwanghj.dietmanager.refactoring.backend.dto.BodyMeasurementDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.PasswordChangeDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserProfileDto;
 import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
+import com.hwanghj.dietmanager.refactoring.backend.entity.BodyMeasurement;
 import com.hwanghj.dietmanager.refactoring.backend.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.entity.UserProfile;
+import com.hwanghj.dietmanager.refactoring.backend.exception.BodyMeasurementNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidPasswordException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.UserProfileNotFoundException;
+import com.hwanghj.dietmanager.refactoring.backend.repository.BodyMeasurementRepository;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserProfileRepository;
 import com.hwanghj.dietmanager.refactoring.backend.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.security.JwtTokenProvider;
@@ -28,16 +34,19 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserProfileRepository userProfileRepository;
+    private final BodyMeasurementRepository bodyMeasurementRepository;
 
     public UserService(
             UserRepository userRepository, 
             PasswordEncoder passwordEncoder, 
             JwtTokenProvider jwtTokenProvider,
-            UserProfileRepository userProfileRepository) {
+            UserProfileRepository userProfileRepository,
+            BodyMeasurementRepository bodyMeasurementRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.userProfileRepository = userProfileRepository;
+        this.bodyMeasurementRepository = bodyMeasurementRepository;
     }
 
     // 회원가입
@@ -187,6 +196,48 @@ public class UserService {
         return toProfileResponse(userProfile);
     }
 
+    // 신체 측정값 저장.
+    @Transactional
+    public BodyMeasurementDto.Response addBodyMeasurement(
+            Long userId,
+            BodyMeasurementDto.Request request){
+
+        User user = userRepository
+            .findById(userId)
+            .orElseThrow(UserNotFoundException::new);
+
+        BodyMeasurement bodyMeasurement = BodyMeasurement
+            .builder()
+            .user(user)
+            .measuredDate(request.getMeasuredDate())
+            .height(request.getHeight())
+            .weight(request.getWeight())
+            .build();
+
+        BodyMeasurement savedBodyMeasurement = bodyMeasurementRepository.save(bodyMeasurement);
+        
+        return toBodyMeasurementResponse(savedBodyMeasurement);
+    }
+
+    // 가장 최근 신체 측정값 조회.
+    @Transactional(readOnly = true)
+    public BodyMeasurementDto.Response findLatestBodyMeasurement(Long userId){
+        BodyMeasurement bodyMeasurement = bodyMeasurementRepository
+            .findTopByUserIdOrderByMeasuredDateDesc(userId)
+            .orElseThrow(BodyMeasurementNotFoundException::new);
+        
+        return toBodyMeasurementResponse(bodyMeasurement);
+    }
+
+    // 전체 신체 측정 이력 조회
+    @Transactional(readOnly = true)
+    public List<BodyMeasurementDto.Response> findBodyMeasurements(Long userId){
+        return bodyMeasurementRepository
+            .findByUserIdOrderByMeasuredDateDesc(userId)
+            .stream()
+            .map(this::toBodyMeasurementResponse)
+            .toList();
+    }
 
     // 헬퍼 메서드.
 
@@ -228,10 +279,14 @@ public class UserService {
             .build();
     }
 
-
-
-
-
-    // 프로필 조회/수정
-    // 신체 측정값 저장/조회
+    // 신체 측정값 응답 헬퍼 메서드
+    private BodyMeasurementDto.Response toBodyMeasurementResponse(BodyMeasurement bodyMeasurement){
+        return BodyMeasurementDto.Response
+            .builder()
+            .measurementId(bodyMeasurement.getId())
+            .measuredDate(bodyMeasurement.getMeasuredDate())
+            .height(bodyMeasurement.getHeight())
+            .weight(bodyMeasurement.getWeight())
+            .build();
+    }
 }
