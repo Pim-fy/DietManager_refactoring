@@ -12,6 +12,49 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(com.hwanghj.dietmanager.refactoring.backend.statistics.StatisticsRangeException.class)
+    public ResponseEntity<ErrorResponse> handleStatisticsRange(RuntimeException e) {
+        return ResponseEntity.badRequest().body(ErrorResponse.of("VALIDATION_ERROR", e.getMessage()));
+    }
+
+    @ExceptionHandler(com.hwanghj.dietmanager.refactoring.backend.security.LoginAttemptLimiter.Limited.class)
+    public ResponseEntity<ErrorResponse> handleLoginLimit(RuntimeException e) {
+        return ResponseEntity.status(429).header("Retry-After", "600")
+            .body(ErrorResponse.of("LOGIN_LIMIT", e.getMessage()));
+    }
+    @ExceptionHandler(com.hwanghj.dietmanager.refactoring.backend.food.FoodApiLimitException.class)
+    public ResponseEntity<ErrorResponse> handleFoodLimit(RuntimeException e) {
+        return ResponseEntity.status(429).header("Retry-After", "60")
+            .body(ErrorResponse.of("FOOD_API_LIMIT", e.getMessage()));
+    }
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleStatus(org.springframework.web.server.ResponseStatusException e) {
+        return ResponseEntity.status(e.getStatusCode()).body(ErrorResponse.of("VALIDATION_ERROR", e.getReason() == null ? "요청을 확인해주세요." : e.getReason()));
+    }
+    @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class,
+        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
+        org.springframework.web.bind.MissingServletRequestParameterException.class})
+    public ResponseEntity<ErrorResponse> handleMalformedInput(Exception e) {
+        return ResponseEntity.badRequest().body(ErrorResponse.of("VALIDATION_ERROR", "입력 형식과 필수 항목을 확인해주세요."));
+    }
+    @ExceptionHandler(StateConflictException.class)
+    public ResponseEntity<ErrorResponse> handleIntakeException(RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.of("INTAKE_CONFLICT", e.getMessage()));
+    }
+    @ExceptionHandler({com.hwanghj.dietmanager.refactoring.backend.intake.IntakeNotFoundException.class, com.hwanghj.dietmanager.refactoring.backend.plan.MealPlanNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleIntakeNotFound(RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.of("INTAKE_NOT_FOUND", e.getMessage()));
+    }
+    @ExceptionHandler(com.hwanghj.dietmanager.refactoring.backend.food.FoodApiException.class)
+    public ResponseEntity<ErrorResponse> handleFoodApiException(RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(ErrorResponse.of("FOOD_API_ERROR", e.getMessage()));
+    }
+
+    @ExceptionHandler({jakarta.validation.ConstraintViolationException.class,
+        org.springframework.web.method.annotation.HandlerMethodValidationException.class})
+    public ResponseEntity<ErrorResponse> handleParameterValidation(Exception e) {
+        return ResponseEntity.badRequest().body(ErrorResponse.of("VALIDATION_ERROR", "검색어와 페이지 입력을 확인해주세요."));
+    }
     @ExceptionHandler(DuplicateEmailException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateEmailException(DuplicateEmailException e) {
         // getMessage()는 Throwable에서 상속된 예외 메시지를 반환함.

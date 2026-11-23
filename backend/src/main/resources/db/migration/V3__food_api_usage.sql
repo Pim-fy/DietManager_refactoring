@@ -1,0 +1,3 @@
+CREATE TABLE food_api_usage (
+usage_date DATE NOT NULL PRIMARY KEY, calls INT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

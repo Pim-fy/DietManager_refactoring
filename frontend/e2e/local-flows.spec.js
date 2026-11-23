@@ -1,0 +1,195 @@
+import { test, expect } from '@playwright/test'
+import { mkdirSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+
+const screenshotFolder = process.env.E2E_SCREENSHOT_DIR || path.join(tmpdir(), 'dietmanager-e2e')
+mkdirSync(screenshotFolder, { recursive: true })
+const sessionKey = 'dietmanager.access-token.v1'
+let email
+const runtimeErrors = new WeakMap()
+test.beforeEach(async ({ page, request }) => {
+  const errors = []
+  runtimeErrors.set(page, errors)
+  page.on('pageerror', error => errors.push(error.message))
+  page.on('console', message => {
+    if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:')) errors.push(message.text())
+  })
+  email = `e2e-${crypto.randomUUID()}@example.test`
+  const registered = await request.post('/api/users/register', { data: {
+    email, password: 'Password123!', userName: 'E2E 검증', gender: 'MALE', birthDate: '1990-01-01', goalType: 'MAINTAIN_WEIGHT',
+  } })
+  expect(registered.status()).toBe(201)
+  await page.goto('/')
+  await expect(page).toHaveTitle('DietManager · 건강 기록')
+  await page.getByLabel('이메일').fill(email)
+  await page.getByLabel('비밀번호', { exact: true }).fill('Password123!')
+  await page.locator('form').getByRole('button', { name: '로그인', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '신체 기록', exact: true })).toBeVisible()
+})
+test.afterEach(async ({ page }) => {
+  await expect(page).toHaveURL('http://127.0.0.1:5186/')
+  await expect(page.locator('vite-error-overlay')).toHaveCount(0)
+  expect(runtimeErrors.get(page)).toEqual([])
+})
+
+test('동시 401 요청을 한 번 갱신하고 로그아웃한다', async ({ page }) => {
+  let refreshCalls = 0
+  page.on('request', request => { if (request.url().endsWith('/api/users/refresh')) refreshCalls++ })
+  await page.evaluate(key => sessionStorage.setItem(key, 'expired-access-token'), sessionKey)
+  await page.reload()
+  await expect(page.getByRole('heading', { name: '신체 기록', exact: true })).toBeVisible()
+  expect(refreshCalls).toBe(1)
+  const token = await page.evaluate(key => sessionStorage.getItem(key), sessionKey)
+  expect(token).not.toBe('expired-access-token')
+  await page.getByRole('button', { name: '로그아웃', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '로그인', exact: true })).toBeVisible()
+  await expect.poll(async () => (await page.context().cookies()).some(cookie => cookie.name === 'dietmanager_refresh')).toBe(false)
+})
+
+test('신체 기록 추가·수정·삭제·복구와 모바일 화면', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', error => errors.push(error.message))
+  await page.getByLabel('키 (cm)').fill('170')
+  await page.getByLabel('몸무게 (kg)').fill('70')
+  await page.getByRole('button', { name: '기록 저장', exact: true }).click()
+  await expect(page.getByText('신체 기록을 저장했습니다.')).toBeVisible()
+  await page.getByRole('button', { name: /신체 기록 .* 수정/ }).click()
+  await page.getByLabel('몸무게 (kg)').fill('69')
+  await page.getByRole('button', { name: '기록 저장', exact: true }).click()
+  await expect(page.locator('.latest')).toContainText('69 kg')
+  await page.getByRole('button', { name: /신체 기록 .* 삭제/ }).click()
+  await expect(page.getByRole('heading', { name: '삭제된 신체 기록' })).toBeVisible()
+  await page.getByRole('button', { name: /신체 기록 .* 복구/ }).click()
+  await expect(page.locator('.latest')).toContainText('69 kg')
+  await page.setViewportSize({ width: 390, height: 844 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: `${screenshotFolder}/maintenance-mobile.png`, fullPage: true })
+  expect(errors).toEqual([])
+})
+
+test('실제 식품 검색·즐겨찾기·섭취 기록·계획 전환', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', error => errors.push(error.message))
+  await page.getByRole('button', { name: '섭취 기록', exact: true }).click()
+  await page.getByLabel('식품명').fill('국밥')
+  const searchResponse = page.waitForResponse(response => response.url().includes('/api/foods?'))
+  await page.getByRole('button', { name: '검색', exact: true }).click()
+  const response = await searchResponse
+  expect(response.status()).toBe(200)
+  await expect(page.locator('.food-results li').first()).toBeVisible()
+  const food = (await response.json()).items.find(item => item.baseAmount > 0 && ['g', 'ml'].includes(item.baseUnit))
+  expect(food).toBeTruthy()
+  await page.getByRole('button', { name: `${food.foodName} 즐겨찾기 추가`, exact: true }).click()
+  await expect(page.getByText('즐겨찾기에 추가했습니다.')).toBeVisible()
+  await page.getByRole('button', { name: `${food.foodName} 선택`, exact: true }).click()
+  await page.getByLabel(`섭취량 (${food.baseUnit})`).fill('100')
+  await page.getByRole('button', { name: '섭취 기록 저장', exact: true }).click()
+  await expect(page.getByText('섭취 기록을 저장했습니다.')).toBeVisible()
+  await page.getByRole('button', { name: `${food.foodName} 삭제`, exact: true }).click()
+  await page.getByRole('button', { name: `${food.foodName} 복구`, exact: true }).click()
+  await expect(page.getByText('기록을 복구했습니다.')).toBeVisible()
+  await page.getByRole('button', { name: `${food.foodName} 영양정보 수정`, exact: true }).click()
+  await page.getByLabel('음식명', { exact: true }).fill('API 수정 국밥')
+  await page.getByLabel('기준 칼로리 (kcal)').fill('100')
+  await page.getByRole('button', { name: '영양정보 저장', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'API 수정 국밥 영양정보 수정', exact: true })).toBeVisible()
+  await expect(page.getByText('식품 API · 사용자 수정', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '식단 계획', exact: true }).click()
+  await page.getByRole('button', { name: `즐겨찾기 ${food.foodName} 선택`, exact: true }).click()
+  await page.getByLabel(`계획량 (${food.baseUnit})`).fill('50')
+  await page.getByRole('button', { name: '계획 저장', exact: true }).click()
+  await expect(page.getByText('식단 계획을 저장했습니다.')).toBeVisible()
+  await page.getByRole('button', { name: '섭취로 기록', exact: true }).click()
+  await expect(page.getByText(/섭취 기록으로 저장됨/)).toBeVisible()
+  await expect(page.getByRole('button', { name: '섭취로 기록', exact: true })).toHaveCount(0)
+  await page.screenshot({ path: `${screenshotFolder}/maintenance-plan.png`, fullPage: true })
+  expect(errors).toEqual([])
+})
+
+test('비밀번호 변경 후 재로그인 안내', async ({ page }) => {
+  await page.getByRole('button', { name: '내 정보', exact: true }).click()
+  const section = page.locator('section').filter({ has: page.getByRole('heading', { name: '비밀번호 변경', exact: true }) })
+  await section.getByLabel('현재 비밀번호').fill('Password123!')
+  await section.getByLabel('새 비밀번호', { exact: true }).fill('NewPassword123!')
+  await section.getByLabel('새 비밀번호 확인').fill('NewPassword123!')
+  await section.getByRole('button', { name: '변경사항 저장' }).click()
+  await expect(page.getByText('비밀번호를 변경했습니다. 새 비밀번호로 다시 로그인해주세요.')).toBeVisible()
+  await page.getByLabel('이메일').fill(email)
+  await page.getByLabel('비밀번호', { exact: true }).fill('NewPassword123!')
+  await page.locator('form').getByRole('button', { name: '로그인', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '신체 기록', exact: true })).toBeVisible()
+})
+
+test('식품 API 한도 안내 후 재시도', async ({ page }) => {
+  await page.getByRole('button', { name: '섭취 기록', exact: true }).click()
+  await page.route('**/api/foods?*', route => route.fulfill({ status: 429, contentType: 'application/json',
+    body: JSON.stringify({ code: 'FOOD_API_LIMIT', message: '식품 API 호출 한도에 도달했습니다. 잠시 후 다시 시도해주세요.' }) }))
+  await page.getByLabel('식품명').fill('국밥')
+  await page.getByRole('button', { name: '검색', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('호출 한도')
+  await page.unroute('**/api/foods?*')
+  await page.getByRole('button', { name: '검색 다시 시도' }).click()
+  await expect(page.locator('.food-results li').first()).toBeVisible()
+})
+
+test('음식 직접 입력·영양정보 수정·섭취량 변경·복구·새로고침', async ({ page }) => {
+  await page.getByRole('button', { name: '섭취 기록', exact: true }).click()
+  await page.getByRole('button', { name: '음식 직접 입력', exact: true }).click()
+  await page.getByLabel('음식명', { exact: true }).fill('직접 음식')
+  await page.getByLabel('섭취량', { exact: true }).fill('150')
+  await page.getByLabel('기준 칼로리 (kcal)').fill('200')
+  await page.getByLabel('기준 탄수화물 (g)').fill('30')
+  await page.getByLabel('기준 지방 (g)').fill('0')
+  const savedResponse = page.waitForResponse(response => response.url().endsWith('/api/intakes/manual') && response.request().method() === 'POST')
+  await page.getByRole('button', { name: '직접 입력 저장' }).click()
+  const created = await (await savedResponse).json()
+  expect(created.calories).toBe(300)
+  expect(created.protein).toBeNull()
+  await expect(page.getByText('음식명과 영양정보를 저장했습니다.')).toBeVisible()
+  await page.getByRole('button', { name: '직접 음식 영양정보 수정', exact: true }).click()
+  await page.getByLabel('음식명', { exact: true }).fill('직접 수정 음식')
+  await page.getByLabel('기준 칼로리 (kcal)').fill('250')
+  await page.getByRole('button', { name: '영양정보 저장' }).click()
+  await expect(page.getByRole('button', { name: '직접 수정 음식 수정', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '직접 수정 음식 수정', exact: true }).click()
+  await page.getByLabel('섭취량 (g)', { exact: true }).fill('200')
+  await page.getByRole('button', { name: '수정 저장' }).click()
+  await expect(page.locator('.intake-list')).toContainText('500 kcal')
+  await page.getByRole('button', { name: '직접 수정 음식 삭제', exact: true }).click()
+  await page.getByRole('button', { name: '직접 수정 음식 복구', exact: true }).click()
+  await expect(page.locator('.intake-list')).toContainText('500 kcal')
+  await page.reload()
+  await page.getByRole('button', { name: '섭취 기록', exact: true }).click()
+  await expect(page.locator('.intake-list')).toContainText('500 kcal')
+  await expect(page.getByText('직접 입력 · 사용자 수정', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '직접 수정 음식 영양정보 수정', exact: true }).click()
+  await expect(page.getByLabel('기준 칼로리 (kcal)')).toHaveValue('250')
+  await page.setViewportSize({ width: 390, height: 844 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: `${screenshotFolder}/manual-nutrition-mobile.png`, fullPage: true })
+})
+
+
+test('화면별 조회를 분리하고 신체 조회 실패가 다른 화면을 막지 않는다', async ({ page }) => {
+  const calls = []
+  page.on('request', request => { if (request.url().includes('/api/users/')) calls.push(request.url()) })
+  await page.getByRole('button', { name: '섭취 기록', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '섭취 기록', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '내 정보', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '내 정보', exact: true })).toBeVisible()
+  expect(calls.some(url => url.includes('/account'))).toBeTruthy()
+  expect(calls.some(url => url.includes('/body-measurements'))).toBeFalsy()
+  const statisticsResponse = page.waitForResponse(response => response.url().includes('/api/statistics?'))
+  await page.getByRole('button', { name: '기록 추이', exact: true }).click()
+  expect((await statisticsResponse).status()).toBe(200)
+  await expect(page.getByRole('heading', { name: '기록 추이', exact: true })).toBeVisible()
+
+  await page.route('**/api/users/body-measurements', route => route.fulfill({
+    status: 503, contentType: 'application/json', body: JSON.stringify({ code: 'TEST_UNAVAILABLE', message: '신체 조회 검증 오류' }),
+  }))
+  await page.getByRole('button', { name: '신체 기록', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('신체 조회 검증 오류')
+  await page.getByRole('button', { name: '섭취 기록', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '섭취 기록', exact: true })).toBeVisible()
+})

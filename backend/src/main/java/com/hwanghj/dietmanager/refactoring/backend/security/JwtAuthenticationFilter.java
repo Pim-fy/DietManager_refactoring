@@ -7,8 +7,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.hwanghj.dietmanager.refactoring.backend.entity.User;
-import com.hwanghj.dietmanager.refactoring.backend.repository.UserRepository;
+import com.hwanghj.dietmanager.refactoring.backend.user.User;
+import com.hwanghj.dietmanager.refactoring.backend.user.UserRepository;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,10 +22,12 @@ import jakarta.servlet.http.HttpServletResponse;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final AuthSessionService sessions;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, UserRepository userRepository) {
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, UserRepository userRepository, AuthSessionService sessions) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.userRepository = userRepository;
+        this.sessions = sessions;
     }
 
     
@@ -36,12 +38,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
         String token = resolvetoken(request);
         
-        if(token != null && jwtTokenProvider.validateToken(token)) {
-            Long userId = jwtTokenProvider.getUserId(token);
+        var claims = token == null ? null : jwtTokenProvider.authentication(token);
+        Long userId = claims == null ? null : claims.userId();
+        if(userId != null) {
 
             User user = userRepository.findById(userId).orElse(null);
             
-            if(user != null) {
+            if(user != null && user.getTokenVersion()==claims.version() && sessions.active(claims.sessionId(),userId,claims.version())) {
                 CustomUserDetails userDetails = new CustomUserDetails(user);
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
@@ -61,6 +64,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return authorization.substring(7);
     }
 }
-
 
     

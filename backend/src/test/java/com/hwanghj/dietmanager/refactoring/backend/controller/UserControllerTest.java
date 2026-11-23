@@ -12,6 +12,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 import java.util.List;
+import com.hwanghj.dietmanager.refactoring.backend.user.UserController;
+import com.hwanghj.dietmanager.refactoring.backend.user.AccountController;
+import com.hwanghj.dietmanager.refactoring.backend.profile.ProfileController;
+import com.hwanghj.dietmanager.refactoring.backend.measurement.BodyMeasurementController;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,14 +33,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.hwanghj.dietmanager.refactoring.backend.common.Gender;
 import com.hwanghj.dietmanager.refactoring.backend.common.GoalType;
 import com.hwanghj.dietmanager.refactoring.backend.common.UserRole;
-import com.hwanghj.dietmanager.refactoring.backend.dto.BodyMeasurementDto;
-import com.hwanghj.dietmanager.refactoring.backend.dto.PasswordChangeDto;
-import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountFindDto;
-import com.hwanghj.dietmanager.refactoring.backend.dto.UserAccountModifyDto;
-import com.hwanghj.dietmanager.refactoring.backend.dto.UserLoginDto;
-import com.hwanghj.dietmanager.refactoring.backend.dto.UserProfileDto;
-import com.hwanghj.dietmanager.refactoring.backend.dto.UserRegisterDto;
-import com.hwanghj.dietmanager.refactoring.backend.entity.User;
+import com.hwanghj.dietmanager.refactoring.backend.measurement.BodyMeasurementDto;
+import com.hwanghj.dietmanager.refactoring.backend.user.PasswordChangeDto;
+import com.hwanghj.dietmanager.refactoring.backend.user.UserAccountFindDto;
+import com.hwanghj.dietmanager.refactoring.backend.user.UserAccountModifyDto;
+import com.hwanghj.dietmanager.refactoring.backend.user.UserLoginDto;
+import com.hwanghj.dietmanager.refactoring.backend.profile.UserProfileDto;
+import com.hwanghj.dietmanager.refactoring.backend.user.UserRegisterDto;
+import com.hwanghj.dietmanager.refactoring.backend.user.User;
 import com.hwanghj.dietmanager.refactoring.backend.exception.BodyMeasurementNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.GlobalExceptionHandler;
@@ -45,7 +49,10 @@ import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidPasswordExce
 import com.hwanghj.dietmanager.refactoring.backend.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.exception.UserProfileNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.security.CustomUserDetails;
-import com.hwanghj.dietmanager.refactoring.backend.service.UserService;
+import com.hwanghj.dietmanager.refactoring.backend.user.AuthenticationService;
+import com.hwanghj.dietmanager.refactoring.backend.user.AccountService;
+import com.hwanghj.dietmanager.refactoring.backend.profile.ProfileService;
+import com.hwanghj.dietmanager.refactoring.backend.measurement.BodyMeasurementService;
 
 // 회원가입 컨트롤러 테스트 코드.
 // 컨트롤러 테스트: HTTP응답 확인이 목적.
@@ -56,8 +63,10 @@ import com.hwanghj.dietmanager.refactoring.backend.service.UserService;
 class UserControllerTest {
 
     // 컨트롤러가 호출할 서비스를 mock으로 둠.
-    @Mock
-    private UserService userService;
+    @Mock private AuthenticationService authenticationService;
+@Mock private AccountService accountService;
+@Mock private ProfileService profileService;
+@Mock private BodyMeasurementService bodyMeasurementService;
 
     // MockMvc: 실제 서버를 띄우지 않고도 HTTP 요청처럼 컨트롤러를 테스트하게 해주는 도구.
     private MockMvc mockMvc;
@@ -69,7 +78,7 @@ class UserControllerTest {
         mockMvc = MockMvcBuilders
                 // UserController만 단독 테스트 대상으로 등록.
                 // 컨트롤러에 userService를 넣어줌.
-                .standaloneSetup(new UserController(userService))
+                .standaloneSetup(new UserController(authenticationService, new com.hwanghj.dietmanager.refactoring.backend.security.LoginAttemptLimiter()), new AccountController(accountService), new ProfileController(profileService), new BodyMeasurementController(bodyMeasurementService))
                 // Spring Security의 @AuthenticationPrincipal 처리기가 자동으로 붙지 않을 수 있기 때문.
                 .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 // 테스트 중 예외 발생 시 실제처럼 GlobalExceptionHandler가 처리하게 등록함.
@@ -87,8 +96,8 @@ class UserControllerTest {
         
         // given: 테스트 준비.
 
-        // userService.register() 호출 시 성공 응답 DTO를 반환하도록 설정함.
-        when(userService.register(any(UserRegisterDto.Request.class)))
+        // authenticationService.register() 호출 시 성공 응답 DTO를 반환하도록 설정함.
+        when(authenticationService.register(any(UserRegisterDto.Request.class)))
                 .thenReturn(new UserRegisterDto.Response("회원가입이 완료되었습니다."));
 
         // when + then: 테스트 진행.
@@ -107,9 +116,9 @@ class UserControllerTest {
                 // 응답 JSON의 message 필드 값이 기대값인지 확인.
                 .andExpect(jsonPath("$.message").value("회원가입이 완료되었습니다."));
 
-        // 컨트롤러가 실제로 userService.register()를 호출했는지 확인.
+        // 컨트롤러가 실제로 authenticationService.register()를 호출했는지 확인.
         // 요청이 컨트롤러에서 서비스로 정상 전달되었는지 확인하는 부분.
-        verify(userService).register(any(UserRegisterDto.Request.class));
+        verify(authenticationService).register(any(UserRegisterDto.Request.class));
     }
 
     // 테스트2: DTO 검증 실패 테스트.
@@ -150,8 +159,8 @@ class UserControllerTest {
         // given: 테스트 준비.
         
         // 중복 이메일 발생 상황 설정.
-        // 컨트롤러가 userService.register() 호출 시 DuplicateEmailException을 던지도록 설정함.
-        when(userService.register(any(UserRegisterDto.Request.class)))
+        // 컨트롤러가 authenticationService.register() 호출 시 DuplicateEmailException을 던지도록 설정함.
+        when(authenticationService.register(any(UserRegisterDto.Request.class)))
                 .thenThrow(new DuplicateEmailException());
 
         // when + then: 테스트 실행 + 검증.
@@ -191,7 +200,7 @@ class UserControllerTest {
     @Test
     void loginReturnsOkWhenRequestIsValid() throws Exception{
         // given: userService.login 호출 시 성공 응답 DTO 반환 상황 생성.
-        when(userService.login(any(UserLoginDto.Request.class)))
+        when(authenticationService.login(any(UserLoginDto.Request.class)))
             .thenReturn(UserLoginDto.Response
                 .builder()
                 .userId(1L)
@@ -214,7 +223,7 @@ class UserControllerTest {
             .andExpect(jsonPath("$.accessToken").value("access-token"));
         
         // then: 컨트롤러가 실제로 서비스를 호출했는지 확인. 요청의 컨트롤러 -> 서비스 전달 확인 부분.
-        verify(userService).login(any(UserLoginDto.Request.class));
+        verify(authenticationService).login(any(UserLoginDto.Request.class));
     }
 
     // 테스트2: 요청 DTO 검증 실패.
@@ -240,7 +249,7 @@ class UserControllerTest {
     @Test
     void loginReturnsUnauthorizedWhenCredentialsAreInvalid() throws Exception {
         // given: 로그인 정보 불일치 상황 설정.
-        when(userService.login(any(UserLoginDto.Request.class)))
+        when(authenticationService.login(any(UserLoginDto.Request.class)))
             .thenThrow(new InvalidLoginException());
         
         // when + then
@@ -281,7 +290,7 @@ class UserControllerTest {
         SecurityContextHolder.getContext().setAuthentication(auth);
                 
         // given: 조회 성공 설정.
-        when(userService.findAccount(1L))
+        when(accountService.findAccount(1L))
             .thenReturn(UserAccountFindDto.Response
                 .builder()
                 .userId(1L)
@@ -300,7 +309,7 @@ class UserControllerTest {
             
         
         // then
-        verify(userService).findAccount(1L);
+        verify(accountService).findAccount(1L);
 
         // then: 다른 테스트에 인증 정보가 남지 않도록 정리.
         SecurityContextHolder.clearContext();
@@ -323,7 +332,7 @@ class UserControllerTest {
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         // given: 수정 성공 설정.
-        when(userService.modifyAccount(eq(1L), any(UserAccountModifyDto.Request.class)))
+        when(accountService.modifyAccount(eq(1L), any(UserAccountModifyDto.Request.class)))
             .thenReturn(UserAccountModifyDto.Response
                 .builder()
                 .userId(1L)
@@ -343,7 +352,7 @@ class UserControllerTest {
             .andExpect(jsonPath("$.role").value("USER"));
 
         // then
-        verify(userService).modifyAccount(eq(1L), any(UserAccountModifyDto.Request.class));
+        verify(accountService).modifyAccount(eq(1L), any(UserAccountModifyDto.Request.class));
 
         // then: 다른 테스트에 인증 정보가 남지 않도록 정리.
         SecurityContextHolder.clearContext();
@@ -399,7 +408,7 @@ class UserControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userService.changePassword(eq(1L), any(PasswordChangeDto.Request.class))).thenReturn(new PasswordChangeDto.Response("비밀번호가 변경되었습니다."));
+        when(accountService.changePassword(eq(1L), any(PasswordChangeDto.Request.class))).thenReturn(new PasswordChangeDto.Response("비밀번호가 변경되었습니다."));
 
         // when + then
         mockMvc.perform(patch("/api/users/password")
@@ -408,7 +417,7 @@ class UserControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("비밀번호가 변경되었습니다."));
 
-        verify(userService).changePassword(eq(1L), any(PasswordChangeDto.Request.class));
+        verify(accountService).changePassword(eq(1L), any(PasswordChangeDto.Request.class));
 
         SecurityContextHolder.clearContext();
     }
@@ -447,7 +456,7 @@ class UserControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userService.changePassword(eq(1L), any(PasswordChangeDto.Request.class)))
+        when(accountService.changePassword(eq(1L), any(PasswordChangeDto.Request.class)))
             .thenThrow(new InvalidPasswordException());
 
         // when + then
@@ -486,7 +495,7 @@ class UserControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userService.findProfile(1L))
+        when(profileService.findProfile(1L))
             .thenReturn(UserProfileDto.Response.builder()
                 .userId(1L)
                 .gender(Gender.MALE)
@@ -502,7 +511,7 @@ class UserControllerTest {
             .andExpect(jsonPath("$.birthDate").value("1995-01-01"))
             .andExpect(jsonPath("$.goalType").value("LOSE_WEIGHT"));
 
-        verify(userService).findProfile(1L);
+        verify(profileService).findProfile(1L);
 
         SecurityContextHolder.clearContext();
     }
@@ -520,7 +529,7 @@ class UserControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userService.findProfile(1L))
+        when(profileService.findProfile(1L))
             .thenThrow(new UserProfileNotFoundException());
 
         // when + then
@@ -547,7 +556,7 @@ class UserControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userService.modifyProfile(eq(1L), any(UserProfileDto.Request.class)))
+        when(profileService.modifyProfile(eq(1L), any(UserProfileDto.Request.class)))
             .thenReturn(UserProfileDto.Response.builder()
                 .userId(1L)
                 .gender(Gender.FEMALE)
@@ -565,7 +574,7 @@ class UserControllerTest {
             .andExpect(jsonPath("$.birthDate").value("1998-05-10"))
             .andExpect(jsonPath("$.goalType").value("MAINTAIN_WEIGHT"));
 
-        verify(userService).modifyProfile(eq(1L), any(UserProfileDto.Request.class));
+        verify(profileService).modifyProfile(eq(1L), any(UserProfileDto.Request.class));
 
         SecurityContextHolder.clearContext();
     }
@@ -613,7 +622,7 @@ class UserControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userService.modifyProfile(eq(1L), any(UserProfileDto.Request.class)))
+        when(profileService.modifyProfile(eq(1L), any(UserProfileDto.Request.class)))
             .thenThrow(new UserProfileNotFoundException());
 
         // when + then
@@ -653,7 +662,7 @@ class UserControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userService.addBodyMeasurement(eq(1L), any(BodyMeasurementDto.Request.class)))
+        when(bodyMeasurementService.addBodyMeasurement(eq(1L), any(BodyMeasurementDto.Request.class)))
             .thenReturn(BodyMeasurementDto.Response.builder()
                 .measurementId(10L)
                 .measuredDate(LocalDate.of(2026, 7, 1))
@@ -671,7 +680,7 @@ class UserControllerTest {
             .andExpect(jsonPath("$.height").value(175.5))
             .andExpect(jsonPath("$.weight").value(70.2));
 
-        verify(userService).addBodyMeasurement(eq(1L), any(BodyMeasurementDto.Request.class));
+        verify(bodyMeasurementService).addBodyMeasurement(eq(1L), any(BodyMeasurementDto.Request.class));
 
         SecurityContextHolder.clearContext();
     }
@@ -719,7 +728,7 @@ class UserControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userService.addBodyMeasurement(eq(1L), any(BodyMeasurementDto.Request.class)))
+        when(bodyMeasurementService.addBodyMeasurement(eq(1L), any(BodyMeasurementDto.Request.class)))
             .thenThrow(new UserNotFoundException());
 
         // when + then
@@ -759,7 +768,7 @@ class UserControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userService.findLatestBodyMeasurement(1L))
+        when(bodyMeasurementService.findLatestBodyMeasurement(1L))
             .thenReturn(BodyMeasurementDto.Response.builder()
                 .measurementId(10L)
                 .measuredDate(LocalDate.of(2026, 7, 2))
@@ -775,7 +784,7 @@ class UserControllerTest {
             .andExpect(jsonPath("$.height").value(175.5))
             .andExpect(jsonPath("$.weight").value(70.0));
 
-        verify(userService).findLatestBodyMeasurement(1L);
+        verify(bodyMeasurementService).findLatestBodyMeasurement(1L);
 
         SecurityContextHolder.clearContext();
     }
@@ -793,7 +802,7 @@ class UserControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userService.findLatestBodyMeasurement(1L))
+        when(bodyMeasurementService.findLatestBodyMeasurement(1L))
             .thenThrow(new BodyMeasurementNotFoundException());
 
         // when + then
@@ -820,7 +829,7 @@ class UserControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userService.findBodyMeasurements(1L))
+        when(bodyMeasurementService.findBodyMeasurements(1L))
             .thenReturn(List.of(
                 BodyMeasurementDto.Response.builder()
                     .measurementId(11L)
@@ -847,7 +856,7 @@ class UserControllerTest {
             .andExpect(jsonPath("$[1].height").value(175.5))
             .andExpect(jsonPath("$[1].weight").value(70.2));
 
-        verify(userService).findBodyMeasurements(1L);
+        verify(bodyMeasurementService).findBodyMeasurements(1L);
 
         SecurityContextHolder.clearContext();
     }

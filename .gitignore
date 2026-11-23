@@ -1,3 +1,6 @@
 /.vscode/settings.json
 agents.md
 CLAUDE.md
+/.local-backups/
+/frontend/test-results/
+/frontend/playwright-report/
