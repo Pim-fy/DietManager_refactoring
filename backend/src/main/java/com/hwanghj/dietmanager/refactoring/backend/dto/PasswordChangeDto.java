@@ -3,6 +3,8 @@ package com.hwanghj.dietmanager.refactoring.backend.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -15,6 +17,8 @@ public class PasswordChangeDto {
      * 비밀번호 변경 요청 DTO
      */
     @Getter
+    @Builder
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     public static class Request {
 
