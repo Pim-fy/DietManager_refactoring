@@ -49,6 +49,7 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserPr
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.AccountService;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.AuthenticationService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.EmailUsageChecker;
 import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,11 +62,14 @@ class AuthenticationServiceTest {
 
     @Mock
     private AuthSessionService sessions;
+
+    @Mock
+    private EmailUsageChecker emailUsageChecker;
     private AuthenticationService authenticationService;
 
     @BeforeEach
     void setUp() {
-        authenticationService = new AuthenticationService(userRepository, passwordEncoder, sessions);
+        authenticationService = new AuthenticationService(userRepository, passwordEncoder, sessions, emailUsageChecker);
     }
 
     @Test
@@ -179,6 +183,8 @@ class AuthenticationServiceTest {
         // userRepository.save() 호출 시 DataIntegrityViolationException을 던지게 설정함.
             // 실제 DB에서 unique 제약 위반이 난 상황을 mock으로 만든 것.
         when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
+        // 예외가 난 뒤 다시 확인하면 그 이메일이 이미 있는 상황(동시 가입).
+        when(emailUsageChecker.isTaken("test@example.com")).thenReturn(true);
 
         // when + then: 예외 테스트이므로 동시에 진행됨.
 
@@ -189,6 +195,19 @@ class AuthenticationServiceTest {
                 .isInstanceOf(DuplicateEmailException.class)
                 // 예외 메시지가 기대값인지 확인.
                 .hasMessage("이미 사용 중인 이메일입니다.");
+    }
+
+    @Test
+    void registerRethrowsIntegrityViolationThatIsNotDuplicateEmail() throws Exception {
+        UserRegisterDto.Request request = createRegisterRequest();
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("password123")).thenReturn("hashed-password");
+        var failure = new DataIntegrityViolationException("other constraint");
+        when(userRepository.save(any(User.class))).thenThrow(failure);
+        // 이메일은 여전히 비어 있다 = 이메일 중복이 아닌 다른 제약 위반
+        when(emailUsageChecker.isTaken("test@example.com")).thenReturn(false);
+
+        assertThatThrownBy(() -> authenticationService.register(request)).isSameAs(failure);
     }
 
     @Test
