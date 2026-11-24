@@ -1,10 +1,13 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.service;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.function.Function;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 public final class NutrientCalculator {
     @Getter
     @AllArgsConstructor

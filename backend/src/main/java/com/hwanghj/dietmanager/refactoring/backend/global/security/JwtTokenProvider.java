@@ -1,10 +1,12 @@
 package com.hwanghj.dietmanager.refactoring.backend.global.security;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.util.Date;
 
 import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -24,21 +26,21 @@ public class JwtTokenProvider {
         getUserId(String token)
     */
 
-    private final java.time.Clock clock;
+    private final Clock clock;
     private final SecretKey secretKey;
     private final long accessTokenValidityMs;
 
-    @org.springframework.beans.factory.annotation.Autowired
+    @Autowired
     public JwtTokenProvider(
         @Value("${jwt.secret}") String secret,
-        @Value("${jwt.access-token-validity-ms}") long accessTokenValidityMs, java.time.Clock clock) {
+        @Value("${jwt.access-token-validity-ms}") long accessTokenValidityMs, Clock clock) {
             this.clock = clock;
             this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
             this.accessTokenValidityMs = accessTokenValidityMs;
     }
 
     public JwtTokenProvider(String secret, long accessTokenValidityMs) {
-        this(secret, accessTokenValidityMs, java.time.Clock.systemUTC());
+        this(secret, accessTokenValidityMs, Clock.systemUTC());
     }
 
     // 로그인 성공 시 토큰 발급.

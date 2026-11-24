@@ -8,12 +8,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hwanghj.dietmanager.refactoring.backend.domain.profile.dto.UserProfileDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.profile.service.ProfileService;
 import com.hwanghj.dietmanager.refactoring.backend.global.security.CustomUserDetails;
 
 import jakarta.validation.Valid;
 
-import com.hwanghj.dietmanager.refactoring.backend.domain.profile.dto.UserProfileDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.profile.service.ProfileService;
 @RestController
 @RequestMapping("/api/users")
 public class ProfileController {

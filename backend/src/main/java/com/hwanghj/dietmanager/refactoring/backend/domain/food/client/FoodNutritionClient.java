@@ -8,14 +8,17 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.ObjectMapper;
 
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodApiException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodApiLimitException;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.FoodApiQuota;
+
+import tools.jackson.databind.ObjectMapper;
+
 @Component
 public class FoodNutritionClient {
     private static final String ENDPOINT = "https://apis.data.go.kr/1471000/FoodNtrCpntDbInfo03/getFoodNtrCpntDbInq03";
@@ -25,7 +28,7 @@ public class FoodNutritionClient {
     private final String endpoint;
     private final FoodApiQuota quota;
 
-    @org.springframework.beans.factory.annotation.Autowired
+    @Autowired
     public FoodNutritionClient(@Value("${food-nutrition.service-key:}") String serviceKey, ObjectMapper mapper, FoodApiQuota quota) {
         this(serviceKey, mapper, HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build(), URI.create(ENDPOINT), quota);
     }

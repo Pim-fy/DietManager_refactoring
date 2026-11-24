@@ -1,29 +1,40 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.auth.service;
+
 import java.nio.charset.StandardCharsets;
-import java.security.*;
-import java.time.*;
-import java.util.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Base64;
+import java.util.HexFormat;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
-import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
-import com.hwanghj.dietmanager.refactoring.backend.domain.auth.exception.SessionExpiredException;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.entity.AuthSession;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.entity.RefreshToken;
+import com.hwanghj.dietmanager.refactoring.backend.domain.auth.exception.SessionExpiredException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository.AuthSessionRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository.RefreshTokenRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
+import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 @Service
 public class AuthSessionService {
-    private final java.time.Clock clock;
+    private final Clock clock;
     private final AuthSessionRepository sessions;
     private final RefreshTokenRepository tokens;
     private final JwtTokenProvider jwt;
     private final SecureRandom random=new SecureRandom();
-    public AuthSessionService(AuthSessionRepository sessions,RefreshTokenRepository tokens,JwtTokenProvider jwt) { this(sessions, tokens, jwt, java.time.Clock.systemDefaultZone()); }
-    @org.springframework.beans.factory.annotation.Autowired
-    public AuthSessionService(AuthSessionRepository sessions,RefreshTokenRepository tokens,JwtTokenProvider jwt, java.time.Clock clock) { this.clock = clock; this.sessions=sessions; this.tokens=tokens; this.jwt=jwt;  }
+    public AuthSessionService(AuthSessionRepository sessions,RefreshTokenRepository tokens,JwtTokenProvider jwt) { this(sessions, tokens, jwt, Clock.systemDefaultZone()); }
+    @Autowired
+    public AuthSessionService(AuthSessionRepository sessions,RefreshTokenRepository tokens,JwtTokenProvider jwt, Clock clock) { this.clock = clock; this.sessions=sessions; this.tokens=tokens; this.jwt=jwt;  }
     @Getter
     @AllArgsConstructor
     public static class Pair {

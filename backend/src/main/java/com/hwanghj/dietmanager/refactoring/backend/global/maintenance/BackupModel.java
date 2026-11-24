@@ -1,10 +1,13 @@
 package com.hwanghj.dietmanager.refactoring.backend.global.maintenance;
+
 import java.util.List;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
 public final class BackupModel {
     private BackupModel() {}
     static final List<String> TABLES=List.of("users","user_profiles","body_measurements","intake_records",

@@ -1,8 +1,8 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.measurement.entity;
 
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
 import java.time.LocalDate;
 
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.global.common.BaseTimeEntity;
 
 import jakarta.persistence.Column;

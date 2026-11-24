@@ -1,15 +1,29 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.intake.entity;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import com.hwanghj.dietmanager.refactoring.backend.global.common.BaseTimeEntity;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
-import jakarta.persistence.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.intake.dto.IntakeDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
+import com.hwanghj.dietmanager.refactoring.backend.global.common.BaseTimeEntity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import com.hwanghj.dietmanager.refactoring.backend.domain.intake.dto.IntakeDto;
 /** 영양값을 복사해 원본 DB 갱신이나 외부 API 장애에도 과거 기록을 유지한다. */
 @Entity
 @Table(name = "intake_records", indexes = @Index(name = "idx_intake_user_date", columnList = "user_id,eaten_date"))

@@ -1,13 +1,20 @@
 package com.hwanghj.dietmanager.refactoring.backend.global.maintenance;
 
-import java.nio.file.*;
-import java.sql.*;
-import java.util.*;
+import static com.hwanghj.dietmanager.refactoring.backend.global.maintenance.BackupModel.Backup;
+import static com.hwanghj.dietmanager.refactoring.backend.global.maintenance.BackupModel.TABLES;
+import static com.hwanghj.dietmanager.refactoring.backend.global.maintenance.DatabaseBackupOperations.exists;
+import static com.hwanghj.dietmanager.refactoring.backend.global.maintenance.DatabaseBackupOperations.restoreAndVerify;
+import static com.hwanghj.dietmanager.refactoring.backend.global.maintenance.DatabaseBackupOperations.snapshot;
+
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Set;
+
+import org.flywaydb.core.Flyway;
 import org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor;
 import org.springframework.core.env.StandardEnvironment;
-import org.flywaydb.core.Flyway;
-import static com.hwanghj.dietmanager.refactoring.backend.global.maintenance.DatabaseBackupOperations.*;
-import static com.hwanghj.dietmanager.refactoring.backend.global.maintenance.BackupModel.*;
 
 /** 런타임 설정만 사용하며 접속 정보와 백업 내용은 출력하지 않는다. */
 public final class DatabaseMaintenance {

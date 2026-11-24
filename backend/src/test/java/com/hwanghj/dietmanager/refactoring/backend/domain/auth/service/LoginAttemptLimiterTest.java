@@ -1,8 +1,15 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.auth.service;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import java.time.*;
+
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.time.Clock;
+import java.time.Instant;
+
 import org.junit.jupiter.api.Test;
+
 class LoginAttemptLimiterTest {
     @Test void accountLimitIsCaseInsensitiveAndExpires() {
         Clock clock=mock(Clock.class); Instant start=Instant.parse("2026-01-01T00:00:00Z");

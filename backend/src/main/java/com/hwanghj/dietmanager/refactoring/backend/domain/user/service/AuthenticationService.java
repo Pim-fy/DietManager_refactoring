@@ -5,20 +5,21 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.DuplicateEmailException;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.InvalidLoginException;
-
+import com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.AuthSessionService;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.UserLoginDto;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.UserRegisterDto;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserProfile;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.DuplicateEmailException;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
+
 @Service
 public class AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.AuthSessionService sessions;
-    public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder, com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.AuthSessionService sessions) {
+    private final AuthSessionService sessions;
+    public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthSessionService sessions) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.sessions = sessions;

@@ -1,5 +1,6 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.user.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserRole;
 
 import jakarta.validation.constraints.Email;
@@ -46,7 +47,7 @@ public class UserLoginDto {
         private final String userName;
         private final UserRole role;
         private final String accessToken;
-        @com.fasterxml.jackson.annotation.JsonIgnore
+        @JsonIgnore
         private final String refreshToken;
     }
 }

@@ -1,11 +1,13 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.measurement.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.entity.BodyMeasurement;
+
 /**
  * BodyMeasurement 엔터티의 DB접근 담당 <br>
  * 신체 측정 이력 저장, 최신/전체 측정 기록 조회
@@ -19,6 +21,6 @@ public interface BodyMeasurementRepository extends JpaRepository<BodyMeasurement
     List<BodyMeasurement> findByUserIdAndDeletedFalseOrderByMeasuredDateDescIdDesc(Long userId);
     Optional<BodyMeasurement> findByIdAndUserId(Long id, Long userId);
     List<BodyMeasurement> findByUserIdAndDeletedTrueOrderByMeasuredDateDescIdDesc(Long userId);
-    List<BodyMeasurement> findByUserIdAndDeletedFalseAndMeasuredDateBetweenOrderByMeasuredDateAscIdAsc(Long userId, java.time.LocalDate start, java.time.LocalDate end);
-    Optional<BodyMeasurement> findTopByUserIdAndDeletedFalseAndMeasuredDateLessThanEqualOrderByMeasuredDateDescIdDesc(Long userId, java.time.LocalDate date);
+    List<BodyMeasurement> findByUserIdAndDeletedFalseAndMeasuredDateBetweenOrderByMeasuredDateAscIdAsc(Long userId, LocalDate start, LocalDate end);
+    Optional<BodyMeasurement> findTopByUserIdAndDeletedFalseAndMeasuredDateLessThanEqualOrderByMeasuredDateDescIdDesc(Long userId, LocalDate date);
 }

@@ -1,11 +1,21 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.controller;
+
 import java.time.LocalDate;
-import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.*;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import com.hwanghj.dietmanager.refactoring.backend.global.security.CustomUserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.dto.NutritionDto;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.service.NutritionService;
+import com.hwanghj.dietmanager.refactoring.backend.global.security.CustomUserDetails;
+
+import jakarta.validation.Valid;
+
 @RestController @RequestMapping("/api/nutrition")
 public class NutritionController {
     private final NutritionService service;

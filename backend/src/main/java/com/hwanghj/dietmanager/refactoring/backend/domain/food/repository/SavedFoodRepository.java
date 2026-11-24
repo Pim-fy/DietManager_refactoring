@@ -1,8 +1,13 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.food.repository;
-import java.util.*;
+
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.entity.SavedFood;
+
 public interface SavedFoodRepository extends JpaRepository<SavedFood,Long> {
     long countByUserIdAndFavoriteTrue(Long userId);
     Optional<SavedFood> findByUserIdAndSnapshotFoodCode(Long userId,String code);

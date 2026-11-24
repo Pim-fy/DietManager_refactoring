@@ -1,8 +1,13 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.food.entity;
+
 import java.math.BigDecimal;
-import jakarta.persistence.*;
-import lombok.NoArgsConstructor;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import lombok.NoArgsConstructor;
+
 /** 외부 검색 결과의 저장 가능한 영양 원본. 즐겨찾기와 식단 계획에서 함께 사용한다. */
 @Embeddable @NoArgsConstructor
 public class FoodSnapshot {

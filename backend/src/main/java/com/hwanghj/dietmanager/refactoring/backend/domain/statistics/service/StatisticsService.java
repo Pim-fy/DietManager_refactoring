@@ -1,15 +1,24 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.statistics.service;
+
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.repository.BodyMeasurementRepository;
-import com.hwanghj.dietmanager.refactoring.backend.domain.intake.service.IntakeMapper;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.entity.IntakeRecord;
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.repository.IntakeRepository;
-import com.hwanghj.dietmanager.refactoring.backend.domain.statistics.exception.StatisticsRangeException;
+import com.hwanghj.dietmanager.refactoring.backend.domain.intake.service.IntakeMapper;
+import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.repository.BodyMeasurementRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.statistics.dto.StatisticsDto;
-@org.springframework.stereotype.Service
+import com.hwanghj.dietmanager.refactoring.backend.domain.statistics.exception.StatisticsRangeException;
+
+@Service
 public class StatisticsService {
     private final IntakeRepository intakes;
     private final BodyMeasurementRepository measurements;
@@ -18,7 +27,7 @@ public class StatisticsService {
     public StatisticsDto.Result range(Long userId, LocalDate start, LocalDate end) {
         if (end.isBefore(start) || ChronoUnit.DAYS.between(start, end) > 365) throw new StatisticsRangeException( "날짜 범위는 최대 366일입니다.");
         var records = intakes.findByUserIdAndDeletedFalseAndEatenDateBetweenOrderByEatenDateAscIdAsc(userId, start, end);
-        var grouped = records.stream().collect(java.util.stream.Collectors.groupingBy(IntakeRecord::getEatenDate));
+        var grouped = records.stream().collect(Collectors.groupingBy(IntakeRecord::getEatenDate));
         Map<LocalDate, Double> weights = new HashMap<>();
         for (var record : measurements.findByUserIdAndDeletedFalseAndMeasuredDateBetweenOrderByMeasuredDateAscIdAsc(userId, start, end)) weights.put(record.getMeasuredDate(), record.getWeight());
         List<StatisticsDto.Day> days = new ArrayList<>();

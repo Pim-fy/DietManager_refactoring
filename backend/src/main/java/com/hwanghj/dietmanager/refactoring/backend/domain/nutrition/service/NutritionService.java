@@ -1,15 +1,18 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.service;
+
 import java.time.LocalDate;
 import java.time.Period;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserProfileRepository;
-import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.repository.BodyMeasurementRepository;
 
+import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.repository.BodyMeasurementRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.dto.NutritionDto;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.ActivityLevel;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.NutritionPreference;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.repository.NutritionPreferenceRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserProfileRepository;
+
 @Service
 public class NutritionService {
     private final NutritionPreferenceRepository preferences;

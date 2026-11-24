@@ -1,25 +1,27 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.intake.service;
 
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
 import java.time.LocalDate;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.UserNotFoundException;
-
-import com.hwanghj.dietmanager.refactoring.backend.domain.intake.exception.IntakeException;
-import com.hwanghj.dietmanager.refactoring.backend.domain.intake.exception.IntakeNotFoundException;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.FoodLibraryService;
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.dto.IntakeDto;
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.entity.IntakeRecord;
+import com.hwanghj.dietmanager.refactoring.backend.domain.intake.exception.IntakeException;
+import com.hwanghj.dietmanager.refactoring.backend.domain.intake.exception.IntakeNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.repository.IntakeRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.UserNotFoundException;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
+
 @Service
 public class IntakeService {
     private final IntakeRepository repository;
     private final UserRepository users;
-    private final com.hwanghj.dietmanager.refactoring.backend.domain.food.service.FoodLibraryService foods;
-    public IntakeService(IntakeRepository repository, UserRepository users, com.hwanghj.dietmanager.refactoring.backend.domain.food.service.FoodLibraryService foods) {
+    private final FoodLibraryService foods;
+    public IntakeService(IntakeRepository repository, UserRepository users, FoodLibraryService foods) {
         this.repository = repository; this.users = users; this.foods = foods;
     }
     @Transactional
@@ -48,7 +50,7 @@ public class IntakeService {
         var user=users.findById(userId).orElseThrow(UserNotFoundException::new);
         var input=request.getNutrition();
         var food=FoodNutrition.builder()
-            .foodCode("manual:"+java.util.UUID.randomUUID())
+            .foodCode("manual:"+UUID.randomUUID())
             .foodName(input.getFoodName().trim())
             .makerName("")
             .servingSize(input.getBaseAmount()+request.getUnit())

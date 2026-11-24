@@ -1,13 +1,16 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.intake.service;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Function;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
-import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.service.NutrientCalculator;
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.dto.IntakeDto;
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.entity.IntakeRecord;
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.entity.MealType;
+import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.service.NutrientCalculator;
+
 public final class IntakeMapper {
     private IntakeMapper() {}
     private static BigDecimal scale(BigDecimal nutrient, IntakeRecord record) {

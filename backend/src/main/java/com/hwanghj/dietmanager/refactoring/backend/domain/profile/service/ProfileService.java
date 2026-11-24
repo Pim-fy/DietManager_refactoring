@@ -3,11 +3,11 @@ package com.hwanghj.dietmanager.refactoring.backend.domain.profile.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserProfile;
-import com.hwanghj.dietmanager.refactoring.backend.domain.profile.exception.UserProfileNotFoundException;
-
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserProfileRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.profile.dto.UserProfileDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.profile.exception.UserProfileNotFoundException;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserProfile;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserProfileRepository;
+
 @Service
 public class ProfileService {
     private final UserProfileRepository userProfileRepository;

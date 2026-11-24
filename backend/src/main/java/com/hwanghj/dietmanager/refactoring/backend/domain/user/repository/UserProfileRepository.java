@@ -3,9 +3,10 @@ package com.hwanghj.dietmanager.refactoring.backend.domain.user.repository;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserProfile;
 
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserProfile;
+
 /**
  * UserProfile 엔터티의 DB 접근 담당 <br>
  * 사용자 id 기준 프로필 정보 조회

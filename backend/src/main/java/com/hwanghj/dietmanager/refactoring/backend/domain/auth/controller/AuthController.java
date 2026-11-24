@@ -2,13 +2,21 @@ package com.hwanghj.dietmanager.refactoring.backend.domain.auth.controller;
 
 import java.net.URI;
 import java.util.Map;
-import jakarta.servlet.http.*;
+
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.exception.OriginNotAllowedException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.exception.SessionExpiredException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.AuthSessionService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 @RestController
 @RequestMapping("/api/users")
 public class AuthController {

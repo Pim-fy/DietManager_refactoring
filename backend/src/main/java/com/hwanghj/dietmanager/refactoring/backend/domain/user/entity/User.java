@@ -1,6 +1,7 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.user.entity;
 
 import com.hwanghj.dietmanager.refactoring.backend.global.common.BaseTimeEntity;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

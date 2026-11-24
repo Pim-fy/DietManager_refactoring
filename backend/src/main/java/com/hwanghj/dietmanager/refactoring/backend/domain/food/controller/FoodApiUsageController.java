@@ -1,7 +1,11 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.food.controller;
-import org.springframework.web.bind.annotation.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.FoodApiQuota;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodApiUsageDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.FoodApiQuota;
+
 @RestController
 public class FoodApiUsageController {
     private final FoodApiQuota quota;

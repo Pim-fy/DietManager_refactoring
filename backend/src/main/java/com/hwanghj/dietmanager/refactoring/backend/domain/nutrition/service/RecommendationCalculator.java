@@ -1,11 +1,14 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.service;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.Gender;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.GoalType;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.dto.NutritionDto;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.ActivityLevel;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.Gender;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.GoalType;
+
 public final class RecommendationCalculator {
     private static final String FORMULA = "Mifflin–St Jeor";
     private RecommendationCalculator() {}

@@ -1,9 +1,13 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.intake.repository;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.entity.IntakeRecord;
+
 public interface IntakeRepository extends JpaRepository<IntakeRecord, Long> {
     List<IntakeRecord> findByUserIdAndEatenDateAndDeletedFalseOrderByIdAsc(Long userId, LocalDate date);
     List<IntakeRecord> findByUserIdAndEatenDateAndDeletedTrueOrderByIdAsc(Long userId, LocalDate date);

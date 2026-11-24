@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
+
 /**
  * User 엔터티의 DB 접근 담당 <br>
  * 이메일 기반 사용자 조회, 회원가입 중복 검사 처리

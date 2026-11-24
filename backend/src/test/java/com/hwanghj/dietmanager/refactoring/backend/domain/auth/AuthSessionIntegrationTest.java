@@ -1,23 +1,37 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.auth;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.UUID;
+
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
-import jakarta.servlet.http.Cookie;
-import tools.jackson.databind.ObjectMapper;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.MockMvc;
 
-import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.controller.AuthCookies;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository.AuthSessionRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.AuthSessionCleanup;
+import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
+
+import jakarta.servlet.http.Cookie;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import tools.jackson.databind.ObjectMapper;
+
 @SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("test")
 class AuthSessionIntegrationTest {
     @Test void repeatedFailedLoginsHaveSafeRateLimitResponse() throws Exception {
@@ -48,7 +62,7 @@ class AuthSessionIntegrationTest {
             .content("{\"email\":\""+email+"\",\"password\":\"Password123!\"}"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.refreshToken").doesNotExist()).andReturn().getResponse();
         String header=result.getHeader("Set-Cookie");
-        org.assertj.core.api.Assertions.assertThat(header).contains("HttpOnly","SameSite=Strict");
+        Assertions.assertThat(header).contains("HttpOnly","SameSite=Strict");
         return new Login(mapper.readTree(result.getContentAsString()).get("accessToken").asText(),cookie(header));
     }
     Cookie cookie(String header) { return new Cookie(AuthCookies.NAME,header.split(";",2)[0].split("=",2)[1]); }
@@ -85,10 +99,10 @@ class AuthSessionIntegrationTest {
         var login=login();
         String id=jwt.authentication(login.getAccess()).getSessionId();
         var session=sessions.findById(id).orElseThrow();
-        org.springframework.test.util.ReflectionTestUtils.setField(session,"expiresAt",java.time.LocalDateTime.now(java.time.Clock.systemUTC()).minusDays(1));
+        ReflectionTestUtils.setField(session,"expiresAt",LocalDateTime.now(Clock.systemUTC()).minusDays(1));
         sessions.saveAndFlush(session);
         mvc.perform(post("/api/users/refresh").cookie(login.getRefresh())).andExpect(status().isUnauthorized());
         cleanup.cleanup();
-        org.assertj.core.api.Assertions.assertThat(sessions.existsById(id)).isFalse();
+        Assertions.assertThat(sessions.existsById(id)).isFalse();
     }
 }

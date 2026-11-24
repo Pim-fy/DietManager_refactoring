@@ -1,14 +1,23 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.food;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.math.BigDecimal;
-import java.time.*;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
+
 import org.junit.jupiter.api.Test;
-import static org.mockito.Mockito.*;
-import static org.assertj.core.api.Assertions.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodSelectionException;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.client.FoodNutritionClient;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodSelectionException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.FoodNutritionService;
+
 class FoodCacheClockTest {
     @Test void cacheExpiresAtBoundaryWithoutSleeping() {
         var client = mock(FoodNutritionClient.class);

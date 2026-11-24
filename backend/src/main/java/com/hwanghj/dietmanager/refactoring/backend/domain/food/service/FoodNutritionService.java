@@ -1,15 +1,20 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.food.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodSelectionException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.client.FoodNutritionClient;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodSelectionException;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 /** 제한된 메모리 캐시로 검색 호출량을 줄이고, 섭취 저장에 신뢰할 수 있는 원본 값을 제공한다. */
 @Service
 public class FoodNutritionService {
@@ -19,13 +24,13 @@ public class FoodNutritionService {
         private final T value;
         private final Instant expires;
     }
-    private final java.time.Clock clock;
+    private final Clock clock;
     private final FoodNutritionClient client;
     private final Map<String, Cached<FoodNutrition.SearchResult>> searches = new LinkedHashMap<>();
     private final Map<String, Cached<FoodNutrition>> foods = new LinkedHashMap<>();
-    public FoodNutritionService(FoodNutritionClient client) { this(client, java.time.Clock.systemDefaultZone()); }
-    @org.springframework.beans.factory.annotation.Autowired
-    public FoodNutritionService(FoodNutritionClient client, java.time.Clock clock) { this.clock = clock; this.client = client;  }
+    public FoodNutritionService(FoodNutritionClient client) { this(client, Clock.systemDefaultZone()); }
+    @Autowired
+    public FoodNutritionService(FoodNutritionClient client, Clock clock) { this.clock = clock; this.client = client;  }
 
     public FoodNutrition.SearchResult search(String keyword, int page, int size) {
         String key = keyword + ":" + page + ":" + size;

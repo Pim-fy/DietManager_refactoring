@@ -1,15 +1,21 @@
 package com.hwanghj.dietmanager.refactoring.backend.support;
 
-import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
-import java.sql.*;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.DriverManager;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.UUID;
+
+import org.hibernate.boot.model.naming.Identifier;
+import org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl;
+import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.test.context.support.TestPropertySourceUtils;
-import org.hibernate.boot.model.naming.*;
-import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 
 /** CREATE DATABASE 권한 없이 새 테이블에서 V1부터 실행하며 종료 시 해당 테이블만 정리한다. */
 public class MySqlIsolation implements ApplicationContextInitializer<ConfigurableApplicationContext> {

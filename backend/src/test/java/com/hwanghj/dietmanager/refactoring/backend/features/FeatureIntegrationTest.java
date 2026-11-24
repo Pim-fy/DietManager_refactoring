@@ -1,27 +1,35 @@
 package com.hwanghj.dietmanager.refactoring.backend.features;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.mockito.Mockito.*;
+
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.client.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.controller.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.entity.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.repository.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.*;
+
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodSelectionException;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.FoodNutritionService;
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.exception.IntakeException;
+import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.ActivityLevel;
+
+import tools.jackson.databind.ObjectMapper;
 
 @SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("test")
 class FeatureIntegrationTest {
@@ -71,17 +79,17 @@ class FeatureIntegrationTest {
         String auth=login("1995-01-01","GAIN_WEIGHT"); measurement(auth,"2026-01-01",70);
         mvc.perform(patch("/api/users/profile").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON)
             .content("{\"gender\":\"FEMALE\",\"birthDate\":\"1995-01-01\",\"goalType\":\"GAIN_WEIGHT\"}")).andExpect(status().isOk());
-        for (var activity:com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.ActivityLevel.values()) {
+        for (var activity:ActivityLevel.values()) {
             mvc.perform(put("/api/nutrition/preferences").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON).content("{\"activityLevel\":\""+activity.name()+"\"}"))
                 .andExpect(status().isOk());
-            double target=BigDecimal.valueOf(1446.5*activity.factor+300).setScale(2,java.math.RoundingMode.HALF_UP).doubleValue();
+            double target=BigDecimal.valueOf(1446.5*activity.factor+300).setScale(2,RoundingMode.HALF_UP).doubleValue();
             mvc.perform(get("/api/nutrition/recommendation").header("Authorization",auth).param("date","2026-01-01"))
                 .andExpect(jsonPath("$.restingCalories").value(1446.5)).andExpect(jsonPath("$.calories").value(target));
         }
     }
     @Test void futurePlansCannotBeConsumedAndInvalidAmountsAreRejected() throws Exception {
         String auth=login("1995-01-01","MAINTAIN_WEIGHT"),code=food();
-        String body="{\"foodCode\":\""+code+"\",\"plannedDate\":\""+java.time.LocalDate.now().plusDays(1)+"\",\"mealType\":\"LUNCH\",\"amount\":100}";
+        String body="{\"foodCode\":\""+code+"\",\"plannedDate\":\""+LocalDate.now().plusDays(1)+"\",\"mealType\":\"LUNCH\",\"amount\":100}";
         var response=mvc.perform(post("/api/meal-plans").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         long id=mapper.readTree(response).path("id").asLong();
@@ -107,7 +115,7 @@ class FeatureIntegrationTest {
         String auth=login("1995-01-01","MAINTAIN_WEIGHT"),other=login("1995-01-01","MAINTAIN_WEIGHT"),code=food();
         mvc.perform(put("/api/foods/favorites").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON).content("{\"foodCode\":\""+code+"\",\"favorite\":true}"))
             .andExpect(status().isOk());
-        when(source.selectedFood(code)).thenThrow(new com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodSelectionException("캐시 만료"));
+        when(source.selectedFood(code)).thenThrow(new FoodSelectionException("캐시 만료"));
         mvc.perform(get("/api/foods/favorites").header("Authorization",other)).andExpect(jsonPath("$.length()").value(0));
         mvc.perform(post("/api/intakes").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON).content("{\"foodCode\":\""+code+"\",\"eatenDate\":\"2026-01-01\",\"mealType\":\"LUNCH\",\"amount\":150}"))
             .andExpect(status().isCreated()).andExpect(jsonPath("$.calories").value(300));

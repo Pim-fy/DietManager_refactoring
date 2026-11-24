@@ -1,17 +1,26 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.food.client;
-import static org.assertj.core.api.Assertions.*;
-import java.net.*;
-import java.net.http.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
-import com.sun.net.httpserver.HttpServer;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.junit.jupiter.api.Test;
-import tools.jackson.databind.ObjectMapper;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodApiException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodApiLimitException;
+import com.sun.net.httpserver.HttpServer;
+
+import tools.jackson.databind.ObjectMapper;
+
 class FoodHttpFailureTest {
     @Test void httpErrorsMalformedBodiesAndRecoveryDoNotExposeKey() throws Exception {
         var server=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
-        var code=new java.util.concurrent.atomic.AtomicInteger(503);
+        var code=new AtomicInteger(503);
         server.createContext("/food",exchange->{
             byte[] body=(code.get()==200 ? "{\"header\":{\"resultCode\":\"00\"},\"body\":{\"items\":[],\"totalCount\":0}}" : "private-key-must-not-leak").getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(code.get(),body.length);

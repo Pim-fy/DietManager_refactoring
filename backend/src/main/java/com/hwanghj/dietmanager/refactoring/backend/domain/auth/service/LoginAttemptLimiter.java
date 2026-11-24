@@ -1,13 +1,24 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.auth.service;
-import java.time.*;
-import java.util.*;
+
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.HexFormat;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessException;
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 @Component
 public class LoginAttemptLimiter {
     public static class Limited extends BusinessException {
@@ -24,7 +35,7 @@ public class LoginAttemptLimiter {
     private final Map<String,Window> failures=new LinkedHashMap<>();
     private final Clock clock;
     public LoginAttemptLimiter() { this(Clock.systemUTC()); }
-    @org.springframework.beans.factory.annotation.Autowired
+    @Autowired
     public LoginAttemptLimiter(Clock clock) { this.clock=clock; }
     public synchronized void check(String ip,String email) {
         failures.entrySet().removeIf(entry->!entry.getValue().getStarted().plusSeconds(600).isAfter(clock.instant()));

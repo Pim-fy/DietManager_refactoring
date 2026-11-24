@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import lombok.Getter;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @Getter
 @JsonInclude(JsonInclude.Include.NON_EMPTY) // errors가 비어 있으면 응답에서 뺀다.

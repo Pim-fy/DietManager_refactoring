@@ -1,11 +1,24 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.intake;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,17 +28,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.client.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.controller.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.entity.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.repository.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.*;
-import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.*;
+
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.client.FoodNutritionClient;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodApiLimitException;
+import com.hwanghj.dietmanager.refactoring.backend.domain.intake.repository.IntakeRepository;
+
 import tools.jackson.databind.ObjectMapper;
 
-import com.hwanghj.dietmanager.refactoring.backend.domain.intake.repository.IntakeRepository;
 @SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("test")
 class IntakeIntegrationTest {
     @Autowired IntakeRepository records;
@@ -68,8 +78,8 @@ class IntakeIntegrationTest {
         mvc.perform(patch("/api/intakes/"+id+"/nutrition").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON).content(correction))
             .andExpect(status().isOk()).andExpect(jsonPath("$.manual").value(false)).andExpect(jsonPath("$.calories").value(450));
         var record=records.findById(id).orElseThrow();
-        org.assertj.core.api.Assertions.assertThat(record.getFoodName()).isEqualTo("검증 식품");
-        org.assertj.core.api.Assertions.assertThat(record.getBaseCalories()).isEqualByComparingTo("200");
+        Assertions.assertThat(record.getFoodName()).isEqualTo("검증 식품");
+        Assertions.assertThat(record.getBaseCalories()).isEqualByComparingTo("200");
         mvc.perform(post("/api/intakes").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON)
             .content("{\"foodCode\":\""+foodCode+"\",\"eatenDate\":\"2026-01-01\",\"mealType\":\"LUNCH\",\"amount\":150}"))
             .andExpect(status().isCreated()).andExpect(jsonPath("$.calories").value(300)).andExpect(jsonPath("$.nutritionEdited").value(false));
@@ -77,7 +87,7 @@ class IntakeIntegrationTest {
     @Test void manualInputsRequireAuthenticationAndValidateUnitsNamesAndNumbers() throws Exception {
         mvc.perform(post("/api/intakes/manual").contentType(MediaType.APPLICATION_JSON).content(manualBody())).andExpect(status().isUnauthorized());
         String auth=login();
-        for(String invalid:java.util.List.of(manualBody().replace("\"g\"","\"개\""),manualBody().replace("직접 음식"," "),
+        for(String invalid:List.of(manualBody().replace("\"g\"","\"개\""),manualBody().replace("직접 음식"," "),
                 manualBody().replace("\"baseAmount\":100","\"baseAmount\":0"),manualBody().replace("\"calories\":200","\"calories\":-1"),
                 manualBody().replace("\"amount\":150","\"amount\":0"),manualBody().replace("\"calories\":200","\"calories\":0.0000001"))) {
             mvc.perform(post("/api/intakes/manual").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON).content(invalid))

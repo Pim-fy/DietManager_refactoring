@@ -1,7 +1,8 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.auth.controller;
 
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseCookie;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 public final class AuthCookies {
     public static final String NAME = "dietmanager_refresh";

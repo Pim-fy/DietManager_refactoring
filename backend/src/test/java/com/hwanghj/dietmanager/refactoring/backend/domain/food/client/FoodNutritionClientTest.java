@@ -1,9 +1,19 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.food.client;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.math.BigDecimal;
+
 import org.junit.jupiter.api.Test;
-import tools.jackson.databind.ObjectMapper;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodApiException;
+
+import tools.jackson.databind.ObjectMapper;
+
 class FoodNutritionClientTest {
     private final FoodNutritionClient client = new FoodNutritionClient("", new ObjectMapper());
     @Test void malformedSuccessIsNotAnEmptySearch() {
