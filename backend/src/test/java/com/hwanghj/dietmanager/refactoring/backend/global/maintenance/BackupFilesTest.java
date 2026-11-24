@@ -1,4 +1,4 @@
-package com.hwanghj.dietmanager.refactoring.backend.maintenance;
+package com.hwanghj.dietmanager.refactoring.backend.global.maintenance;
 import java.nio.file.*;
 import java.util.List;
 import org.junit.jupiter.api.Test;

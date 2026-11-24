@@ -1,4 +1,4 @@
-package com.hwanghj.dietmanager.refactoring.backend.security;
+package com.hwanghj.dietmanager.refactoring.backend.global.security;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;

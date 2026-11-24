@@ -1,4 +1,4 @@
-package com.hwanghj.dietmanager.refactoring.backend.security;
+package com.hwanghj.dietmanager.refactoring.backend.global.security;
 import java.time.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;

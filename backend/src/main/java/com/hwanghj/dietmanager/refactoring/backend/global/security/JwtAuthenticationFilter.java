@@ -1,4 +1,4 @@
-package com.hwanghj.dietmanager.refactoring.backend.security;
+package com.hwanghj.dietmanager.refactoring.backend.global.security;
 
 import java.io.IOException;
 
@@ -15,6 +15,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.hwanghj.dietmanager.refactoring.backend.security.AuthSessionService;
 /**
  * 요청마다 Authorization 헤더를 읽고, 토큰이 유효한 경우 Spring Security에 "인증된 사용자"를 등록.
  */

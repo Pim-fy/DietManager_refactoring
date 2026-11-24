@@ -44,7 +44,7 @@ dependencies {
 
 tasks.register('databaseMaintenance', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'com.hwanghj.dietmanager.refactoring.backend.maintenance.DatabaseMaintenance'
+    mainClass = 'com.hwanghj.dietmanager.refactoring.backend.global.maintenance.DatabaseMaintenance'
     args providers.gradleProperty('operation').getOrElse('verify')
     if (providers.gradleProperty('backupFile').isPresent()) args providers.gradleProperty('backupFile').get()
 }

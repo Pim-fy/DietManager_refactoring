@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import jakarta.servlet.http.Cookie;
 import tools.jackson.databind.ObjectMapper;
 
+import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
 @SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("test")
 class AuthSessionIntegrationTest {
     @Test void repeatedFailedLoginsHaveSafeRateLimitResponse() throws Exception {

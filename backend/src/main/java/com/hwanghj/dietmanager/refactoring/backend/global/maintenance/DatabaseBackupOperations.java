@@ -1,12 +1,12 @@
-package com.hwanghj.dietmanager.refactoring.backend.maintenance;
+package com.hwanghj.dietmanager.refactoring.backend.global.maintenance;
 
 import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
-import static com.hwanghj.dietmanager.refactoring.backend.maintenance.BackupModel.TABLES;
+import static com.hwanghj.dietmanager.refactoring.backend.global.maintenance.BackupModel.TABLES;
 
-import com.hwanghj.dietmanager.refactoring.backend.maintenance.BackupModel.Backup;
-import com.hwanghj.dietmanager.refactoring.backend.maintenance.BackupModel.Table;
+import com.hwanghj.dietmanager.refactoring.backend.global.maintenance.BackupModel.Backup;
+import com.hwanghj.dietmanager.refactoring.backend.global.maintenance.BackupModel.Table;
 
 final class DatabaseBackupOperations {
     private DatabaseBackupOperations() {}

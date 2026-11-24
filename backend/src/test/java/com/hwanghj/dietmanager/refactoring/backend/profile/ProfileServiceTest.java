@@ -48,7 +48,7 @@ import com.hwanghj.dietmanager.refactoring.backend.exception.UserProfileNotFound
 import com.hwanghj.dietmanager.refactoring.backend.measurement.BodyMeasurementRepository;
 import com.hwanghj.dietmanager.refactoring.backend.profile.UserProfileRepository;
 import com.hwanghj.dietmanager.refactoring.backend.user.UserRepository;
-import com.hwanghj.dietmanager.refactoring.backend.security.JwtTokenProvider;
+import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileServiceTest {

@@ -1,4 +1,4 @@
-package com.hwanghj.dietmanager.refactoring.backend.config;
+package com.hwanghj.dietmanager.refactoring.backend.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,9 +7,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.hwanghj.dietmanager.refactoring.backend.exception.ErrorCode;
-import com.hwanghj.dietmanager.refactoring.backend.exception.ErrorResponse;
-import com.hwanghj.dietmanager.refactoring.backend.security.JwtAuthenticationFilter;
+import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
+import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorResponse;
+import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtAuthenticationFilter;
 
 import tools.jackson.databind.ObjectMapper;
 

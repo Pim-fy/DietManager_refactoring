@@ -1,4 +1,4 @@
-package com.hwanghj.dietmanager.refactoring.backend.exception;
+package com.hwanghj.dietmanager.refactoring.backend.global.error;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.hwanghj.dietmanager.refactoring.backend.maintenance;
+package com.hwanghj.dietmanager.refactoring.backend.global.maintenance;
 import java.util.List;
 public final class BackupModel {
     private BackupModel() {}

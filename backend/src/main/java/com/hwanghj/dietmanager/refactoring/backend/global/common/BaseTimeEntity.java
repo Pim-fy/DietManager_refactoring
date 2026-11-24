@@ -1,4 +1,4 @@
-package com.hwanghj.dietmanager.refactoring.backend.common;
+package com.hwanghj.dietmanager.refactoring.backend.global.common;
 
 import java.time.LocalDateTime;
 

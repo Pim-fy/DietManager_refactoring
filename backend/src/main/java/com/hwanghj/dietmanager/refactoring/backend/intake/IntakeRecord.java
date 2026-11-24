@@ -1,7 +1,7 @@
 package com.hwanghj.dietmanager.refactoring.backend.intake;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import com.hwanghj.dietmanager.refactoring.backend.common.BaseTimeEntity;
+import com.hwanghj.dietmanager.refactoring.backend.global.common.BaseTimeEntity;
 import com.hwanghj.dietmanager.refactoring.backend.user.User;
 import com.hwanghj.dietmanager.refactoring.backend.food.FoodNutrition;
 import jakarta.persistence.*;

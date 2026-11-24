@@ -3,7 +3,7 @@ package com.hwanghj.dietmanager.refactoring.backend.measurement;
 import com.hwanghj.dietmanager.refactoring.backend.user.User;
 import java.time.LocalDate;
 
-import com.hwanghj.dietmanager.refactoring.backend.common.BaseTimeEntity;
+import com.hwanghj.dietmanager.refactoring.backend.global.common.BaseTimeEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
