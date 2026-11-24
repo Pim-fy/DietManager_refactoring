@@ -99,9 +99,8 @@ class IntakeIntegrationTest {
     private String foodCode;
     @BeforeEach void setup() {
         foodCode = UUID.randomUUID().toString();
-        var food = new FoodNutrition(foodCode, "검증 식품", "검증 업체", "100g", new BigDecimal("100"), "g",
-            new BigDecimal("200"), new BigDecimal("30"), new BigDecimal("10"), null, "2026-01-01");
-        when(client.search(anyString(), anyInt(), anyInt())).thenReturn(new FoodNutrition.SearchResult(List.of(food), 1, 10, 1));
+        var food = FoodNutrition.builder().foodCode(foodCode).foodName("검증 식품").makerName("검증 업체").servingSize("100g").baseAmount(new BigDecimal("100")).baseUnit("g").calories(new BigDecimal("200")).carbohydrate(new BigDecimal("30")).protein(new BigDecimal("10")).sourceUpdatedDate("2026-01-01").build();
+        when(client.search(anyString(), anyInt(), anyInt())).thenReturn(FoodNutrition.SearchResult.builder().items(List.of(food)).page(1).size(10).totalCount(1).build());
     }
     private String login() throws Exception {
         String email = UUID.randomUUID() + "@example.test";
@@ -132,9 +131,8 @@ class IntakeIntegrationTest {
         mvc.perform(get("/api/intakes").param("date", "2026-01-01").header("Authorization", auth))
             .andExpect(status().isOk()).andExpect(jsonPath("$.calories.value").value(300))
             .andExpect(jsonPath("$.fat.missingCount").value(1));
-        var updatedSource = new FoodNutrition(foodCode, "새 원본 이름", "", "100g", new BigDecimal("100"), "g",
-            new BigDecimal("900"), null, null, null, "2026-02-02");
-        when(client.search(anyString(), anyInt(), anyInt())).thenReturn(new FoodNutrition.SearchResult(List.of(updatedSource), 1, 10, 1));
+        var updatedSource = FoodNutrition.builder().foodCode(foodCode).foodName("새 원본 이름").makerName("").servingSize("100g").baseAmount(new BigDecimal("100")).baseUnit("g").calories(new BigDecimal("900")).sourceUpdatedDate("2026-02-02").build();
+        when(client.search(anyString(), anyInt(), anyInt())).thenReturn(FoodNutrition.SearchResult.builder().items(List.of(updatedSource)).page(1).size(10).totalCount(1).build());
         mvc.perform(get("/api/foods").param("keyword", "updated-" + foodCode).header("Authorization", auth)).andExpect(status().isOk());
         mvc.perform(patch("/api/intakes/" + id).header("Authorization", auth).contentType(MediaType.APPLICATION_JSON)
             .content("{\"eatenDate\":\"2026-01-02\",\"mealType\":\"DINNER\",\"amount\":50}"))

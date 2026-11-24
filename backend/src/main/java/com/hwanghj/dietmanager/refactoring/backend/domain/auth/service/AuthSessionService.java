@@ -12,6 +12,8 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.auth.entity.AuthSessio
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.entity.RefreshToken;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository.AuthSessionRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository.RefreshTokenRepository;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 @Service
 public class AuthSessionService {
     private final java.time.Clock clock;
@@ -22,7 +24,12 @@ public class AuthSessionService {
     public AuthSessionService(AuthSessionRepository sessions,RefreshTokenRepository tokens,JwtTokenProvider jwt) { this(sessions, tokens, jwt, java.time.Clock.systemDefaultZone()); }
     @org.springframework.beans.factory.annotation.Autowired
     public AuthSessionService(AuthSessionRepository sessions,RefreshTokenRepository tokens,JwtTokenProvider jwt, java.time.Clock clock) { this.clock = clock; this.sessions=sessions; this.tokens=tokens; this.jwt=jwt;  }
-    public record Pair(String accessToken,String refreshToken) {}
+    @Getter
+    @AllArgsConstructor
+    public static class Pair {
+        private final String accessToken;
+        private final String refreshToken;
+    }
     @Transactional public Pair open(User user) { return issue(sessions.save(new AuthSession(user, LocalDateTime.now(clock.withZone(ZoneOffset.UTC))))); }
     @Transactional(noRollbackFor=SessionExpiredException.class)
     public Pair refresh(String value) {

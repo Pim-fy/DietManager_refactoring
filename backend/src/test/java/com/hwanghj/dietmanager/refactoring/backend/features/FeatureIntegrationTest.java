@@ -45,7 +45,7 @@ class FeatureIntegrationTest {
     }
     private String food() {
         String code=UUID.randomUUID().toString();
-        when(source.selectedFood(code)).thenReturn(new FoodNutrition(code,"테스트 식품","","100g",new BigDecimal("100"),"g",new BigDecimal("200"),new BigDecimal("30"),new BigDecimal("10"),null,"2026-01-01"));
+        when(source.selectedFood(code)).thenReturn(FoodNutrition.builder().foodCode(code).foodName("테스트 식품").makerName("").servingSize("100g").baseAmount(new BigDecimal("100")).baseUnit("g").calories(new BigDecimal("200")).carbohydrate(new BigDecimal("30")).protein(new BigDecimal("10")).sourceUpdatedDate("2026-01-01").build());
         return code;
     }
     @Test void approvedFormulaActivityAndGoalAreApplied() throws Exception {

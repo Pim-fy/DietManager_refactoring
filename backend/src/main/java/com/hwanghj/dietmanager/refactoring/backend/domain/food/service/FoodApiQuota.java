@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodApiLimitException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.entity.FoodApiUsage;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.repository.FoodApiUsageRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodApiUsageDto;
 @Service
 public class FoodApiQuota {
     private final java.time.Clock clock;
@@ -37,10 +38,15 @@ public class FoodApiQuota {
         });
         calls.addLast(Instant.now(clock));
     }
-    public record Status(LocalDate date,int calls,int dayLimit,int recentMinuteCalls,int minuteLimit) {}
-    @Transactional(readOnly=true) public synchronized Status status() {
+    @Transactional(readOnly=true) public synchronized FoodApiUsageDto.Status status() {
         prune(); LocalDate day=LocalDate.now(clock.withZone(ZoneId.of("Asia/Seoul")));
-        return new Status(day,repository.findById(day).map(FoodApiUsage::getCalls).orElse(0),dayLimit,calls.size(),minuteLimit);
+        return FoodApiUsageDto.Status.builder()
+            .date(day)
+            .calls(repository.findById(day).map(FoodApiUsage::getCalls).orElse(0))
+            .dayLimit(dayLimit)
+            .recentMinuteCalls(calls.size())
+            .minuteLimit(minuteLimit)
+            .build();
     }
     private void prune() { Instant cutoff=Instant.now(clock).minusSeconds(60); while(!calls.isEmpty() && !calls.peekFirst().isAfter(cutoff)) calls.removeFirst(); }
 }

@@ -32,7 +32,12 @@ public final class FoodNutritionParser {
         if (total < 0 || (foods.isEmpty() && total > 0 && (long) (page - 1) * size < total)) {
             throw new FoodApiException("식품 API 검색 결과 형식을 확인할 수 없습니다.");
         }
-        return new FoodNutrition.SearchResult(foods, page, size, total);
+        return FoodNutrition.SearchResult.builder()
+            .items(foods)
+            .page(page)
+            .size(size)
+            .totalCount(total)
+            .build();
     }
 
     private FoodNutrition toFood(JsonNode item) {
@@ -42,9 +47,19 @@ public final class FoodNutritionParser {
         if (match.matches()) { amount = new BigDecimal(match.group(1)); unit = match.group(2).toLowerCase(); }
         String code = text(item, "FOOD_CD"); String name = text(item, "FOOD_NM_KR");
         if (code.isBlank() || name.isBlank()) throw new FoodApiException("식품 API에서 식품 식별 정보를 확인할 수 없습니다.");
-        return new FoodNutrition(code, name, text(item, "MAKER_NM"), servingSize, amount, unit,
-            number(item, "AMT_NUM1"), number(item, "AMT_NUM6"), number(item, "AMT_NUM3"), number(item, "AMT_NUM4"),
-            text(item, "UPDATE_DATE"));
+        return FoodNutrition.builder()
+            .foodCode(code)
+            .foodName(name)
+            .makerName(text(item, "MAKER_NM"))
+            .servingSize(servingSize)
+            .baseAmount(amount)
+            .baseUnit(unit)
+            .calories(number(item, "AMT_NUM1"))
+            .carbohydrate(number(item, "AMT_NUM6"))
+            .protein(number(item, "AMT_NUM3"))
+            .fat(number(item, "AMT_NUM4"))
+            .sourceUpdatedDate(text(item, "UPDATE_DATE"))
+            .build();
     }
     private static String text(JsonNode node, String field) { return node.path(field).isNull() ? "" : node.path(field).asText(""); }
     private static BigDecimal number(JsonNode node, String field) {

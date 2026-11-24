@@ -29,7 +29,7 @@ public final class DatabaseMaintenance {
             }
             Backup backup=snapshot(source);
             Path file = BackupFiles.write(backup);
-            System.out.println("백업 생성: "+file+" ("+backup.tables().size()+"개 테이블, 내용 비공개)");
+            System.out.println("백업 생성: "+file+" ("+backup.getTables().size()+"개 테이블, 내용 비공개)");
             if (!operation.equals("backup")) {
                 DatabaseBackupOperations.restoreAndVerify(source, BackupFiles.read(file));
             }

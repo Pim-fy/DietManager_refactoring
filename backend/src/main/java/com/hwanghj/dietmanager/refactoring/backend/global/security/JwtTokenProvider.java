@@ -13,6 +13,8 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @Component  // JstTokenProvider를 Spring Bean으로 만듦.
 public class JwtTokenProvider {
@@ -95,7 +97,13 @@ public class JwtTokenProvider {
         }
     }
 
-    public record Authentication(Long userId, long version, String sessionId) {}
+    @Getter
+    @AllArgsConstructor
+    public static class Authentication {
+        private final Long userId;
+        private final long version;
+        private final String sessionId;
+    }
     public Authentication authentication(String token) {
         try {
             var claims = Jwts.parser().clock(() -> Date.from(clock.instant())).verifyWith(secretKey).build().parseSignedClaims(token).getPayload();

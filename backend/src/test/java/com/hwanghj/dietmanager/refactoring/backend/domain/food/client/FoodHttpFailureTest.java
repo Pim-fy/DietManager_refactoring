@@ -25,7 +25,7 @@ class FoodHttpFailureTest {
             code.set(429);
             assertThatThrownBy(()->client.search("밥",1,10)).isInstanceOf(FoodApiLimitException.class).hasNoCause();
             code.set(200);
-            assertThat(client.search("밥",1,10).items()).isEmpty();
+            assertThat(client.search("밥",1,10).getItems()).isEmpty();
         } finally { server.stop(0); }
     }
 }

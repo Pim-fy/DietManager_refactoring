@@ -16,6 +16,8 @@ import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvi
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.controller.AuthCookies;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository.AuthSessionRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.AuthSessionCleanup;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 @SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("test")
 class AuthSessionIntegrationTest {
     @Test void repeatedFailedLoginsHaveSafeRateLimitResponse() throws Exception {
@@ -31,7 +33,12 @@ class AuthSessionIntegrationTest {
     @Autowired JwtTokenProvider jwt;
     @Autowired AuthSessionRepository sessions;
     @Autowired AuthSessionCleanup cleanup;
-    record Login(String access,Cookie refresh) {}
+    @Getter
+    @AllArgsConstructor
+    static class Login {
+        private final String access;
+        private final Cookie refresh;
+    }
     Login login() throws Exception {
         String email=UUID.randomUUID()+"@example.test";
         mvc.perform(post("/api/users/register").contentType(MediaType.APPLICATION_JSON).content("""
@@ -47,40 +54,40 @@ class AuthSessionIntegrationTest {
     Cookie cookie(String header) { return new Cookie(AuthCookies.NAME,header.split(";",2)[0].split("=",2)[1]); }
     @Test void rotatesAndRejectsReplayIncludingIssuedAccessToken() throws Exception {
         var login=login();
-        var renewed=mvc.perform(post("/api/users/refresh").cookie(login.refresh())).andExpect(status().isOk()).andReturn().getResponse();
+        var renewed=mvc.perform(post("/api/users/refresh").cookie(login.getRefresh())).andExpect(status().isOk()).andReturn().getResponse();
         String access=mapper.readTree(renewed.getContentAsString()).get("accessToken").asText();
         mvc.perform(get("/api/users/account").header("Authorization","Bearer "+access)).andExpect(status().isOk());
-        mvc.perform(post("/api/users/refresh").cookie(login.refresh())).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/users/refresh").cookie(login.getRefresh())).andExpect(status().isUnauthorized());
         mvc.perform(post("/api/users/refresh").cookie(cookie(renewed.getHeader("Set-Cookie")))).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/users/account").header("Authorization","Bearer "+access)).andExpect(status().isUnauthorized());
     }
     @Test void logoutRevokesBothTokens() throws Exception {
         var login=login();
-        mvc.perform(post("/api/users/logout").cookie(login.refresh())).andExpect(status().isNoContent());
-        mvc.perform(get("/api/users/account").header("Authorization","Bearer "+login.access())).andExpect(status().isUnauthorized());
-        mvc.perform(post("/api/users/refresh").cookie(login.refresh())).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/users/logout").cookie(login.getRefresh())).andExpect(status().isNoContent());
+        mvc.perform(get("/api/users/account").header("Authorization","Bearer "+login.getAccess())).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/users/refresh").cookie(login.getRefresh())).andExpect(status().isUnauthorized());
     }
     @Test void passwordChangeRevokesBothTokens() throws Exception {
         var login=login();
-        mvc.perform(patch("/api/users/password").header("Authorization","Bearer "+login.access()).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(patch("/api/users/password").header("Authorization","Bearer "+login.getAccess()).contentType(MediaType.APPLICATION_JSON)
             .content("{\"currentPassword\":\"Password123!\",\"newPassword\":\"NewPassword123!\"}")).andExpect(status().isOk());
-        mvc.perform(get("/api/users/account").header("Authorization","Bearer "+login.access())).andExpect(status().isUnauthorized());
-        mvc.perform(post("/api/users/refresh").cookie(login.refresh())).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/users/account").header("Authorization","Bearer "+login.getAccess())).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/users/refresh").cookie(login.getRefresh())).andExpect(status().isUnauthorized());
     }
     @Test void rejectsCrossSiteRefreshWithoutConsumingToken() throws Exception {
         var login=login();
-        mvc.perform(post("/api/users/refresh").cookie(login.refresh()).header("Origin","https://attacker.example"))
+        mvc.perform(post("/api/users/refresh").cookie(login.getRefresh()).header("Origin","https://attacker.example"))
             .andExpect(status().isForbidden());
-        mvc.perform(post("/api/users/refresh").cookie(login.refresh()).header("Origin","http://127.0.0.1:5186"))
+        mvc.perform(post("/api/users/refresh").cookie(login.getRefresh()).header("Origin","http://127.0.0.1:5186"))
             .andExpect(status().isOk());
     }
     @Test void expiredRefreshIsRejectedAndCleanedUp() throws Exception {
         var login=login();
-        String id=jwt.authentication(login.access()).sessionId();
+        String id=jwt.authentication(login.getAccess()).getSessionId();
         var session=sessions.findById(id).orElseThrow();
         org.springframework.test.util.ReflectionTestUtils.setField(session,"expiresAt",java.time.LocalDateTime.now(java.time.Clock.systemUTC()).minusDays(1));
         sessions.saveAndFlush(session);
-        mvc.perform(post("/api/users/refresh").cookie(login.refresh())).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/users/refresh").cookie(login.getRefresh())).andExpect(status().isUnauthorized());
         cleanup.cleanup();
         org.assertj.core.api.Assertions.assertThat(sessions.existsById(id)).isFalse();
     }

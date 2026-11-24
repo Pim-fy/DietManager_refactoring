@@ -18,9 +18,23 @@ public class FoodSnapshot {
     @Column(precision=20, scale=6) private BigDecimal fat;
     @Column(name="source_updated_date", length=50) private String sourceUpdatedDate;
     public FoodSnapshot(FoodNutrition food) {
-        foodCode=food.foodCode(); foodName=food.foodName(); makerName=food.makerName(); servingSize=food.servingSize();
-        baseAmount=food.baseAmount(); baseUnit=food.baseUnit(); calories=food.calories(); carbohydrate=food.carbohydrate();
-        protein=food.protein(); fat=food.fat(); sourceUpdatedDate=food.sourceUpdatedDate();
+        foodCode=food.getFoodCode(); foodName=food.getFoodName(); makerName=food.getMakerName(); servingSize=food.getServingSize();
+        baseAmount=food.getBaseAmount(); baseUnit=food.getBaseUnit(); calories=food.getCalories(); carbohydrate=food.getCarbohydrate();
+        protein=food.getProtein(); fat=food.getFat(); sourceUpdatedDate=food.getSourceUpdatedDate();
     }
-    public FoodNutrition food() { return new FoodNutrition(foodCode,foodName,makerName,servingSize,baseAmount,baseUnit,calories,carbohydrate,protein,fat,sourceUpdatedDate); }
+    public FoodNutrition food() {
+        return FoodNutrition.builder()
+            .foodCode(foodCode)
+            .foodName(foodName)
+            .makerName(makerName)
+            .servingSize(servingSize)
+            .baseAmount(baseAmount)
+            .baseUnit(baseUnit)
+            .calories(calories)
+            .carbohydrate(carbohydrate)
+            .protein(protein)
+            .fat(fat)
+            .sourceUpdatedDate(sourceUpdatedDate)
+            .build();
+    }
 }

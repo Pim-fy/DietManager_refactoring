@@ -82,7 +82,7 @@ public class AuthenticationService {
 
         // Jwt 토큰 생성.
         var pair = sessions.open(user);
-        String accessToken = pair.accessToken();
+        String accessToken = pair.getAccessToken();
 
         // 성공 응답 반환.
         return UserLoginDto.Response
@@ -92,7 +92,7 @@ public class AuthenticationService {
             .userName(user.getUserName())
             .role(user.getRole())
             .accessToken(accessToken)
-            .refreshToken(pair.refreshToken())
+            .refreshToken(pair.getRefreshToken())
             .build();
 
     }

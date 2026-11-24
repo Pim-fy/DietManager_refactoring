@@ -24,8 +24,20 @@ public class StatisticsService {
         List<StatisticsDto.Day> days = new ArrayList<>();
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
             var items = grouped.getOrDefault(date, List.of());
-            days.add(new StatisticsDto.Day(date, items.size(), IntakeMapper.aggregate(items, IntakeRecord::effectiveCalories), IntakeMapper.aggregate(items, IntakeRecord::effectiveCarbohydrate), IntakeMapper.aggregate(items, IntakeRecord::effectiveProtein), IntakeMapper.aggregate(items, IntakeRecord::effectiveFat), weights.get(date)));
+            days.add(StatisticsDto.Day.builder()
+                .date(date)
+                .records(items.size())
+                .calories(IntakeMapper.aggregate(items, IntakeRecord::effectiveCalories))
+                .carbohydrate(IntakeMapper.aggregate(items, IntakeRecord::effectiveCarbohydrate))
+                .protein(IntakeMapper.aggregate(items, IntakeRecord::effectiveProtein))
+                .fat(IntakeMapper.aggregate(items, IntakeRecord::effectiveFat))
+                .weight(weights.get(date))
+                .build());
         }
-        return new StatisticsDto.Result(start, end, days);
+        return StatisticsDto.Result.builder()
+            .start(start)
+            .end(end)
+            .days(days)
+            .build();
     }
 }

@@ -15,8 +15,8 @@ class FoodCacheClockTest {
         var clock = mock(Clock.class);
         var start = Instant.parse("2026-01-01T00:00:00Z");
         when(clock.instant()).thenReturn(start);
-        var food = new FoodNutrition("CLOCK", "clock", "", "100g", BigDecimal.valueOf(100), "g", BigDecimal.ONE, null, null, null, "");
-        when(client.search("clock", 1, 10)).thenReturn(new FoodNutrition.SearchResult(List.of(food), 1, 10, 1));
+        var food = FoodNutrition.builder().foodCode("CLOCK").foodName("clock").makerName("").servingSize("100g").baseAmount(BigDecimal.valueOf(100)).baseUnit("g").calories(BigDecimal.ONE).sourceUpdatedDate("").build();
+        when(client.search("clock", 1, 10)).thenReturn(FoodNutrition.SearchResult.builder().items(List.of(food)).page(1).size(10).totalCount(1).build());
         var service = new FoodNutritionService(client, clock);
         service.search("clock", 1, 10);
         when(clock.instant()).thenReturn(start.plusSeconds(299));

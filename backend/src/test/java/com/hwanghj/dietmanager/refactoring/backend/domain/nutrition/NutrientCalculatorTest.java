@@ -12,7 +12,7 @@ class NutrientCalculatorTest {
     @Test void unknownValuesStayUnknownAndAreCounted() {
         assertThat(NutrientCalculator.scale(null, BigDecimal.ONE, BigDecimal.TEN)).isNull();
         var total = NutrientCalculator.sum(Arrays.asList(new BigDecimal("1.25"), null, new BigDecimal("2.50")), value -> value);
-        assertThat(total.value()).isEqualByComparingTo("3.75");
-        assertThat(total.missingCount()).isEqualTo(1);
+        assertThat(total.getValue()).isEqualByComparingTo("3.75");
+        assertThat(total.getMissingCount()).isEqualTo(1);
     }
 }

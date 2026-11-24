@@ -20,8 +20,8 @@ public class AuthController {
         checkOrigin(request);
         try {
             var pair=sessions.refresh(token);
-            AuthCookies.write(response,pair.refreshToken());
-            return Map.of("accessToken",pair.accessToken());
+            AuthCookies.write(response,pair.getRefreshToken());
+            return Map.of("accessToken",pair.getAccessToken());
         } catch (SessionExpiredException error) {
             AuthCookies.write(response,null); throw error;
         }

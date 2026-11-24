@@ -43,8 +43,8 @@ public class IntakeRecord extends BaseTimeEntity {
 
     public void markManual() { manual=true; }
     public void editNutrition(IntakeDto.NutritionInput input) {
-        nutritionEdited=true; editedFoodName=input.foodName().trim(); editedBaseAmount=input.baseAmount();
-        editedCalories=input.calories(); editedCarbohydrate=input.carbohydrate(); editedProtein=input.protein(); editedFat=input.fat();
+        nutritionEdited=true; editedFoodName=input.getFoodName().trim(); editedBaseAmount=input.getBaseAmount();
+        editedCalories=input.getCalories(); editedCarbohydrate=input.getCarbohydrate(); editedProtein=input.getProtein(); editedFat=input.getFat();
     }
     public String effectiveFoodName() { return nutritionEdited ? editedFoodName : foodName; }
     public BigDecimal effectiveBaseAmount() { return nutritionEdited ? editedBaseAmount : baseAmount; }
@@ -54,10 +54,10 @@ public class IntakeRecord extends BaseTimeEntity {
     public BigDecimal effectiveFat() { return nutritionEdited ? editedFat : baseFat; }
 
     public IntakeRecord(User user, FoodNutrition food, LocalDate date, MealType meal, BigDecimal amount) {
-        this.user = user; this.foodCode = food.foodCode(); this.foodName = food.foodName(); this.makerName = food.makerName();
-        this.baseAmount = food.baseAmount(); this.unit = food.baseUnit(); this.baseCalories = food.calories();
-        this.baseCarbohydrate = food.carbohydrate(); this.baseProtein = food.protein(); this.baseFat = food.fat();
-        this.sourceUpdatedDate = food.sourceUpdatedDate(); update(date, meal, amount);
+        this.user = user; this.foodCode = food.getFoodCode(); this.foodName = food.getFoodName(); this.makerName = food.getMakerName();
+        this.baseAmount = food.getBaseAmount(); this.unit = food.getBaseUnit(); this.baseCalories = food.getCalories();
+        this.baseCarbohydrate = food.getCarbohydrate(); this.baseProtein = food.getProtein(); this.baseFat = food.getFat();
+        this.sourceUpdatedDate = food.getSourceUpdatedDate(); update(date, meal, amount);
     }
     public void update(LocalDate date, MealType meal, BigDecimal amount) { this.eatenDate = date; this.mealType = meal; this.amount = amount; }
     public void delete() { deleted = true; }

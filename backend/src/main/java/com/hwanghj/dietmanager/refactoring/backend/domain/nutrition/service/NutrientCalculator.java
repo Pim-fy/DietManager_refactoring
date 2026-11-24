@@ -3,8 +3,15 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.function.Function;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 public final class NutrientCalculator {
-    public record Total(BigDecimal value, int missingCount) {}
+    @Getter
+    @AllArgsConstructor
+    public static class Total {
+        private final BigDecimal value;
+        private final int missingCount;
+    }
     private NutrientCalculator() {}
     public static BigDecimal scale(BigDecimal nutrient, BigDecimal amount, BigDecimal basis) {
         return nutrient == null ? null : nutrient.multiply(amount).divide(basis, 2, RoundingMode.HALF_UP);

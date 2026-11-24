@@ -23,14 +23,14 @@ class FoodApiQuotaTest {
     @Test void minuteLimitRejectsBeforeIncrementingDailyCounter() {
         var quota=quota(2,10); quota.reserve(); quota.reserve();
         assertThatThrownBy(quota::reserve).isInstanceOf(FoodApiLimitException.class);
-        assertThat(quota.status().calls()).isEqualTo(2);
+        assertThat(quota.status().getCalls()).isEqualTo(2);
         verify(repository,times(2)).saveAndFlush(any());
     }
     @Test void dailyLimitSurvivesNewQuotaInstance() {
         var quota=quota(10,2); quota.reserve(); quota.reserve();
         var restarted=new FoodApiQuota(repository,10,2,manager);
         assertThatThrownBy(restarted::reserve).isInstanceOf(FoodApiLimitException.class);
-        assertThat(restarted.status().calls()).isEqualTo(2);
-        assertThat(restarted.status().recentMinuteCalls()).isZero();
+        assertThat(restarted.status().getCalls()).isEqualTo(2);
+        assertThat(restarted.status().getRecentMinuteCalls()).isZero();
     }
 }

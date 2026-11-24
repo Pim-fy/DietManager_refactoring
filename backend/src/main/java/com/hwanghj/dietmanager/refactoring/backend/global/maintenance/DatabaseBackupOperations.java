@@ -41,23 +41,23 @@ final class DatabaseBackupOperations {
         restoreAndVerify(connection,backup,false);
     }
     public static String restoreAndVerify(Connection connection,Backup backup,boolean keep) throws Exception {
-        if(backup.format()!=1) throw new IllegalArgumentException("지원하지 않는 백업 형식");
+        if(backup.getFormat()!=1) throw new IllegalArgumentException("지원하지 않는 백업 형식");
         String prefix="dm_restore_"+UUID.randomUUID().toString().replace("-","").substring(0,12)+"_";
         var created=new ArrayList<String>();
         boolean verified=false;
         try {
             try(var statement=connection.createStatement()) {
                 statement.execute("SET FOREIGN_KEY_CHECKS=0");
-                for(Table table:backup.tables()) {
-                    if(!TABLES.contains(table.name()) || !table.ddl().startsWith("CREATE TABLE `"+table.name()+"`")) throw new IllegalArgumentException("백업 테이블 확인 실패");
-                    String ddl=table.ddl();
+                for(Table table:backup.getTables()) {
+                    if(!TABLES.contains(table.getName()) || !table.getDdl().startsWith("CREATE TABLE `"+table.getName()+"`")) throw new IllegalArgumentException("백업 테이블 확인 실패");
+                    String ddl=table.getDdl();
                     for(String name:TABLES) ddl=ddl.replace("`"+name+"`","`"+prefix+name+"`");
                     // 외래키 이름은 스키마 내에서 고유해야 한다.
                     ddl=ddl.replaceAll("CONSTRAINT `([^`]+)`", "CONSTRAINT `"+prefix+"$1`");
-                    statement.execute(ddl); created.add(prefix+table.name());
-                    String placeholders=String.join(",",Collections.nCopies(table.columns().size(),"?"));
-                    try(var insert=connection.prepareStatement("INSERT INTO `"+prefix+table.name()+"` VALUES ("+placeholders+")")) {
-                        for(var row:table.rows()) {
+                    statement.execute(ddl); created.add(prefix+table.getName());
+                    String placeholders=String.join(",",Collections.nCopies(table.getColumns().size(),"?"));
+                    try(var insert=connection.prepareStatement("INSERT INTO `"+prefix+table.getName()+"` VALUES ("+placeholders+")")) {
+                        for(var row:table.getRows()) {
                             for(int i=0;i<row.size();i++) insert.setString(i+1,row.get(i));
                             insert.addBatch();
                         }
@@ -66,13 +66,13 @@ final class DatabaseBackupOperations {
                 }
                 statement.execute("SET FOREIGN_KEY_CHECKS=1");
             }
-            for(Table expected:backup.tables()) {
+            for(Table expected:backup.getTables()) {
                 var rows=new ArrayList<List<String>>();
-                try(var statement=connection.createStatement(); var rs=statement.executeQuery("SELECT * FROM `"+prefix+expected.name()+"`")) {
-                    while(rs.next()) { var row=new ArrayList<String>(); for(int i=1;i<=expected.columns().size();i++) row.add(rs.getString(i)); rows.add(row); }
+                try(var statement=connection.createStatement(); var rs=statement.executeQuery("SELECT * FROM `"+prefix+expected.getName()+"`")) {
+                    while(rs.next()) { var row=new ArrayList<String>(); for(int i=1;i<=expected.getColumns().size();i++) row.add(rs.getString(i)); rows.add(row); }
                 }
                 // 행 순서에 의존하지 않고 중복까지 보존하여 모든 컬럼 값을 비교한다.
-                if(!bag(expected.rows()).equals(bag(rows))) throw new IllegalStateException("복원 내용 불일치: "+expected.name());
+                if(!bag(expected.getRows()).equals(bag(rows))) throw new IllegalStateException("복원 내용 불일치: "+expected.getName());
             }
             System.out.println("격리된 임시 MySQL 테이블에서 백업 복원 및 전체 행 비교 완료");
             verified=true;

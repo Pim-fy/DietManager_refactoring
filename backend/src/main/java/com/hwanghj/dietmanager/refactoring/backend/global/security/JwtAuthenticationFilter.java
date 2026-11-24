@@ -40,12 +40,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = resolvetoken(request);
         
         var claims = token == null ? null : jwtTokenProvider.authentication(token);
-        Long userId = claims == null ? null : claims.userId();
+        Long userId = claims == null ? null : claims.getUserId();
         if(userId != null) {
 
             User user = userRepository.findById(userId).orElse(null);
             
-            if(user != null && user.getTokenVersion()==claims.version() && sessions.active(claims.sessionId(),userId,claims.version())) {
+            if(user != null && user.getTokenVersion()==claims.getVersion() && sessions.active(claims.getSessionId(),userId,claims.getVersion())) {
                 CustomUserDetails userDetails = new CustomUserDetails(user);
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 

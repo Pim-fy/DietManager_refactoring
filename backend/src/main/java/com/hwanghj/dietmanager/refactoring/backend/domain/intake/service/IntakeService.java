@@ -1,5 +1,6 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.intake.service;
 
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
 import java.time.LocalDate;
 
 import org.springframework.stereotype.Service;
@@ -24,25 +25,42 @@ public class IntakeService {
     @Transactional
     public IntakeDto.Response create(Long userId, IntakeDto.CreateRequest request) {
         var user = users.findById(userId).orElseThrow(UserNotFoundException::new);
-        var food = foods.resolve(userId, request.foodCode());
+        var food = foods.resolve(userId, request.getFoodCode());
         foods.used(userId, food);
-        return IntakeMapper.response(repository.save(new IntakeRecord(user, food, request.eatenDate(), request.mealType(), request.amount())));
+        return IntakeMapper.response(repository.save(new IntakeRecord(user, food, request.getEatenDate(), request.getMealType(), request.getAmount())));
     }
     @Transactional(readOnly = true)
     public IntakeDto.DailyResponse daily(Long userId, LocalDate date) {
         var items = repository.findByUserIdAndEatenDateAndDeletedFalseOrderByIdAsc(userId, date).stream().map(IntakeMapper::response).toList();
         var deletedItems = repository.findByUserIdAndEatenDateAndDeletedTrueOrderByIdAsc(userId, date).stream().map(IntakeMapper::response).toList();
-        return new IntakeDto.DailyResponse(date, items, deletedItems, IntakeMapper.total(items, IntakeDto.Response::calories), IntakeMapper.total(items, IntakeDto.Response::carbohydrate),
-            IntakeMapper.total(items, IntakeDto.Response::protein), IntakeMapper.total(items, IntakeDto.Response::fat));
+        return IntakeDto.DailyResponse.builder()
+            .date(date)
+            .items(items)
+            .deletedItems(deletedItems)
+            .calories(IntakeMapper.total(items, IntakeDto.Response::getCalories))
+            .carbohydrate(IntakeMapper.total(items, IntakeDto.Response::getCarbohydrate))
+            .protein(IntakeMapper.total(items, IntakeDto.Response::getProtein))
+            .fat(IntakeMapper.total(items, IntakeDto.Response::getFat))
+            .build();
     }
     @Transactional
     public IntakeDto.Response createManual(Long userId, IntakeDto.ManualRequest request) {
         var user=users.findById(userId).orElseThrow(UserNotFoundException::new);
-        var input=request.nutrition();
-        var food=new com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition("manual:"+java.util.UUID.randomUUID(),
-            input.foodName().trim(),"",input.baseAmount()+request.unit(),input.baseAmount(),request.unit(),
-            input.calories(),input.carbohydrate(),input.protein(),input.fat(),"");
-        var record=new IntakeRecord(user,food,request.eatenDate(),request.mealType(),request.amount());
+        var input=request.getNutrition();
+        var food=FoodNutrition.builder()
+            .foodCode("manual:"+java.util.UUID.randomUUID())
+            .foodName(input.getFoodName().trim())
+            .makerName("")
+            .servingSize(input.getBaseAmount()+request.getUnit())
+            .baseAmount(input.getBaseAmount())
+            .baseUnit(request.getUnit())
+            .calories(input.getCalories())
+            .carbohydrate(input.getCarbohydrate())
+            .protein(input.getProtein())
+            .fat(input.getFat())
+            .sourceUpdatedDate("")
+            .build();
+        var record=new IntakeRecord(user,food,request.getEatenDate(),request.getMealType(),request.getAmount());
         record.markManual(); return IntakeMapper.response(repository.save(record));
     }
     @Transactional
@@ -55,7 +73,7 @@ public class IntakeService {
     public IntakeDto.Response update(Long userId, Long id, IntakeDto.UpdateRequest request) {
         var record = owned(userId, id);
         if (record.isDeleted()) throw new IntakeException("삭제된 기록은 먼저 복구해주세요.");
-        record.update(request.eatenDate(), request.mealType(), request.amount()); return IntakeMapper.response(record);
+        record.update(request.getEatenDate(), request.getMealType(), request.getAmount()); return IntakeMapper.response(record);
     }
     @Transactional
     public void delete(Long userId, Long id) { owned(userId, id).delete(); }
