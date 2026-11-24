@@ -10,7 +10,9 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.repository
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.dto.NutritionDto;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.ActivityLevel;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.NutritionPreference;
+import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.SettingHistory;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.repository.NutritionPreferenceRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.GoalType;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserProfileRepository;
 
 @Service
@@ -18,11 +20,14 @@ public class NutritionService {
     private final NutritionPreferenceRepository preferences;
     private final UserProfileRepository profiles;
     private final BodyMeasurementRepository measurements;
+    private final SettingHistoryService histories;
 
-    public NutritionService(NutritionPreferenceRepository preferences, UserProfileRepository profiles, BodyMeasurementRepository measurements) {
+    public NutritionService(NutritionPreferenceRepository preferences, UserProfileRepository profiles, BodyMeasurementRepository measurements,
+            SettingHistoryService histories) {
         this.preferences = preferences;
         this.profiles = profiles;
         this.measurements = measurements;
+        this.histories = histories;
     }
 
     @Transactional(readOnly = true)
@@ -34,16 +39,21 @@ public class NutritionService {
 
     @Transactional
     public NutritionDto.Preference save(Long userId, ActivityLevel activity) {
-        var preference = preferences.findById(userId).orElseGet(() -> new NutritionPreference(userId, activity));
+        var existing = preferences.findById(userId);
+        ActivityLevel previous = existing.map(NutritionPreference::getActivityLevel).orElse(null);
+        var preference = existing.orElseGet(() -> new NutritionPreference(userId, activity));
         preference.update(activity);
         preferences.save(preference);
+        profiles.findByUserId(userId).ifPresent(profile -> histories.activityChanged(profile, previous, activity));
         return NutritionDto.Preference.builder().activityLevel(activity).build();
     }
 
     @Transactional(readOnly = true)
     public NutritionDto.Recommendation recommendation(Long userId, LocalDate date) {
         var profile = profiles.findByUserId(userId).orElse(null);
-        var activity = preference(userId).getActivityLevel();
+        // 조회 날짜 당시의 목표·활동량. 이력이 없으면 현재 설정을 쓴다.
+        var setting = histories.at(userId, date);
+        var activity = setting.isPresent() ? setting.get().getActivityLevel() : preference(userId).getActivityLevel();
         var measurement = measurements.findTopByUserIdAndDeletedFalseAndMeasuredDateLessThanEqualOrderByMeasuredDateDescIdDesc(userId, date).orElse(null);
         String reason = profile == null ? "프로필을 먼저 등록해주세요."
                 : activity == null ? "활동량을 먼저 선택해주세요."
@@ -53,7 +63,8 @@ public class NutritionService {
         if (reason != null)
             return RecommendationCalculator.unavailable(date, activity, reason);
         int age = Period.between(profile.getBirthDate(), date).getYears();
-        return RecommendationCalculator.calculate(measurement.getWeight(), measurement.getHeight(), age, profile.getGender(), profile.getGoalType(), activity,
+        GoalType goal = setting.map(SettingHistory::getGoalType).orElse(profile.getGoalType());
+        return RecommendationCalculator.calculate(measurement.getWeight(), measurement.getHeight(), age, profile.getGender(), goal, activity,
                 date, measurement.getMeasuredDate());
     }
 }

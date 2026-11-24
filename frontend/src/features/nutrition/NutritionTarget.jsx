@@ -115,8 +115,8 @@ export default function NutritionTarget({ call, date, daily }) {
       ) : null}
       {target && daily?.date === date ? <ExcessWarning daily={daily} target={target} /> : null}
       <p className="help">
-        만 19세 이상 일반 성인의 참고 추정값입니다. Mifflin–St Jeor 공식, 목표별 ±300 kcal, 탄수화물·단백질·지방 50·20·30%를 적용합니다. 과거 날짜도 현재 프로필과
-        활동량을 사용합니다.
+        만 19세 이상 일반 성인의 참고 추정값입니다. Mifflin–St Jeor 공식, 목표별 ±300 kcal, 탄수화물·단백질·지방 50·20·30%를 적용합니다. 과거 날짜는 그날 적용 중이던
+        목표와 활동량으로 계산합니다.
       </p>
     </section>
   )
