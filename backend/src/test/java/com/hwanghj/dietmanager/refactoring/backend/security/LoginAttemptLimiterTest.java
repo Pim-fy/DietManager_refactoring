@@ -13,6 +13,13 @@ class LoginAttemptLimiterTest {
         when(clock.instant()).thenReturn(start.plusSeconds(600));
         assertThatCode(()->limiter.check("ip","User@example.test")).doesNotThrowAnyException();
     }
+    @Test void fullFailureTableDoesNotBlockOtherUsers() {
+        var limiter=new LoginAttemptLimiter();
+        for(int i=0;i<LoginAttemptLimiter.MAX_ENTRIES;i++) limiter.failed("ip-"+i,i+"@example.test");
+        assertThatCode(()->limiter.check("fresh-ip","fresh@example.test")).doesNotThrowAnyException();
+        for(int i=0;i<5;i++) limiter.failed("fresh-ip","fresh@example.test");
+        assertThatThrownBy(()->limiter.check("fresh-ip","fresh@example.test")).isInstanceOf(LoginAttemptLimiter.Limited.class);
+    }
     @Test void ipLimitCoversDifferentAccountsAndSuccessfulLoginResetsAccount() {
         var limiter=new LoginAttemptLimiter();
         for(int i=0;i<30;i++) limiter.failed("ip",i+"@example.test");
