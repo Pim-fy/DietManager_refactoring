@@ -142,6 +142,26 @@ class JwtIntegrationTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {"/api/not-mapped", "/api/users/not-mapped", "/not-mapped"})
+    void unlistedPathsRequireAuthentication(String path) throws Exception {
+        mvc.perform(get(path)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void publicEndpointsStayOpen() throws Exception {
+        mvc.perform(post("/api/users/register").contentType(MediaType.APPLICATION_JSON).content("{}"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/users/login").contentType(MediaType.APPLICATION_JSON).content("{}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void authenticatedUnknownPathIsNotFound() throws Exception {
+        mvc.perform(get("/api/not-mapped").header("Authorization", "Bearer " + registerAndLogin()))
+            .andExpect(status().isNotFound());
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = {"/account", "/profile", "/password"})
     void updatesRequireAuthentication(String path) throws Exception {
         mvc.perform(patch("/api/users" + path).contentType(MediaType.APPLICATION_JSON).content("{}"))
