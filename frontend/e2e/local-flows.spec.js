@@ -174,6 +174,35 @@ test('음식 직접 입력·영양정보 수정·섭취량 변경·복구·새�
 })
 
 
+test('섭취량 경고: 권장량이 없으면 1일 기준치, 있으면 권장량과 비교', async ({ page }) => {
+  async function addManual(name, calories, carbohydrate) {
+    await page.getByRole('button', { name: '음식 직접 입력', exact: true }).click()
+    await page.getByLabel('음식명', { exact: true }).fill(name)
+    await page.getByLabel('섭취량', { exact: true }).fill('100')
+    await page.getByLabel('기준 칼로리 (kcal)').fill(String(calories))
+    await page.getByLabel('기준 탄수화물 (g)').fill(String(carbohydrate))
+    await page.getByRole('button', { name: '직접 입력 저장' }).click()
+    await expect(page.getByText('음식명과 영양정보를 저장했습니다.')).toBeVisible()
+  }
+  const warning = page.getByLabel('섭취량 경고')
+  await page.getByRole('button', { name: '섭취 기록', exact: true }).click()
+  await addManual('경고 확인 음식', 100, 10)
+  await expect(warning).toContainText('1일 기준치 이내로 섭취했습니다.')
+  await addManual('탄수화물 많은 음식', 100, 390)
+  await expect(warning.getByRole('alert')).toHaveText('탄수화물: 1일 기준치(324g) 대비 76g 초과 (123.5%)')
+
+  await page.getByRole('button', { name: '신체 기록', exact: true }).click()
+  await page.getByLabel('키 (cm)').fill('170')
+  await page.getByLabel('몸무게 (kg)').fill('70')
+  await page.getByRole('button', { name: '기록 저장' }).click()
+  await expect(page.getByText('신체 기록을 저장했습니다.')).toBeVisible()
+  await page.getByRole('button', { name: '섭취 기록', exact: true }).click()
+  await page.getByLabel('활동량').selectOption('MODERATE')
+  await page.getByRole('button', { name: '활동량 저장' }).click()
+  await addManual('칼로리 많은 음식', 5000, 0)
+  await expect(warning.getByRole('alert')).toContainText(/칼로리: 권장량\([\d,.]+kcal\) 대비 [\d,.]+kcal 초과/)
+})
+
 test('화면별 조회를 분리하고 신체 조회 실패가 다른 화면을 막지 않는다', async ({ page }) => {
   const calls = []
   page.on('request', request => { if (request.url().includes('/api/users/')) calls.push(request.url()) })
