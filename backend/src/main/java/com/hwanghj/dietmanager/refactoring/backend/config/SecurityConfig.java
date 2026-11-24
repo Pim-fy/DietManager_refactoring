@@ -7,14 +7,20 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.hwanghj.dietmanager.refactoring.backend.exception.ErrorCode;
+import com.hwanghj.dietmanager.refactoring.backend.exception.ErrorResponse;
 import com.hwanghj.dietmanager.refactoring.backend.security.JwtAuthenticationFilter;
+
+import tools.jackson.databind.ObjectMapper;
 
 @Configuration
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ObjectMapper objectMapper;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, ObjectMapper objectMapper) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.objectMapper = objectMapper;
     }
 
     @Bean
@@ -23,9 +29,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint((request, response, exception) -> {
-                response.setStatus(401);
+                response.setStatus(ErrorCode.UNAUTHORIZED.getStatus().value());
                 response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write("{\"code\":\"UNAUTHORIZED\",\"message\":\"로그인이 필요합니다.\"}");
+                response.getWriter().write(objectMapper.writeValueAsString(ErrorResponse.of(ErrorCode.UNAUTHORIZED)));
             }))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/foods/**", "/api/intakes/**", "/api/nutrition/**", "/api/statistics/**", "/api/meal-plans/**").authenticated()

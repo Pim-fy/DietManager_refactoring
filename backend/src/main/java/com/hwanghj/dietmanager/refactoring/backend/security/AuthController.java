@@ -5,7 +5,6 @@ import java.util.Map;
 import jakarta.servlet.http.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/users")
@@ -20,7 +19,7 @@ public class AuthController {
             var pair=sessions.refresh(token);
             AuthCookies.write(response,pair.refreshToken());
             return Map.of("accessToken",pair.accessToken());
-        } catch (com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException error) {
+        } catch (SessionExpiredException error) {
             AuthCookies.write(response,null); throw error;
         }
     }
@@ -32,13 +31,13 @@ public class AuthController {
     }
     private void checkOrigin(HttpServletRequest request) {
         String origin=request.getHeader("Origin");
-        if ("cross-site".equals(request.getHeader("Sec-Fetch-Site"))) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        if ("cross-site".equals(request.getHeader("Sec-Fetch-Site"))) throw new OriginNotAllowedException();
         if (origin==null) return; // 비브라우저 클라이언트는 쿠키를 명시적으로 제공한다.
         try {
             URI uri=URI.create(origin);
             boolean loopback="localhost".equals(uri.getHost()) || "127.0.0.1".equals(uri.getHost());
             if (!"http".equals(uri.getScheme()) || !loopback ||
                     (uri.getPort()!=5186 && uri.getPort()!=request.getServerPort())) throw new IllegalArgumentException();
-        } catch (IllegalArgumentException error) { throw new ResponseStatusException(HttpStatus.FORBIDDEN); }
+        } catch (IllegalArgumentException error) { throw new OriginNotAllowedException(); }
     }
 }
