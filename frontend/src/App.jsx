@@ -1,12 +1,25 @@
-import AuthPage from './components/AuthPage'
-import Workspace from './components/Workspace'
-import useAuth from './hooks/useAuth'
 import './App.css'
+
+import AuthPage from './features/auth/AuthPage'
+import useAuth from './features/auth/useAuth'
+import Workspace from './features/workspace/Workspace'
+
 export default function App() {
   const { token, notice, login, logout } = useAuth()
-  return token ? <Workspace key={token} token={token} onLogout={logout} /> : <>
-    <header className="public-header"><span className="brand">DietManager</span></header>
-    {notice ? <p className="session-notice" role="status">{notice}</p> : null}
-    <AuthPage onLogin={login} />
-  </>
+
+  if (token) return <Workspace key={token} token={token} onLogout={logout} />
+
+  return (
+    <>
+      <header className="public-header">
+        <span className="brand">DietManager</span>
+      </header>
+      {notice ? (
+        <p className="session-notice" role="status">
+          {notice}
+        </p>
+      ) : null}
+      <AuthPage onLogin={login} />
+    </>
+  )
 }
