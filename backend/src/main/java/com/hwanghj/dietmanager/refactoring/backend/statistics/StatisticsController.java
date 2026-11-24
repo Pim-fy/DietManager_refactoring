@@ -2,7 +2,7 @@ package com.hwanghj.dietmanager.refactoring.backend.statistics;
 import java.time.LocalDate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import com.hwanghj.dietmanager.refactoring.backend.security.CustomUserDetails;
+import com.hwanghj.dietmanager.refactoring.backend.global.security.CustomUserDetails;
 @RestController @RequestMapping("/api/statistics")
 public class StatisticsController {
     private final StatisticsService service;

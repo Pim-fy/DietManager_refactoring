@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import com.hwanghj.dietmanager.refactoring.backend.security.CustomUserDetails;
+import com.hwanghj.dietmanager.refactoring.backend.global.security.CustomUserDetails;
 @RestController @RequestMapping("/api/foods")
 public class FoodLibraryController {
     private final FoodLibraryService service;

@@ -2,7 +2,7 @@ package com.hwanghj.dietmanager.refactoring.backend.user;
 
 import java.time.LocalDate;
 
-import com.hwanghj.dietmanager.refactoring.backend.common.BaseTimeEntity;
+import com.hwanghj.dietmanager.refactoring.backend.global.common.BaseTimeEntity;
 import com.hwanghj.dietmanager.refactoring.backend.common.Gender;
 import com.hwanghj.dietmanager.refactoring.backend.common.GoalType;
 

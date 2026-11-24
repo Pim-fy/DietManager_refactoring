@@ -2,6 +2,7 @@ package com.hwanghj.dietmanager.refactoring.backend.nutrition;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import com.hwanghj.dietmanager.refactoring.backend.common.*;
+import com.hwanghj.dietmanager.refactoring.backend.global.common.*;
 import static org.assertj.core.api.Assertions.assertThat;
 class RecommendationCalculatorTest {
     @Test void keepsFormulaAndMacroRatios() {

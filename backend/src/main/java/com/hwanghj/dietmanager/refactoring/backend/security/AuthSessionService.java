@@ -6,6 +6,7 @@ import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.hwanghj.dietmanager.refactoring.backend.user.User;
+import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
 @Service
 public class AuthSessionService {
     private final java.time.Clock clock;

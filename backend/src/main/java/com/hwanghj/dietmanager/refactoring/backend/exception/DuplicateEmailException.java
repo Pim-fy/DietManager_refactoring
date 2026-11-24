@@ -1,5 +1,8 @@
 package com.hwanghj.dietmanager.refactoring.backend.exception;
 
+
+import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessException;
+import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 public class DuplicateEmailException extends BusinessException {
     public DuplicateEmailException() {
         // GlobalExceptionHandler에서 사용할 메시지 전달.

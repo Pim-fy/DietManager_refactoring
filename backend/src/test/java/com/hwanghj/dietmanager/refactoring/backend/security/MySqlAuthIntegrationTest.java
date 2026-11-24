@@ -12,12 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 class MySqlAuthIntegrationTest extends AuthSessionIntegrationTest {
     @org.springframework.beans.factory.annotation.Autowired javax.sql.DataSource dataSource;
     @org.junit.jupiter.api.Test void restoredTablesCanBeRetainedForRecovery() throws Exception {
-        var table=new com.hwanghj.dietmanager.refactoring.backend.maintenance.BackupModel.Table("users",
+        var table=new com.hwanghj.dietmanager.refactoring.backend.global.maintenance.BackupModel.Table("users",
             "CREATE TABLE `users` (`id` BIGINT PRIMARY KEY, `marker` VARCHAR(30)) ENGINE=InnoDB",
             java.util.List.of("id","marker"),java.util.List.of(java.util.List.of("1","restore-test")));
-        var backup=new com.hwanghj.dietmanager.refactoring.backend.maintenance.BackupModel.Backup(1,java.util.List.of(table));
+        var backup=new com.hwanghj.dietmanager.refactoring.backend.global.maintenance.BackupModel.Backup(1,java.util.List.of(table));
         try(var connection=dataSource.getConnection()) {
-            String prefix=com.hwanghj.dietmanager.refactoring.backend.maintenance.DatabaseMaintenance.restoreAndVerify(connection,backup,true);
+            String prefix=com.hwanghj.dietmanager.refactoring.backend.global.maintenance.DatabaseMaintenance.restoreAndVerify(connection,backup,true);
             try(var statement=connection.createStatement()) {
                 try(var rows=statement.executeQuery("SELECT marker FROM `"+prefix+"users`")) {
                     org.assertj.core.api.Assertions.assertThat(rows.next()).isTrue();

@@ -1,4 +1,4 @@
-package com.hwanghj.dietmanager.refactoring.backend.config;
+package com.hwanghj.dietmanager.refactoring.backend.global.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

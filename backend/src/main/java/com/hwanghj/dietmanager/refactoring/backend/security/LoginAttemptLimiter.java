@@ -4,8 +4,8 @@ import java.util.*;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import org.springframework.stereotype.Component;
-import com.hwanghj.dietmanager.refactoring.backend.exception.BusinessException;
-import com.hwanghj.dietmanager.refactoring.backend.exception.ErrorCode;
+import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessException;
+import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 @Component
 public class LoginAttemptLimiter {
     public static class Limited extends BusinessException {

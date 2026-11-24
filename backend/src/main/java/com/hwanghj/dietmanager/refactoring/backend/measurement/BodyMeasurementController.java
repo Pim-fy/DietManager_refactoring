@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.hwanghj.dietmanager.refactoring.backend.security.CustomUserDetails;
+import com.hwanghj.dietmanager.refactoring.backend.global.security.CustomUserDetails;
 
 import jakarta.validation.Valid;
 

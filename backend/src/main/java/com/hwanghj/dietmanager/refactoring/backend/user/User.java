@@ -1,6 +1,6 @@
 package com.hwanghj.dietmanager.refactoring.backend.user;
 
-import com.hwanghj.dietmanager.refactoring.backend.common.BaseTimeEntity;
+import com.hwanghj.dietmanager.refactoring.backend.global.common.BaseTimeEntity;
 import com.hwanghj.dietmanager.refactoring.backend.common.UserRole;
 
 import jakarta.persistence.CascadeType;

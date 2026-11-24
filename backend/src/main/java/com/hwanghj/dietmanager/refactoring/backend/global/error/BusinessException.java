@@ -1,4 +1,4 @@
-package com.hwanghj.dietmanager.refactoring.backend.exception;
+package com.hwanghj.dietmanager.refactoring.backend.global.error;
 
 /**
  * 업무 규칙 위반을 나타내는 예외의 공통 부모.

@@ -3,7 +3,7 @@ import java.time.LocalDate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.hwanghj.dietmanager.refactoring.backend.security.CustomUserDetails;
+import com.hwanghj.dietmanager.refactoring.backend.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 
 @RestController

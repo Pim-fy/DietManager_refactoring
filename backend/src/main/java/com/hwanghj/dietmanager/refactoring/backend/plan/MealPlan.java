@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import com.hwanghj.dietmanager.refactoring.backend.common.BaseTimeEntity;
+import com.hwanghj.dietmanager.refactoring.backend.global.common.BaseTimeEntity;
 import com.hwanghj.dietmanager.refactoring.backend.user.User;
 import com.hwanghj.dietmanager.refactoring.backend.food.FoodNutrition;
 import com.hwanghj.dietmanager.refactoring.backend.food.FoodSnapshot;
