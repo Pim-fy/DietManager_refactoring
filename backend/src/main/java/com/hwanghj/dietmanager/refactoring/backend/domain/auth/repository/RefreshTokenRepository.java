@@ -5,20 +5,17 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
 
-import com.hwanghj.dietmanager.refactoring.backend.domain.auth.entity.AuthSession;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.entity.RefreshToken;
 
 import jakarta.persistence.LockModeType;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, String> {
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select t from RefreshToken t where t.tokenHash = :hash")
-    Optional<RefreshToken> locked(String hash);
 
-    @Modifying
-    @Query("delete from RefreshToken t where t.session.id in (select s.id from AuthSession s where s.expiresAt <= :now or s.revoked = true)")
-    int deleteInactive(LocalDateTime now);
+    // 갱신·로그아웃 시 같은 토큰을 동시에 쓰지 못하게 행을 잠근다.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<RefreshToken> findWithLockByTokenHash(String tokenHash);
+
+    // 만료됐거나 폐기된 세션의 토큰 삭제. 세션보다 먼저 지운다.
+    long deleteBySessionExpiresAtLessThanEqualOrSessionRevokedTrue(LocalDateTime now);
 }

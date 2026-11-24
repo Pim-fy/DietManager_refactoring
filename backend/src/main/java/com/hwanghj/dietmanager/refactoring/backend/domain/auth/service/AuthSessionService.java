@@ -59,7 +59,7 @@ public class AuthSessionService {
 
     @Transactional(noRollbackFor = SessionExpiredException.class)
     public Pair refresh(String value) {
-        var token = tokens.locked(hash(value)).orElseThrow(SessionExpiredException::new);
+        var token = tokens.findWithLockByTokenHash(hash(value)).orElseThrow(SessionExpiredException::new);
         var session = token.getSession();
         if (token.isUsed()) {
             session.revoke();
@@ -74,7 +74,7 @@ public class AuthSessionService {
     @Transactional
     public void logout(String value) {
         if (value != null)
-            tokens.locked(hash(value)).ifPresent(token -> token.getSession().revoke());
+            tokens.findWithLockByTokenHash(hash(value)).ifPresent(token -> token.getSession().revoke());
     }
 
     @Transactional(readOnly = true)
