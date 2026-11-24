@@ -34,7 +34,7 @@
 - 새 로그인 토큰은 서버 로그아웃·갱신 토큰 재사용으로 폐기된다. 비밀번호 변경은 기존 Access·Refresh Token을 모두 무효화한다.
 
 ### 로컬 실행
-1. 백엔드 실행: `cd backend`, `./gradlew bootRun --args="--spring.profiles.active=local,maintenance"` (Windows: `gradlew.bat`). DB·JWT 설정이 담긴 `application-local.properties`가 필요하며 저장소에는 포함되지 않는다. `maintenance` 프로필은 Flyway를 켜고 JPA를 `validate`로 둔다. 이 프로필 없이 실행하면 기본 설정 `ddl-auto=create`가 적용될 수 있으므로 사용하지 않는다.
+1. 백엔드 실행: `cd backend`, `./gradlew bootRun --args="--spring.profiles.active=local,maintenance"` (Windows: `gradlew.bat`). DB·JWT 설정이 담긴 `application-local.properties`가 필요하며 저장소에는 포함되지 않는다. 기본 설정에서 Flyway가 켜지고 JPA는 `validate`로 동작하므로 스키마를 다시 만들지 않는다.
 2. 프론트엔드 실행: `cd frontend`, `npm ci`, `npm run dev`.
 3. `http://localhost:5186`에서 접속한다. 개발·미리보기 포트는 5186으로 고정하며,
    사용 중이면 자동으로 다른 포트로 이동하지 않고 실행을 중단한다.
@@ -89,7 +89,7 @@ API: `GET /api/foods?keyword=김밥&page=1&size=10`, `GET /api/intakes?date=2026
 `POST /api/intakes/{id}/restore`. 모두 JWT 인증이 필요하다.
 
 DB 스키마는 `backend/src/main/resources/db/migration`의 Flyway V1~V4로 관리한다.
-`maintenance` 프로필에서는 새 빈 DB에 V1부터 순서대로 적용된다.
+새 빈 DB에는 V1부터 순서대로 적용된다.
 
 백엔드 일반 테스트 106개와 MySQL 통합 테스트 24개가 통과했다(2026-11-23 재실행).
 Chrome E2E 테스트는 구현되어 있으며, 서버를 실행한 뒤 직접 실행해야 한다.
