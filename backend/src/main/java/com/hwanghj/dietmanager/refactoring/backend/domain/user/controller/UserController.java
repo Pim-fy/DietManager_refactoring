@@ -11,7 +11,6 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.auth.controller.AuthCo
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.LoginAttemptLimiter;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.UserLoginDto;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.UserRegisterDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.AuthenticationService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,15 +40,11 @@ public class UserController {
     public ResponseEntity<UserLoginDto.Response> login(
             @Valid @RequestBody UserLoginDto.Request request, HttpServletResponse servletResponse,
             HttpServletRequest servletRequest) {
-        loginLimiter.check(servletRequest.getRemoteAddr(), request.getEmail());
-        UserLoginDto.Response result;
-        try {
-            result = authenticationService.login(request);
-        } catch (InvalidLoginException error) {
-            loginLimiter.failed(servletRequest.getRemoteAddr(), request.getEmail());
-            throw error;
-        }
-        loginLimiter.succeeded(request.getEmail());
+        // 비밀번호 검사 전에 시도를 먼저 센다(동시 요청으로 한도를 넘지 못하게). 실패하면 그대로 남는다.
+        String ip = servletRequest.getRemoteAddr();
+        loginLimiter.attempt(ip, request.getEmail());
+        UserLoginDto.Response result = authenticationService.login(request);
+        loginLimiter.succeeded(ip, request.getEmail());
         if (result.getRefreshToken() != null)
             AuthCookies.write(servletResponse, result.getRefreshToken());
         return ResponseEntity

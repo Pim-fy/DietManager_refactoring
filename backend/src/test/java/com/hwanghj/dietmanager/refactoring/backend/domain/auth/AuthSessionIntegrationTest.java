@@ -10,7 +10,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -43,8 +51,42 @@ class AuthSessionIntegrationTest {
             mvc.perform(post("/api/users/login").contentType(MediaType.APPLICATION_JSON).content(body))
                     .andExpect(status().isUnauthorized());
         mvc.perform(post("/api/users/login").contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isTooManyRequests()).andExpect(header().string("Retry-After", "600"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(result -> Assertions.assertThat(Long.parseLong(result.getResponse().getHeader("Retry-After"))).isBetween(590L, 600L))
                 .andExpect(jsonPath("$.code").value("LOGIN_LIMIT"));
+    }
+
+    @Test
+    void concurrentFailedLoginsOnSameAccountCheckPasswordOnlyUpToLimit() throws Exception {
+        String body = "{\"email\":\"" + UUID.randomUUID() + "@example.test\",\"password\":\"InvalidPassword123!\"}";
+        String ip = "198.51.100." + ThreadLocalRandom.current().nextInt(1, 255);
+        int threads = 30;
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        try {
+            var ready = new CountDownLatch(threads);
+            var go = new CountDownLatch(1);
+            List<Future<Integer>> results = new ArrayList<>();
+            for (int i = 0; i < threads; i++) {
+                Callable<Integer> task = () -> {
+                    ready.countDown();
+                    go.await();
+                    return mvc.perform(post("/api/users/login").contentType(MediaType.APPLICATION_JSON).content(body).with(request -> {
+                        request.setRemoteAddr(ip);
+                        return request;
+                    })).andReturn().getResponse().getStatus();
+                };
+                results.add(pool.submit(task));
+            }
+            ready.await();
+            go.countDown();
+            List<Integer> statuses = new ArrayList<>();
+            for (Future<Integer> result : results)
+                statuses.add(result.get());
+            Assertions.assertThat(statuses).filteredOn(code -> code == 401).hasSize(5);
+            Assertions.assertThat(statuses).filteredOn(code -> code == 429).hasSize(threads - 5);
+        } finally {
+            pool.shutdownNow();
+        }
     }
 
     @Autowired
