@@ -4,3 +4,5 @@ CLAUDE.md
 /.local-backups/
 /frontend/test-results/
 /frontend/playwright-report/
+/docs/
+/backend/src/main/resources/db/mysql/
