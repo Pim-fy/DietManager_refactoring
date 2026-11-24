@@ -1,0 +1,10 @@
+ALTER TABLE users ADD COLUMN token_version BIGINT NOT NULL DEFAULT 0;
+CREATE TABLE auth_sessions (
+id VARCHAR(36) NOT NULL PRIMARY KEY, user_id BIGINT NOT NULL,
+token_version BIGINT NOT NULL, expires_at DATETIME(6) NOT NULL, revoked BOOLEAN NOT NULL,
+FOREIGN KEY(user_id) REFERENCES users(id), INDEX idx_auth_user(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE refresh_tokens (
+token_hash VARCHAR(64) NOT NULL PRIMARY KEY, session_id VARCHAR(36) NOT NULL, used BOOLEAN NOT NULL,
+FOREIGN KEY(session_id) REFERENCES auth_sessions(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
