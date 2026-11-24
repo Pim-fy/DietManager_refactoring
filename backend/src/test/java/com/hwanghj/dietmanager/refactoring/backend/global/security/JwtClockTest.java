@@ -2,7 +2,7 @@ package com.hwanghj.dietmanager.refactoring.backend.global.security;
 import java.time.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
-import com.hwanghj.dietmanager.refactoring.backend.user.User;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.User;
 import static org.assertj.core.api.Assertions.assertThat;
 class JwtClockTest {
     @Test void tokenExpiresUsingInjectedTime() {

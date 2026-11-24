@@ -8,7 +8,7 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.hwanghj.dietmanager.refactoring.backend.user.User;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.User;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;

@@ -13,8 +13,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
-import com.hwanghj.dietmanager.refactoring.backend.food.*;
-import com.hwanghj.dietmanager.refactoring.backend.intake.IntakeException;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.intake.exception.IntakeException;
 
 @SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("test")
 class FeatureIntegrationTest {
@@ -64,7 +65,7 @@ class FeatureIntegrationTest {
         String auth=login("1995-01-01","GAIN_WEIGHT"); measurement(auth,"2026-01-01",70);
         mvc.perform(patch("/api/users/profile").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON)
             .content("{\"gender\":\"FEMALE\",\"birthDate\":\"1995-01-01\",\"goalType\":\"GAIN_WEIGHT\"}")).andExpect(status().isOk());
-        for (var activity:com.hwanghj.dietmanager.refactoring.backend.nutrition.ActivityLevel.values()) {
+        for (var activity:com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.ActivityLevel.values()) {
             mvc.perform(put("/api/nutrition/preferences").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON).content("{\"activityLevel\":\""+activity.name()+"\"}"))
                 .andExpect(status().isOk());
             double target=BigDecimal.valueOf(1446.5*activity.factor+300).setScale(2,java.math.RoundingMode.HALF_UP).doubleValue();
@@ -100,7 +101,7 @@ class FeatureIntegrationTest {
         String auth=login("1995-01-01","MAINTAIN_WEIGHT"),other=login("1995-01-01","MAINTAIN_WEIGHT"),code=food();
         mvc.perform(put("/api/foods/favorites").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON).content("{\"foodCode\":\""+code+"\",\"favorite\":true}"))
             .andExpect(status().isOk());
-        when(source.selectedFood(code)).thenThrow(new com.hwanghj.dietmanager.refactoring.backend.food.FoodSelectionException("캐시 만료"));
+        when(source.selectedFood(code)).thenThrow(new com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodSelectionException("캐시 만료"));
         mvc.perform(get("/api/foods/favorites").header("Authorization",other)).andExpect(jsonPath("$.length()").value(0));
         mvc.perform(post("/api/intakes").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON).content("{\"foodCode\":\""+code+"\",\"eatenDate\":\"2026-01-01\",\"mealType\":\"LUNCH\",\"amount\":150}"))
             .andExpect(status().isCreated()).andExpect(jsonPath("$.calories").value(300));

@@ -17,7 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.hwanghj.dietmanager.refactoring.backend.statistics.StatisticsService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.statistics.StatisticsService;
 
 import tools.jackson.databind.ObjectMapper;
 

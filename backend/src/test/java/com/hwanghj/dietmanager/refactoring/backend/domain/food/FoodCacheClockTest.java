@@ -1,0 +1,28 @@
+package com.hwanghj.dietmanager.refactoring.backend.domain.food;
+import java.math.BigDecimal;
+import java.time.*;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodSelectionException;
+class FoodCacheClockTest {
+    @Test void cacheExpiresAtBoundaryWithoutSleeping() {
+        var client = mock(FoodNutritionClient.class);
+        var clock = mock(Clock.class);
+        var start = Instant.parse("2026-01-01T00:00:00Z");
+        when(clock.instant()).thenReturn(start);
+        var food = new FoodNutrition("CLOCK", "clock", "", "100g", BigDecimal.valueOf(100), "g", BigDecimal.ONE, null, null, null, "");
+        when(client.search("clock", 1, 10)).thenReturn(new FoodNutrition.SearchResult(List.of(food), 1, 10, 1));
+        var service = new FoodNutritionService(client, clock);
+        service.search("clock", 1, 10);
+        when(clock.instant()).thenReturn(start.plusSeconds(299));
+        service.search("clock", 1, 10);
+        verify(client, times(1)).search("clock", 1, 10);
+        when(clock.instant()).thenReturn(start.plusSeconds(300));
+        service.search("clock", 1, 10);
+        verify(client, times(2)).search("clock", 1, 10);
+        when(clock.instant()).thenReturn(start.plusSeconds(3900));
+        assertThatThrownBy(() -> service.selectedFood("CLOCK")).isInstanceOf(FoodSelectionException.class);
+    }
+}
