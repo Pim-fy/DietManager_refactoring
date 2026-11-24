@@ -4,10 +4,12 @@ import java.util.*;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import org.springframework.stereotype.Component;
+import com.hwanghj.dietmanager.refactoring.backend.exception.BusinessException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.ErrorCode;
 @Component
 public class LoginAttemptLimiter {
-    public static class Limited extends RuntimeException {
-        public Limited() { super("로그인 실패가 반복되어 잠시 제한되었습니다. 10분 후 다시 시도해주세요."); }
+    public static class Limited extends BusinessException {
+        public Limited() { super(ErrorCode.LOGIN_LIMIT); }
     }
     private record Window(int count,Instant started) {}
     static final int MAX_ENTRIES=10000;

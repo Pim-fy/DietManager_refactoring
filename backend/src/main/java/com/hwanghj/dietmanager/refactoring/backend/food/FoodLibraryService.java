@@ -30,7 +30,7 @@ public class FoodLibraryService {
     @Transactional
     public Item favorite(Long userId,String code,boolean value) {
         var existing=repository.findByUserIdAndSnapshotFoodCode(userId,code);
-        if (!value && existing.isEmpty()) throw new FoodSelectionException("저장된 식품을 찾을 수 없습니다.");
+        if (!value && existing.isEmpty()) throw new FoodNotFoundException();
         if (value && (existing.isEmpty() || !existing.get().isFavorite()) && repository.countByUserIdAndFavoriteTrue(userId)>=100) throw new FoodSelectionException("즐겨찾기는 최대 100개까지 저장할 수 있습니다.");
         var saved=existing.orElseGet(()->new SavedFood(users.findById(userId).orElseThrow(UserNotFoundException::new),resolve(userId,code)));
         saved.favorite(value); return item(repository.save(saved));

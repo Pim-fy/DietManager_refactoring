@@ -78,7 +78,7 @@ class FeatureIntegrationTest {
         var response=mvc.perform(post("/api/meal-plans").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         long id=mapper.readTree(response).path("id").asLong();
-        mvc.perform(post("/api/meal-plans/"+id+"/consume").header("Authorization",auth)).andExpect(status().isConflict());
+        mvc.perform(post("/api/meal-plans/"+id+"/consume").header("Authorization",auth)).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("MEAL_PLAN_CONFLICT"));
         mvc.perform(post("/api/meal-plans").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON).content(body.replace("\"amount\":100","\"amount\":-1")))
             .andExpect(status().isBadRequest());
     }
@@ -121,10 +121,10 @@ class FeatureIntegrationTest {
             .content("{\"foodCode\":\""+code+"\",\"plannedDate\":\"2026-01-01\",\"mealType\":\"DINNER\",\"amount\":100}"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.nutrition.calories").value(200));
         mvc.perform(delete("/api/meal-plans/"+id).header("Authorization",auth)).andExpect(status().isNoContent());
-        mvc.perform(post("/api/meal-plans/"+id+"/consume").header("Authorization",auth)).andExpect(status().isConflict());
+        mvc.perform(post("/api/meal-plans/"+id+"/consume").header("Authorization",auth)).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("MEAL_PLAN_CONFLICT"));
         mvc.perform(post("/api/meal-plans/"+id+"/restore").header("Authorization",auth)).andExpect(status().isOk());
         mvc.perform(post("/api/meal-plans/"+id+"/consume").header("Authorization",auth)).andExpect(status().isOk()).andExpect(jsonPath("$.intakeId").isNumber());
-        mvc.perform(post("/api/meal-plans/"+id+"/consume").header("Authorization",auth)).andExpect(status().isConflict());
+        mvc.perform(post("/api/meal-plans/"+id+"/consume").header("Authorization",auth)).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("MEAL_PLAN_CONFLICT"));
         mvc.perform(get("/api/intakes").header("Authorization",auth).param("date","2026-01-01")).andExpect(jsonPath("$.items.length()").value(1)).andExpect(jsonPath("$.calories.value").value(200));
     }
     @Test void statisticsPreserveMissingNutrientsAndRestrictRanges() throws Exception {

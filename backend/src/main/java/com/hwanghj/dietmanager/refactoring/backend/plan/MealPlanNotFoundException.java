@@ -1,4 +1,8 @@
 package com.hwanghj.dietmanager.refactoring.backend.plan;
-public class MealPlanNotFoundException extends RuntimeException {
-    public MealPlanNotFoundException() { super("섭취 기록을 찾을 수 없습니다."); }
+
+import com.hwanghj.dietmanager.refactoring.backend.exception.BusinessException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.ErrorCode;
+
+public class MealPlanNotFoundException extends BusinessException {
+    public MealPlanNotFoundException() { super(ErrorCode.MEAL_PLAN_NOT_FOUND); }
 }

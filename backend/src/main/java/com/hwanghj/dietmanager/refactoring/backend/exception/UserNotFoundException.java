@@ -1,6 +1,6 @@
 package com.hwanghj.dietmanager.refactoring.backend.exception;
 
-public class UserNotFoundException extends RuntimeException{
+public class UserNotFoundException extends BusinessException {
     
     public UserNotFoundException() {
         /*
@@ -15,6 +15,6 @@ public class UserNotFoundException extends RuntimeException{
                 - 처음에 넘긴 예외 메시지를 저장.
                 - 이후 e.getMessage() 호출 시 저장된 메시지가 반환되는 것.
         */
-        super("사용자를 찾을 수 없습니다.");
+        super(ErrorCode.USER_NOT_FOUND);
     }
 }

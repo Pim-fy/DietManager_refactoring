@@ -1,4 +1,8 @@
 package com.hwanghj.dietmanager.refactoring.backend.intake;
-public class IntakeException extends com.hwanghj.dietmanager.refactoring.backend.exception.StateConflictException {
-    public IntakeException(String message) { super(message); }
+
+import com.hwanghj.dietmanager.refactoring.backend.exception.BusinessException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.ErrorCode;
+
+public class IntakeException extends BusinessException {
+    public IntakeException(String message) { super(ErrorCode.INTAKE_CONFLICT, message); }
 }

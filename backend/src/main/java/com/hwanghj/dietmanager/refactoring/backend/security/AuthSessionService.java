@@ -6,7 +6,6 @@ import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.hwanghj.dietmanager.refactoring.backend.user.User;
-import com.hwanghj.dietmanager.refactoring.backend.exception.InvalidLoginException;
 @Service
 public class AuthSessionService {
     private final java.time.Clock clock;
@@ -19,12 +18,12 @@ public class AuthSessionService {
     public AuthSessionService(AuthSessionRepository sessions,RefreshTokenRepository tokens,JwtTokenProvider jwt, java.time.Clock clock) { this.clock = clock; this.sessions=sessions; this.tokens=tokens; this.jwt=jwt;  }
     public record Pair(String accessToken,String refreshToken) {}
     @Transactional public Pair open(User user) { return issue(sessions.save(new AuthSession(user, LocalDateTime.now(clock.withZone(ZoneOffset.UTC))))); }
-    @Transactional(noRollbackFor=InvalidLoginException.class)
+    @Transactional(noRollbackFor=SessionExpiredException.class)
     public Pair refresh(String value) {
-        var token=tokens.locked(hash(value)).orElseThrow(InvalidLoginException::new);
+        var token=tokens.locked(hash(value)).orElseThrow(SessionExpiredException::new);
         var session=token.getSession();
-        if (token.isUsed()) { session.revoke(); throw new InvalidLoginException(); }
-        if (!valid(session) || session.getTokenVersion()!=session.getUser().getTokenVersion()) throw new InvalidLoginException();
+        if (token.isUsed()) { session.revoke(); throw new SessionExpiredException(); }
+        if (!valid(session) || session.getTokenVersion()!=session.getUser().getTokenVersion()) throw new SessionExpiredException();
         token.consume(); return issue(session);
     }
     @Transactional public void logout(String value) { if (value!=null) tokens.locked(hash(value)).ifPresent(token->token.getSession().revoke()); }
@@ -40,7 +39,7 @@ public class AuthSessionService {
         return new Pair(jwt.createAccessToken(session.getUser(),session.getId()),raw);
     }
     private String hash(String value) {
-        if (value==null || value.length()>200) throw new InvalidLoginException();
+        if (value==null || value.length()>200) throw new SessionExpiredException();
         try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8))); }
         catch (NoSuchAlgorithmException e) { throw new IllegalStateException("SHA-256 unavailable"); }
     }

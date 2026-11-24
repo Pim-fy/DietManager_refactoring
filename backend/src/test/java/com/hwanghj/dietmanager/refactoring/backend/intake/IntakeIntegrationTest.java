@@ -46,7 +46,7 @@ class IntakeIntegrationTest {
             .andExpect(status().isOk()).andExpect(jsonPath("$.days[0].calories.value").value(240));
         mvc.perform(delete("/api/intakes/"+id).header("Authorization",auth)).andExpect(status().isNoContent());
         mvc.perform(patch("/api/intakes/"+id+"/nutrition").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON)
-            .content("{\"foodName\":\"불가\",\"baseAmount\":100}")).andExpect(status().isConflict());
+            .content("{\"foodName\":\"불가\",\"baseAmount\":100}")).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("INTAKE_CONFLICT"));
         mvc.perform(post("/api/intakes/"+id+"/restore").header("Authorization",auth))
             .andExpect(status().isOk()).andExpect(jsonPath("$.foodName").value("수정 음식")).andExpect(jsonPath("$.calories").value(240));
         verifyNoInteractions(client);
@@ -169,7 +169,7 @@ class IntakeIntegrationTest {
             .andExpect(status().isBadRequest());
         mvc.perform(post("/api/intakes").header("Authorization", auth).contentType(MediaType.APPLICATION_JSON)
             .content("{\"foodCode\":\"unknown\",\"eatenDate\":\"2026-01-01\",\"mealType\":\"LUNCH\",\"amount\":1}"))
-            .andExpect(status().isConflict());
+            .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("FOOD_SELECTION_CONFLICT"));
     }
     @Test void repeatedSearchUsesCache() throws Exception {
         String auth = login(); search(auth); search(auth);

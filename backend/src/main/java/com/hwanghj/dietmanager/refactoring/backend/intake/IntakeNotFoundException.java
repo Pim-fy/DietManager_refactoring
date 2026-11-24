@@ -1,4 +1,8 @@
 package com.hwanghj.dietmanager.refactoring.backend.intake;
-public class IntakeNotFoundException extends RuntimeException {
-    public IntakeNotFoundException() { super("섭취 기록을 찾을 수 없습니다."); }
+
+import com.hwanghj.dietmanager.refactoring.backend.exception.BusinessException;
+import com.hwanghj.dietmanager.refactoring.backend.exception.ErrorCode;
+
+public class IntakeNotFoundException extends BusinessException {
+    public IntakeNotFoundException() { super(ErrorCode.INTAKE_NOT_FOUND); }
 }
