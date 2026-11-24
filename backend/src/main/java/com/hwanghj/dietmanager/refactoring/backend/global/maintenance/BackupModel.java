@@ -14,7 +14,7 @@ public final class BackupModel {
 
     static final List<String> TABLES = List.of("users", "user_profiles", "body_measurements", "intake_records",
             "nutrition_preferences", "saved_foods", "meal_plans", "auth_sessions", "refresh_tokens", "food_api_usage",
-            "setting_histories", "flyway_schema_history");
+            "setting_histories", "login_failures", "flyway_schema_history");
 
     /** 테이블 하나의 백업 내용. 백업 JSON 파일 형식이므로 필드 이름을 바꾸지 않는다. */
     @Getter
