@@ -25,3 +25,4 @@ dist-ssr
 
 # 민감정보 관리
 .env.local
+.env

@@ -40,6 +40,7 @@
    사용 중이면 자동으로 다른 포트로 이동하지 않고 실행을 중단한다.
    `/api` 요청은 기본적으로 `http://localhost:8080`으로 프록시된다.
    다른 백엔드 포트는 `VITE_API_PROXY_TARGET` 환경변수로 지정한다.
+   고정으로 쓰려면 `frontend/.env.example`을 `.env.local`로 복사해 값을 넣는다(`.env`, `.env.local`은 Git에서 제외).
 
 포트를 지정해 실행하는 PowerShell 예(프론트 5186, 백엔드 18086):
 
