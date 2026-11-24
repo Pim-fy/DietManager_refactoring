@@ -2,8 +2,15 @@ package com.hwanghj.dietmanager.refactoring.backend.domain.nutrition;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.controller.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.*;
 import com.hwanghj.dietmanager.refactoring.backend.global.common.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.ActivityLevel;
+import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.service.RecommendationCalculator;
 class RecommendationCalculatorTest {
     @Test void keepsFormulaAndMacroRatios() {
         var date = LocalDate.of(2026, 1, 1);

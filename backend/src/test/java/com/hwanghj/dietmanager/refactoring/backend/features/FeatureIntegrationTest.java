@@ -14,6 +14,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.client.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.controller.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.entity.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.repository.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.*;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.*;
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.exception.IntakeException;
 
@@ -65,7 +71,7 @@ class FeatureIntegrationTest {
         String auth=login("1995-01-01","GAIN_WEIGHT"); measurement(auth,"2026-01-01",70);
         mvc.perform(patch("/api/users/profile").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON)
             .content("{\"gender\":\"FEMALE\",\"birthDate\":\"1995-01-01\",\"goalType\":\"GAIN_WEIGHT\"}")).andExpect(status().isOk());
-        for (var activity:com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.ActivityLevel.values()) {
+        for (var activity:com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.ActivityLevel.values()) {
             mvc.perform(put("/api/nutrition/preferences").header("Authorization",auth).contentType(MediaType.APPLICATION_JSON).content("{\"activityLevel\":\""+activity.name()+"\"}"))
                 .andExpect(status().isOk());
             double target=BigDecimal.valueOf(1446.5*activity.factor+300).setScale(2,java.math.RoundingMode.HALF_UP).doubleValue();

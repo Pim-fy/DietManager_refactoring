@@ -3,6 +3,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.service.NutrientCalculator;
 class NutrientCalculatorTest {
     @Test void scalesAndRoundsOnlyAtFinalDivision() {
         assertThat(NutrientCalculator.scale(new BigDecimal("1"), new BigDecimal("1"), new BigDecimal("8"))).isEqualByComparingTo("0.13");

@@ -16,9 +16,16 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.client.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.controller.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.entity.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.repository.*;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.*;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.*;
 import tools.jackson.databind.ObjectMapper;
 
+import com.hwanghj.dietmanager.refactoring.backend.domain.intake.repository.IntakeRepository;
 @SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("test")
 class IntakeIntegrationTest {
     @Autowired IntakeRepository records;

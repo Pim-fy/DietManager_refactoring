@@ -13,6 +13,9 @@ import jakarta.servlet.http.Cookie;
 import tools.jackson.databind.ObjectMapper;
 
 import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
+import com.hwanghj.dietmanager.refactoring.backend.domain.auth.controller.AuthCookies;
+import com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository.AuthSessionRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.AuthSessionCleanup;
 @SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("test")
 class AuthSessionIntegrationTest {
     @Test void repeatedFailedLoginsHaveSafeRateLimitResponse() throws Exception {

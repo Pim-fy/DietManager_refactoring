@@ -12,10 +12,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 import java.util.List;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserController;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.AccountController;
-import com.hwanghj.dietmanager.refactoring.backend.domain.profile.ProfileController;
-import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.BodyMeasurementController;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.controller.UserController;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.controller.AccountController;
+import com.hwanghj.dietmanager.refactoring.backend.domain.profile.controller.ProfileController;
+import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.controller.BodyMeasurementController;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,17 +30,17 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.Gender;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.GoalType;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserRole;
-import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.BodyMeasurementDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.PasswordChangeDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserAccountFindDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserAccountModifyDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserLoginDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.profile.UserProfileDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserRegisterDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.User;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.Gender;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.GoalType;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserRole;
+import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.dto.BodyMeasurementDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.PasswordChangeDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.UserAccountFindDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.UserAccountModifyDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.UserLoginDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.profile.dto.UserProfileDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.UserRegisterDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
 import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.exception.BodyMeasurementNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.global.error.GlobalExceptionHandler;
@@ -49,10 +49,10 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.Invalid
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.profile.exception.UserProfileNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.global.security.CustomUserDetails;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.AuthenticationService;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.AccountService;
-import com.hwanghj.dietmanager.refactoring.backend.domain.profile.ProfileService;
-import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.BodyMeasurementService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.AuthenticationService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.AccountService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.profile.service.ProfileService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.service.BodyMeasurementService;
 
 // 회원가입 컨트롤러 테스트 코드.
 // 컨트롤러 테스트: HTTP응답 확인이 목적.
@@ -78,7 +78,7 @@ class UserControllerTest {
         mockMvc = MockMvcBuilders
                 // UserController만 단독 테스트 대상으로 등록.
                 // 컨트롤러에 userService를 넣어줌.
-                .standaloneSetup(new UserController(authenticationService, new com.hwanghj.dietmanager.refactoring.backend.domain.auth.LoginAttemptLimiter()), new AccountController(accountService), new ProfileController(profileService), new BodyMeasurementController(bodyMeasurementService))
+                .standaloneSetup(new UserController(authenticationService, new com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.LoginAttemptLimiter()), new AccountController(accountService), new ProfileController(profileService), new BodyMeasurementController(bodyMeasurementService))
                 // Spring Security의 @AuthenticationPrincipal 처리기가 자동으로 붙지 않을 수 있기 때문.
                 .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 // 테스트 중 예외 발생 시 실제처럼 GlobalExceptionHandler가 처리하게 등록함.

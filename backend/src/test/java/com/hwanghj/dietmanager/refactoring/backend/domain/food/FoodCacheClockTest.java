@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodSelectionException;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.client.FoodNutritionClient;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.FoodNutritionService;
 class FoodCacheClockTest {
     @Test void cacheExpiresAtBoundaryWithoutSleeping() {
         var client = mock(FoodNutritionClient.class);

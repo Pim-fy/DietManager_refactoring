@@ -10,10 +10,10 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.List;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.AuthenticationService;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.AccountService;
-import com.hwanghj.dietmanager.refactoring.backend.domain.profile.ProfileService;
-import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.BodyMeasurementService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.AuthenticationService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.AccountService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.profile.service.ProfileService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.service.BodyMeasurementService;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -26,35 +26,35 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.Gender;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.GoalType;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserRole;
-import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.BodyMeasurementDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.PasswordChangeDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserAccountFindDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserAccountModifyDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserLoginDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.profile.UserProfileDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserRegisterDto;
-import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.BodyMeasurement;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.User;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserProfile;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.Gender;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.GoalType;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserRole;
+import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.dto.BodyMeasurementDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.PasswordChangeDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.UserAccountFindDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.UserAccountModifyDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.UserLoginDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.profile.dto.UserProfileDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.dto.UserRegisterDto;
+import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.entity.BodyMeasurement;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserProfile;
 import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.exception.BodyMeasurementNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.DuplicateEmailException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.InvalidLoginException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.InvalidPasswordException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.profile.exception.UserProfileNotFoundException;
-import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.BodyMeasurementRepository;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserProfileRepository;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.UserRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.repository.BodyMeasurementRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserProfileRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private PasswordEncoder passwordEncoder;
-    @Mock private com.hwanghj.dietmanager.refactoring.backend.domain.auth.AuthSessionService sessions;
+    @Mock private com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.AuthSessionService sessions;
     private AuthenticationService authenticationService;
     @BeforeEach void setUp() { authenticationService = new AuthenticationService(userRepository, passwordEncoder, sessions); }
     @Test
@@ -198,7 +198,7 @@ class AuthenticationServiceTest {
         
         // given: 지정한 형태의 토큰 반황 상황 설정.
         when(sessions.open(user))
-            .thenReturn(new com.hwanghj.dietmanager.refactoring.backend.domain.auth.AuthSessionService.Pair("access-token", "refresh-token"));
+            .thenReturn(new com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.AuthSessionService.Pair("access-token", "refresh-token"));
         
         // requset의 원본 password를 동일 조건으로 해싱한 값이 DB에 저장된 해싱된 비밀번호와 일치하는 상황 생성.
         when(passwordEncoder.matches("password123", "hashed-password"))

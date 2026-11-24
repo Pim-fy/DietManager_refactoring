@@ -7,6 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodApiLimitException;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.entity.FoodApiUsage;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.repository.FoodApiUsageRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.FoodApiQuota;
 class FoodApiQuotaTest {
     final FoodApiUsageRepository repository=mock(FoodApiUsageRepository.class);
     final PlatformTransactionManager manager=mock(PlatformTransactionManager.class);
