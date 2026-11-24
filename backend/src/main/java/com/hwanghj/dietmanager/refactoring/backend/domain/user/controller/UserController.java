@@ -23,6 +23,7 @@ import jakarta.validation.Valid;
 public class UserController {
     private final AuthenticationService authenticationService;
     private final LoginAttemptLimiter loginLimiter;
+
     public UserController(AuthenticationService authenticationService, LoginAttemptLimiter loginLimiter) {
         this.authenticationService = authenticationService;
         this.loginLimiter = loginLimiter;
@@ -30,25 +31,28 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<UserRegisterDto.Response> register(
-        @Valid @RequestBody UserRegisterDto.Request request) {
-            return ResponseEntity
+            @Valid @RequestBody UserRegisterDto.Request request) {
+        return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(authenticationService.register(request));
     }
 
     @PostMapping("/login")
     public ResponseEntity<UserLoginDto.Response> login(
-        @Valid @RequestBody UserLoginDto.Request request, HttpServletResponse servletResponse,
-        HttpServletRequest servletRequest) {
-        loginLimiter.check(servletRequest.getRemoteAddr(),request.getEmail());
+            @Valid @RequestBody UserLoginDto.Request request, HttpServletResponse servletResponse,
+            HttpServletRequest servletRequest) {
+        loginLimiter.check(servletRequest.getRemoteAddr(), request.getEmail());
         UserLoginDto.Response result;
-        try { result = authenticationService.login(request); }
-        catch (InvalidLoginException error) {
-            loginLimiter.failed(servletRequest.getRemoteAddr(),request.getEmail()); throw error;
+        try {
+            result = authenticationService.login(request);
+        } catch (InvalidLoginException error) {
+            loginLimiter.failed(servletRequest.getRemoteAddr(), request.getEmail());
+            throw error;
         }
         loginLimiter.succeeded(request.getEmail());
-        if (result.getRefreshToken() != null) AuthCookies.write(servletResponse, result.getRefreshToken());
+        if (result.getRefreshToken() != null)
+            AuthCookies.write(servletResponse, result.getRefreshToken());
         return ResponseEntity
-            .ok(result);
+                .ok(result);
     }
 }

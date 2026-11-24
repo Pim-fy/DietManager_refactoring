@@ -20,6 +20,7 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/users")
 public class AccountController {
     private final AccountService accountService;
+
     public AccountController(AccountService accountService) {
         this.accountService = accountService;
     }
@@ -35,13 +36,13 @@ public class AccountController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody UserAccountModifyDto.Request request) {
         return ResponseEntity.ok(
-            accountService.modifyAccount(userDetails.getUserId(), request));
+                accountService.modifyAccount(userDetails.getUserId(), request));
     }
 
     @PatchMapping("/password")
     public ResponseEntity<PasswordChangeDto.Response> changePassword(
-        @AuthenticationPrincipal CustomUserDetails userDetails,
-        @Valid @RequestBody PasswordChangeDto.Request request) {
-            return ResponseEntity.ok(accountService.changePassword(userDetails.getUserId(), request));
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody PasswordChangeDto.Request request) {
+        return ResponseEntity.ok(accountService.changePassword(userDetails.getUserId(), request));
     }
 }

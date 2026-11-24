@@ -12,7 +12,8 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.Gender;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.GoalType;
 
 class RecommendationCalculatorTest {
-    @Test void keepsFormulaAndMacroRatios() {
+    @Test
+    void keepsFormulaAndMacroRatios() {
         var date = LocalDate.of(2026, 1, 1);
         var result = RecommendationCalculator.calculate(70, 170, 30, Gender.MALE, GoalType.MAINTAIN_WEIGHT, ActivityLevel.values()[0], date, date);
         assertThat(result.getRestingCalories()).isEqualByComparingTo("1617.5");
@@ -21,8 +22,11 @@ class RecommendationCalculatorTest {
         assertThat(result.getProtein()).isEqualByComparingTo("97.05");
         assertThat(result.getFat()).isEqualByComparingTo("64.7");
     }
-    @Test void invalidCalculationReturnsUnavailable() {
+
+    @Test
+    void invalidCalculationReturnsUnavailable() {
         var date = LocalDate.of(2026, 1, 1);
-        assertThat(RecommendationCalculator.calculate(Double.NaN, 170, 30, Gender.FEMALE, GoalType.LOSE_WEIGHT, ActivityLevel.values()[0], date, date).isAvailable()).isFalse();
+        assertThat(RecommendationCalculator.calculate(Double.NaN, 170, 30, Gender.FEMALE, GoalType.LOSE_WEIGHT, ActivityLevel.values()[0], date, date)
+                .isAvailable()).isFalse();
     }
 }

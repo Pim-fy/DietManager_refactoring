@@ -53,11 +53,21 @@ import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvi
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceTest {
-    @Mock private UserRepository userRepository;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private AuthSessionService sessions;
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private AuthSessionService sessions;
     private AuthenticationService authenticationService;
-    @BeforeEach void setUp() { authenticationService = new AuthenticationService(userRepository, passwordEncoder, sessions); }
+
+    @BeforeEach
+    void setUp() {
+        authenticationService = new AuthenticationService(userRepository, passwordEncoder, sessions);
+    }
+
     @Test
     void registerCreatesUserWithProfile() throws Exception {
 
@@ -70,7 +80,7 @@ class AuthenticationServiceTest {
         // 이미 가입된 이메일이 아니라는 상황을 생성.
             // userRepository.existsByEmail("test@example.com") 호출 -> false반환
         when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-        
+
         // 테스트에서는 해싱된 비밀번호 값을 고정된 값을 반환하게 사용함.
             // passwordEncoder.encode("password123") 호출 -> "hashed-password" 반환
         when(passwordEncoder.encode("password123")).thenReturn("hashed-password");
@@ -120,6 +130,7 @@ class AuthenticationServiceTest {
         // 목표 유형이 요청값과 같은지 확인.
         assertThat(savedUser.getProfile().getGoalType()).isEqualTo(GoalType.LOSE_WEIGHT);
     }
+
     @Test
     void registerThrowsDuplicateEmailExceptionWhenEmailAlreadyExists() throws Exception {
 
@@ -151,6 +162,7 @@ class AuthenticationServiceTest {
         // userRepository.save(...)가 한 번도 호출되지 않았는지 확인함.
         verify(userRepository, never()).save(any());
     }
+
     @Test
     void registerConvertsDataIntegrityViolationToDuplicateEmailException() throws Exception {
 
@@ -169,7 +181,7 @@ class AuthenticationServiceTest {
         when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
 
         // when + then: 예외 테스트이므로 동시에 진행됨.
-        
+
         // authenticationService.register(request) 호출 시 예외가 발생해야 한다는 검증.
         // 서비스가 예외를 그대로 밖으로 내보내지 않고, DuplicateEmailException으로 변환하는지 확인.
         assertThatThrownBy(() -> authenticationService.register(request))
@@ -178,8 +190,9 @@ class AuthenticationServiceTest {
                 // 예외 메시지가 기대값인지 확인.
                 .hasMessage("이미 사용 중인 이메일입니다.");
     }
+
     @Test
-    void loginReturnsUserInfoWhenCredentialsAreValid() throws Exception{
+    void loginReturnsUserInfoWhenCredentialsAreValid() throws Exception {
         // given
 
         // 테스트용 요청 DTO 생성.
@@ -187,24 +200,24 @@ class AuthenticationServiceTest {
 
         // user 객체 생성.
         User user = User
-            .builder()
-            .email("test@example.com")
-            .passwordHash("hashed-password")
-            .userName("홍길동")
-            .build();
+                .builder()
+                .email("test@example.com")
+                .passwordHash("hashed-password")
+                .userName("홍길동")
+                .build();
 
         // request의 email과 동일 email이 DB에 존재하는 상황 생성.
         when(userRepository.findByEmail("test@example.com"))
-            .thenReturn(Optional.of(user));
-        
+                .thenReturn(Optional.of(user));
+
         // given: 지정한 형태의 토큰 반황 상황 설정.
         when(sessions.open(user))
-            .thenReturn(new AuthSessionService.Pair("access-token", "refresh-token"));
-        
+                .thenReturn(new AuthSessionService.Pair("access-token", "refresh-token"));
+
         // requset의 원본 password를 동일 조건으로 해싱한 값이 DB에 저장된 해싱된 비밀번호와 일치하는 상황 생성.
         when(passwordEncoder.matches("password123", "hashed-password"))
-            .thenReturn(true);
-            
+                .thenReturn(true);
+
         // when: 테스트 진행.
 
         // 로그인 로직 실행.
@@ -223,10 +236,11 @@ class AuthenticationServiceTest {
 
         // then: 토큰 생성 로직 실행 확인.
         verify(sessions).open(user);
-        
+
     }
+
     @Test
-    void loginThrowsInvalidLoginExceptionWhenEmailDoesNotExist() throws Exception{
+    void loginThrowsInvalidLoginExceptionWhenEmailDoesNotExist() throws Exception {
         // given
 
         // 로그인 요청 DTO 생성.
@@ -234,26 +248,27 @@ class AuthenticationServiceTest {
 
         // DB에 존재하지 않는 이메일 로그인 시도 상황 설정.
         when(userRepository.findByEmail("test@example.com"))
-            .thenReturn(Optional.empty());
+                .thenReturn(Optional.empty());
 
         // when + then.
 
         // when: 로그인 API에 로그인 요청.
         assertThatThrownBy(() -> authenticationService.login(request))
             // then: 발생한 예외 타입이 InvalidLoginException인지 확인.
-            .isInstanceOf(InvalidLoginException.class)
+                .isInstanceOf(InvalidLoginException.class)
             // then: 예외 메시지가 기대값인지 확인.
-            .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다.");
-        
+                .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다.");
+
         // then: 비밀번호 검증 로직 실행 확인
         // passwordEncoder.matches()가 한번도 실행되지 않았는지 확인.
-            // never()이 0번 호출을 의미.   
+            // never()이 0번 호출을 의미.
         verify(passwordEncoder, never()).matches(any(), any());
         // then: 토큰 생성 로직이 한번도 실행되지 않았는지 확인.
         verify(sessions, never()).open(any(User.class));
     }
+
     @Test
-    void loginThrowsInvalidLoginExceptionWhenPasswordDoesNotMatch() throws Exception{
+    void loginThrowsInvalidLoginExceptionWhenPasswordDoesNotMatch() throws Exception {
         // given
 
         // 로그인 요청 DTO 생성.
@@ -261,12 +276,12 @@ class AuthenticationServiceTest {
 
         // user 객체 생성.
         User user = User
-            .builder()
-            .email("test@example.com")
-            .passwordHash("hashed-password")
-            .userName("홍길동")
-            .build();
-        
+                .builder()
+                .email("test@example.com")
+                .passwordHash("hashed-password")
+                .userName("홍길동")
+                .build();
+
         // DB에 존재하는 이메일 로그인 시도 상황 설정.
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
@@ -277,12 +292,13 @@ class AuthenticationServiceTest {
 
         // when: 로그인 API에 로그인 요청.
         assertThatThrownBy(() -> authenticationService.login(request))
-            .isInstanceOf(InvalidLoginException.class)  // then: 발생한 예외 타입이 InvalidLoginException인지 확인.
-            .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다.");   // then: 예외 메시지가 기대값인지 확인.
+                .isInstanceOf(InvalidLoginException.class) // then: 발생한 예외 타입이 InvalidLoginException인지 확인.
+                .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다."); // then: 예외 메시지가 기대값인지 확인.
 
         // then: 토큰 생성 로직이 한번도 실행되지 않았는지 확인.
         verify(sessions, never()).open(any(User.class));
     }
+
     private UserRegisterDto.Request createRegisterRequest() throws Exception {
         return UserRegisterDto.Request.builder()
                 .email("test@example.com")
@@ -293,57 +309,64 @@ class AuthenticationServiceTest {
                 .goalType(GoalType.LOSE_WEIGHT)
                 .build();
     }
+
     private UserLoginDto.Request createLoginRequest() {
         return UserLoginDto.Request
-            .builder()
-            .email("test@example.com")
-            .password("password123")
-            .build();
+                .builder()
+                .email("test@example.com")
+                .password("password123")
+                .build();
     }
+
     private UserAccountModifyDto.Request createModifyAccountRequest(String email, String userName) {
         return UserAccountModifyDto.Request
-            .builder()
-            .email(email)
-            .userName(userName)
-            .build();
+                .builder()
+                .email(email)
+                .userName(userName)
+                .build();
     }
-    private PasswordChangeDto.Request createPasswordChangeRequest(String currentPassword,String newPassword) {
+
+    private PasswordChangeDto.Request createPasswordChangeRequest(String currentPassword, String newPassword) {
         return PasswordChangeDto.Request.builder()
-            .currentPassword(currentPassword)
-            .newPassword(newPassword)
-            .build();
+                .currentPassword(currentPassword)
+                .newPassword(newPassword)
+                .build();
     }
+
     private UserProfileDto.Request createProfileRequest(
             Gender gender,
             LocalDate birthDate,
             GoalType goalType) {
         return UserProfileDto.Request.builder()
-            .gender(gender)
-            .birthDate(birthDate)
-            .goalType(goalType)
-            .build();
+                .gender(gender)
+                .birthDate(birthDate)
+                .goalType(goalType)
+                .build();
     }
+
     private BodyMeasurementDto.Request createBodyMeasurementRequest(
             LocalDate measuredDate,
             Double height,
             Double weight) {
         return BodyMeasurementDto.Request.builder()
-            .measuredDate(measuredDate)
-            .height(height)
-            .weight(weight)
-            .build();
+                .measuredDate(measuredDate)
+                .height(height)
+                .weight(weight)
+                .build();
     }
+
     private User createUserWithId(Long userId) {
         User user = User.builder()
-            .email("test@example.com")
-            .passwordHash("hashed-password")
-            .userName("홍길동")
-            .build();
+                .email("test@example.com")
+                .passwordHash("hashed-password")
+                .userName("홍길동")
+                .build();
 
         ReflectionTestUtils.setField(user, "id", userId);
 
         return user;
     }
+
     private BodyMeasurement createBodyMeasurement(
             Long measurementId,
             User user,
@@ -351,11 +374,11 @@ class AuthenticationServiceTest {
             Double height,
             Double weight) {
         BodyMeasurement bodyMeasurement = BodyMeasurement.builder()
-            .user(user)
-            .measuredDate(measuredDate)
-            .height(height)
-            .weight(weight)
-            .build();
+                .user(user)
+                .measuredDate(measuredDate)
+                .height(height)
+                .weight(weight)
+                .build();
 
         ReflectionTestUtils.setField(bodyMeasurement, "id", measurementId);
 

@@ -4,5 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class FoodApiLimitException extends BusinessException {
-    public FoodApiLimitException() { super(ErrorCode.FOOD_API_LIMIT); }
+    public FoodApiLimitException() {
+        super(ErrorCode.FOOD_API_LIMIT);
+    }
 }

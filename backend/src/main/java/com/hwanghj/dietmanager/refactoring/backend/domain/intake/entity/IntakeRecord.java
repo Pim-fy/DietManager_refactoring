@@ -30,50 +30,145 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class IntakeRecord extends BaseTimeEntity {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "user_id", nullable = false) private User user;
-    @Column(name = "eaten_date", nullable = false) private LocalDate eatenDate;
-    @Enumerated(EnumType.STRING) @Column(name = "meal_type", nullable = false, length = 20) private MealType mealType;
-    @Column(name = "food_code", nullable = false, length = 100) private String foodCode;
-    @Column(name = "food_name", nullable = false, length = 500) private String foodName;
-    @Column(name = "maker_name", length = 500) private String makerName;
-    @Column(nullable = false, precision = 20, scale = 6) private BigDecimal amount;
-    @Column(name = "base_amount", nullable = false, precision = 20, scale = 6) private BigDecimal baseAmount;
-    @Column(nullable = false, length = 10) private String unit;
-    @Column(name = "base_calories", precision = 20, scale = 6) private BigDecimal baseCalories;
-    @Column(name = "base_carbohydrate", precision = 20, scale = 6) private BigDecimal baseCarbohydrate;
-    @Column(name = "base_protein", precision = 20, scale = 6) private BigDecimal baseProtein;
-    @Column(name = "base_fat", precision = 20, scale = 6) private BigDecimal baseFat;
-    @Column(name = "source_updated_date", length = 50) private String sourceUpdatedDate;
-    @Column(nullable = false) private boolean deleted;
-    @Column(nullable=false) private boolean manual;
-    @Column(nullable=false) private boolean nutritionEdited;
-    @Column(length=500) private String editedFoodName;
-    @Column(precision=20,scale=6) private BigDecimal editedBaseAmount;
-    @Column(precision=20,scale=6) private BigDecimal editedCalories;
-    @Column(precision=20,scale=6) private BigDecimal editedCarbohydrate;
-    @Column(precision=20,scale=6) private BigDecimal editedProtein;
-    @Column(precision=20,scale=6) private BigDecimal editedFat;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    public void markManual() { manual=true; }
-    public void editNutrition(IntakeDto.NutritionInput input) {
-        nutritionEdited=true; editedFoodName=input.getFoodName().trim(); editedBaseAmount=input.getBaseAmount();
-        editedCalories=input.getCalories(); editedCarbohydrate=input.getCarbohydrate(); editedProtein=input.getProtein(); editedFat=input.getFat();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @Column(name = "eaten_date", nullable = false)
+    private LocalDate eatenDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "meal_type", nullable = false, length = 20)
+    private MealType mealType;
+
+    @Column(name = "food_code", nullable = false, length = 100)
+    private String foodCode;
+
+    @Column(name = "food_name", nullable = false, length = 500)
+    private String foodName;
+
+    @Column(name = "maker_name", length = 500)
+    private String makerName;
+
+    @Column(nullable = false, precision = 20, scale = 6)
+    private BigDecimal amount;
+
+    @Column(name = "base_amount", nullable = false, precision = 20, scale = 6)
+    private BigDecimal baseAmount;
+
+    @Column(nullable = false, length = 10)
+    private String unit;
+
+    @Column(name = "base_calories", precision = 20, scale = 6)
+    private BigDecimal baseCalories;
+
+    @Column(name = "base_carbohydrate", precision = 20, scale = 6)
+    private BigDecimal baseCarbohydrate;
+
+    @Column(name = "base_protein", precision = 20, scale = 6)
+    private BigDecimal baseProtein;
+
+    @Column(name = "base_fat", precision = 20, scale = 6)
+    private BigDecimal baseFat;
+
+    @Column(name = "source_updated_date", length = 50)
+    private String sourceUpdatedDate;
+
+    @Column(nullable = false)
+    private boolean deleted;
+
+    @Column(nullable = false)
+    private boolean manual;
+
+    @Column(nullable = false)
+    private boolean nutritionEdited;
+
+    @Column(length = 500)
+    private String editedFoodName;
+
+    @Column(precision = 20, scale = 6)
+    private BigDecimal editedBaseAmount;
+
+    @Column(precision = 20, scale = 6)
+    private BigDecimal editedCalories;
+
+    @Column(precision = 20, scale = 6)
+    private BigDecimal editedCarbohydrate;
+
+    @Column(precision = 20, scale = 6)
+    private BigDecimal editedProtein;
+
+    @Column(precision = 20, scale = 6)
+    private BigDecimal editedFat;
+
+    public void markManual() {
+        manual = true;
     }
-    public String effectiveFoodName() { return nutritionEdited ? editedFoodName : foodName; }
-    public BigDecimal effectiveBaseAmount() { return nutritionEdited ? editedBaseAmount : baseAmount; }
-    public BigDecimal effectiveCalories() { return nutritionEdited ? editedCalories : baseCalories; }
-    public BigDecimal effectiveCarbohydrate() { return nutritionEdited ? editedCarbohydrate : baseCarbohydrate; }
-    public BigDecimal effectiveProtein() { return nutritionEdited ? editedProtein : baseProtein; }
-    public BigDecimal effectiveFat() { return nutritionEdited ? editedFat : baseFat; }
+
+    public void editNutrition(IntakeDto.NutritionInput input) {
+        nutritionEdited = true;
+        editedFoodName = input.getFoodName().trim();
+        editedBaseAmount = input.getBaseAmount();
+        editedCalories = input.getCalories();
+        editedCarbohydrate = input.getCarbohydrate();
+        editedProtein = input.getProtein();
+        editedFat = input.getFat();
+    }
+
+    public String effectiveFoodName() {
+        return nutritionEdited ? editedFoodName : foodName;
+    }
+
+    public BigDecimal effectiveBaseAmount() {
+        return nutritionEdited ? editedBaseAmount : baseAmount;
+    }
+
+    public BigDecimal effectiveCalories() {
+        return nutritionEdited ? editedCalories : baseCalories;
+    }
+
+    public BigDecimal effectiveCarbohydrate() {
+        return nutritionEdited ? editedCarbohydrate : baseCarbohydrate;
+    }
+
+    public BigDecimal effectiveProtein() {
+        return nutritionEdited ? editedProtein : baseProtein;
+    }
+
+    public BigDecimal effectiveFat() {
+        return nutritionEdited ? editedFat : baseFat;
+    }
 
     public IntakeRecord(User user, FoodNutrition food, LocalDate date, MealType meal, BigDecimal amount) {
-        this.user = user; this.foodCode = food.getFoodCode(); this.foodName = food.getFoodName(); this.makerName = food.getMakerName();
-        this.baseAmount = food.getBaseAmount(); this.unit = food.getBaseUnit(); this.baseCalories = food.getCalories();
-        this.baseCarbohydrate = food.getCarbohydrate(); this.baseProtein = food.getProtein(); this.baseFat = food.getFat();
-        this.sourceUpdatedDate = food.getSourceUpdatedDate(); update(date, meal, amount);
+        this.user = user;
+        this.foodCode = food.getFoodCode();
+        this.foodName = food.getFoodName();
+        this.makerName = food.getMakerName();
+        this.baseAmount = food.getBaseAmount();
+        this.unit = food.getBaseUnit();
+        this.baseCalories = food.getCalories();
+        this.baseCarbohydrate = food.getCarbohydrate();
+        this.baseProtein = food.getProtein();
+        this.baseFat = food.getFat();
+        this.sourceUpdatedDate = food.getSourceUpdatedDate();
+        update(date, meal, amount);
     }
-    public void update(LocalDate date, MealType meal, BigDecimal amount) { this.eatenDate = date; this.mealType = meal; this.amount = amount; }
-    public void delete() { deleted = true; }
-    public void restore() { deleted = false; }
+
+    public void update(LocalDate date, MealType meal, BigDecimal amount) {
+        this.eatenDate = date;
+        this.mealType = meal;
+        this.amount = amount;
+    }
+
+    public void delete() {
+        deleted = true;
+    }
+
+    public void restore() {
+        deleted = false;
+    }
 }

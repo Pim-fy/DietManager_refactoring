@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.entity.AuthSession;
 
-public interface AuthSessionRepository extends JpaRepository<AuthSession,String> {
+public interface AuthSessionRepository extends JpaRepository<AuthSession, String> {
     @Modifying
     @Query("delete from AuthSession s where s.expiresAt <= :now or s.revoked = true")
     int deleteInactive(LocalDateTime now);

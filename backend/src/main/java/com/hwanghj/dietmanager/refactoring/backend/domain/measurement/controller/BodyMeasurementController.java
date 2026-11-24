@@ -23,6 +23,7 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/users")
 public class BodyMeasurementController {
     private final BodyMeasurementService bodyMeasurementService;
+
     public BodyMeasurementController(BodyMeasurementService bodyMeasurementService) {
         this.bodyMeasurementService = bodyMeasurementService;
     }
@@ -35,8 +36,8 @@ public class BodyMeasurementController {
     @PostMapping("/body-measurements")
     public ResponseEntity<BodyMeasurementDto.Response> addBodyMeasurement(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody BodyMeasurementDto.Request request){
-        
+            @Valid @RequestBody BodyMeasurementDto.Request request) {
+
         BodyMeasurementDto.Response response = bodyMeasurementService.addBodyMeasurement(userDetails.getUserId(), request);
 
         return ResponseEntity.ok(response);
@@ -44,31 +45,32 @@ public class BodyMeasurementController {
 
     @GetMapping("/body-measurements/latest")
     public ResponseEntity<BodyMeasurementDto.Response> findLatestBodyMeasurement(
-            @AuthenticationPrincipal CustomUserDetails userDetails){
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         return ResponseEntity.ok(
-            bodyMeasurementService.findLatestBodyMeasurement(userDetails.getUserId())
-        );
+                bodyMeasurementService.findLatestBodyMeasurement(userDetails.getUserId()));
     }
 
     @GetMapping("/body-measurements")
     public ResponseEntity<List<BodyMeasurementDto.Response>> findBodyMeasurements(
-            @AuthenticationPrincipal CustomUserDetails userDetails){
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            bodyMeasurementService.findBodyMeasurements(userDetails.getUserId())
-        );
+                bodyMeasurementService.findBodyMeasurements(userDetails.getUserId()));
     }
+
     @PatchMapping("/body-measurements/{id}")
     public BodyMeasurementDto.Response updateMeasurement(@AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long id, @Valid @RequestBody BodyMeasurementDto.Request request) {
         return bodyMeasurementService.updateMeasurement(user.getUserId(), id, request);
     }
+
     @DeleteMapping("/body-measurements/{id}")
     public ResponseEntity<Void> deleteMeasurement(@AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long id) {
         bodyMeasurementService.deleteMeasurement(user.getUserId(), id);
         return ResponseEntity.noContent().build();
     }
+
     @PostMapping("/body-measurements/{id}/restore")
     public BodyMeasurementDto.Response restoreMeasurement(@AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long id) {

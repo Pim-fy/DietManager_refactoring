@@ -4,7 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class UserNotFoundException extends BusinessException {
-    
+
     public UserNotFoundException() {
         /*
             1. GlobalExceptionHandler에서 사용할 메시지 전달.

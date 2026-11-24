@@ -4,7 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class InvalidLoginException extends BusinessException {
-    
+
     public InvalidLoginException() {
         super(ErrorCode.INVALID_LOGIN);
     }

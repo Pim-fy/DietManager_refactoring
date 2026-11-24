@@ -24,13 +24,21 @@ public class FoodNutritionService {
         private final T value;
         private final Instant expires;
     }
+
     private final Clock clock;
     private final FoodNutritionClient client;
     private final Map<String, Cached<FoodNutrition.SearchResult>> searches = new LinkedHashMap<>();
     private final Map<String, Cached<FoodNutrition>> foods = new LinkedHashMap<>();
-    public FoodNutritionService(FoodNutritionClient client) { this(client, Clock.systemDefaultZone()); }
+
+    public FoodNutritionService(FoodNutritionClient client) {
+        this(client, Clock.systemDefaultZone());
+    }
+
     @Autowired
-    public FoodNutritionService(FoodNutritionClient client, Clock clock) { this.clock = clock; this.client = client;  }
+    public FoodNutritionService(FoodNutritionClient client, Clock clock) {
+        this.clock = clock;
+        this.client = client;
+    }
 
     public FoodNutrition.SearchResult search(String keyword, int page, int size) {
         String key = keyword + ":" + page + ":" + size;
@@ -49,19 +57,28 @@ public class FoodNutritionService {
         }
         return result;
     }
+
     private void rememberFoods(FoodNutrition.SearchResult result) {
-        for (var food : result.getItems()) foods.put(food.getFoodCode(), new Cached<>(food, Instant.now(clock).plusSeconds(3600)));
+        for (var food : result.getItems())
+            foods.put(food.getFoodCode(), new Cached<>(food, Instant.now(clock).plusSeconds(3600)));
         trim(foods, 1000);
     }
+
     public synchronized FoodNutrition selectedFood(String code) {
         var hit = foods.get(code);
         if (hit == null || !hit.getExpires().isAfter(Instant.now(clock))) {
             throw new FoodSelectionException("선택한 식품 정보가 만료되었습니다. 식품을 다시 검색해주세요.");
         }
-        if (!hit.getValue().recordable()) throw new FoodSelectionException("기준량 단위를 확인할 수 없는 식품은 섭취 기록에 추가할 수 없습니다.");
+        if (!hit.getValue().recordable())
+            throw new FoodSelectionException("기준량 단위를 확인할 수 없는 식품은 섭취 기록에 추가할 수 없습니다.");
         return hit.getValue();
     }
+
     private static void trim(Map<?, ?> map, int max) {
-        while (map.size() > max) { var iterator = map.keySet().iterator(); iterator.next(); iterator.remove(); }
+        while (map.size() > max) {
+            var iterator = map.keySet().iterator();
+            iterator.next();
+            iterator.remove();
+        }
     }
 }

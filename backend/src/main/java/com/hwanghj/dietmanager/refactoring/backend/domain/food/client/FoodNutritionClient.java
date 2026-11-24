@@ -36,9 +36,11 @@ public class FoodNutritionClient {
     public FoodNutritionClient(@Value("${food-nutrition.service-key:}") String serviceKey, ObjectMapper mapper) {
         this(serviceKey, mapper, HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build(), URI.create(ENDPOINT));
     }
+
     FoodNutritionClient(String serviceKey, ObjectMapper mapper, HttpClient http, URI endpoint) {
         this(serviceKey, mapper, http, endpoint, null);
     }
+
     private FoodNutritionClient(String serviceKey, ObjectMapper mapper, HttpClient http, URI endpoint, FoodApiQuota quota) {
         this.quota = quota;
         this.serviceKey = serviceKey;
@@ -48,19 +50,24 @@ public class FoodNutritionClient {
     }
 
     public FoodNutrition.SearchResult search(String keyword, int page, int size) {
-        if (serviceKey.isBlank()) throw new FoodApiException("식품 API 인증키가 설정되지 않았습니다.");
-        if (quota!=null) quota.reserve();
+        if (serviceKey.isBlank())
+            throw new FoodApiException("식품 API 인증키가 설정되지 않았습니다.");
+        if (quota != null)
+            quota.reserve();
         // Decoding 키를 딱 한 번 인코딩한다. URL과 예외 원문에는 인증키가 있어 로그에 남기지 않는다.
         String url = endpoint + "?serviceKey=" + encode(serviceKey) + "&type=json&pageNo=" + page
-            + "&numOfRows=" + size + "&FOOD_NM_KR=" + encode(keyword);
+                + "&numOfRows=" + size + "&FOOD_NM_KR=" + encode(keyword);
         try {
             var response = http.send(HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(20)).GET().build(),
-                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 429) throw new FoodApiLimitException();
-            if (response.statusCode() != 200) throw new FoodApiException("식품 API 요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.");
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() == 429)
+                throw new FoodApiLimitException();
+            if (response.statusCode() != 200)
+                throw new FoodApiException("식품 API 요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.");
             return parse(response.body(), page, size);
-        } catch (FoodApiException | FoodApiLimitException e) { throw e; }
-        catch (InterruptedException e) {
+        } catch (FoodApiException | FoodApiLimitException e) {
+            throw e;
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new FoodApiException("식품 검색이 중단되었습니다.");
         } catch (Exception e) {
@@ -72,5 +79,8 @@ public class FoodNutritionClient {
     FoodNutrition.SearchResult parse(String json, int page, int size) {
         return parser.parse(json, page, size);
     }
-    private static String encode(String value) { return URLEncoder.encode(value, StandardCharsets.UTF_8); }
+
+    private static String encode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
 }

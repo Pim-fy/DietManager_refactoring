@@ -9,6 +9,13 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.food.service.FoodApiQu
 @RestController
 public class FoodApiUsageController {
     private final FoodApiQuota quota;
-    public FoodApiUsageController(FoodApiQuota quota) { this.quota=quota; }
-    @GetMapping("/api/foods/usage") public FoodApiUsageDto.Status usage() { return quota.status(); }
+
+    public FoodApiUsageController(FoodApiQuota quota) {
+        this.quota = quota;
+    }
+
+    @GetMapping("/api/foods/usage")
+    public FoodApiUsageDto.Status usage() {
+        return quota.status();
+    }
 }

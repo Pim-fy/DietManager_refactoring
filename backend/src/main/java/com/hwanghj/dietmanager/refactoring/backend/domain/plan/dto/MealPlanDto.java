@@ -30,20 +30,20 @@ public final class MealPlanDto {
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Request {
 
-        @NotBlank
-        @Size(max = 100)
+        @NotBlank(message = "식품 코드는 필수입니다.")
+        @Size(max = 100, message = "식품 코드는 100자 이하여야 합니다.")
         private String foodCode;
 
-        @NotNull
+        @NotNull(message = "계획일은 필수입니다.")
         private LocalDate plannedDate;
 
-        @NotNull
+        @NotNull(message = "끼니는 필수입니다.")
         private MealType mealType;
 
-        @NotNull
-        @DecimalMin("0.01")
-        @DecimalMax("1000000")
-        @Digits(integer = 7, fraction = 2)
+        @NotNull(message = "계획량은 필수입니다.")
+        @DecimalMin(value = "0.01", message = "계획량은 0.01 이상이어야 합니다.")
+        @DecimalMax(value = "1000000", message = "계획량은 1,000,000 이하여야 합니다.")
+        @Digits(integer = 7, fraction = 2, message = "계획량은 소수점 2자리까지 입력할 수 있습니다.")
         private BigDecimal amount;
     }
 

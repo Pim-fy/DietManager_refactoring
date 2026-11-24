@@ -26,8 +26,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "body_measurements")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BodyMeasurement extends BaseTimeEntity{
-    
+public class BodyMeasurement extends BaseTimeEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -49,10 +49,18 @@ public class BodyMeasurement extends BaseTimeEntity{
     private boolean deleted;
 
     public void update(LocalDate date, double height, double weight) {
-        this.measuredDate = date; this.height = height; this.weight = weight;
+        this.measuredDate = date;
+        this.height = height;
+        this.weight = weight;
     }
-    public void delete() { deleted = true; }
-    public void restore() { deleted = false; }
+
+    public void delete() {
+        deleted = true;
+    }
+
+    public void restore() {
+        deleted = false;
+    }
 
     @Builder
     public BodyMeasurement(User user, LocalDate measuredDate, double height, double weight) {

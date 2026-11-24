@@ -31,21 +31,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.sessions = sessions;
     }
 
-    
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request, 
-            HttpServletResponse response, 
+            HttpServletRequest request,
+            HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         String token = resolvetoken(request);
-        
+
         var claims = token == null ? null : jwtTokenProvider.authentication(token);
         Long userId = claims == null ? null : claims.getUserId();
-        if(userId != null) {
+        if (userId != null) {
 
             User user = userRepository.findById(userId).orElse(null);
-            
-            if(user != null && user.getTokenVersion()==claims.getVersion() && sessions.active(claims.getSessionId(),userId,claims.getVersion())) {
+
+            if (user != null && user.getTokenVersion() == claims.getVersion() && sessions.active(claims.getSessionId(), userId, claims.getVersion())) {
                 CustomUserDetails userDetails = new CustomUserDetails(user);
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
@@ -59,11 +58,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String resolvetoken(HttpServletRequest request) {
         String authorization = request.getHeader("Authorization");
 
-        if(authorization == null || !authorization.startsWith("Bearer ")) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
             return null;
         }
         return authorization.substring(7);
     }
 }
-
-    

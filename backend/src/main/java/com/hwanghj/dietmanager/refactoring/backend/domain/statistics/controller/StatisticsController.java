@@ -12,10 +12,15 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.statistics.dto.Statist
 import com.hwanghj.dietmanager.refactoring.backend.domain.statistics.service.StatisticsService;
 import com.hwanghj.dietmanager.refactoring.backend.global.security.CustomUserDetails;
 
-@RestController @RequestMapping("/api/statistics")
+@RestController
+@RequestMapping("/api/statistics")
 public class StatisticsController {
     private final StatisticsService service;
-    public StatisticsController(StatisticsService service) { this.service = service; }
+
+    public StatisticsController(StatisticsService service) {
+        this.service = service;
+    }
+
     @GetMapping
     public StatisticsDto.Result range(@AuthenticationPrincipal CustomUserDetails user, @RequestParam LocalDate start, @RequestParam LocalDate end) {
         return service.range(user.getUserId(), start, end);

@@ -11,8 +11,9 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.plan.entity.MealPlan;
 
 import jakarta.persistence.LockModeType;
 
-public interface MealPlanRepository extends JpaRepository<MealPlan,Long> {
-    List<MealPlan> findByUserIdAndPlannedDateOrderByIdAsc(Long userId,LocalDate date);
+public interface MealPlanRepository extends JpaRepository<MealPlan, Long> {
+    List<MealPlan> findByUserIdAndPlannedDateOrderByIdAsc(Long userId, LocalDate date);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<MealPlan> findByIdAndUserId(Long id,Long userId);
+    Optional<MealPlan> findByIdAndUserId(Long id, Long userId);
 }

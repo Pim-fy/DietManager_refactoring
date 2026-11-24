@@ -52,25 +52,31 @@ import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvi
 
 @ExtendWith(MockitoExtension.class)
 class ProfileServiceTest {
-    @Mock private UserProfileRepository userProfileRepository;
+    @Mock
+    private UserProfileRepository userProfileRepository;
     private ProfileService profileService;
-    @BeforeEach void setUp() { profileService = new ProfileService(userProfileRepository); }
+
+    @BeforeEach
+    void setUp() {
+        profileService = new ProfileService(userProfileRepository);
+    }
+
     @Test
     void findProfileReturnsProfileWhenProfileExists() {
         // given
         User user = User.builder()
-            .email("test@example.com")
-            .passwordHash("hashed-password")
-            .userName("홍길동")
-            .build();
+                .email("test@example.com")
+                .passwordHash("hashed-password")
+                .userName("홍길동")
+                .build();
 
         ReflectionTestUtils.setField(user, "id", 1L);
 
         UserProfile profile = UserProfile.builder()
-            .gender(Gender.MALE)
-            .birthDate(LocalDate.of(1995, 1, 1))
-            .goalType(GoalType.LOSE_WEIGHT)
-            .build();
+                .gender(Gender.MALE)
+                .birthDate(LocalDate.of(1995, 1, 1))
+                .goalType(GoalType.LOSE_WEIGHT)
+                .build();
 
         user.assignProfile(profile);
 
@@ -87,6 +93,7 @@ class ProfileServiceTest {
 
         verify(userProfileRepository).findByUserId(1L);
     }
+
     @Test
     void findProfileThrowsUserProfileNotFoundExceptionWhenProfileDoesNotExist() {
         // given
@@ -94,34 +101,35 @@ class ProfileServiceTest {
 
         // when + then
         assertThatThrownBy(() -> profileService.findProfile(1L))
-            .isInstanceOf(UserProfileNotFoundException.class)
-            .hasMessage("사용자 프로필을 찾을 수 없습니다.");
+                .isInstanceOf(UserProfileNotFoundException.class)
+                .hasMessage("사용자 프로필을 찾을 수 없습니다.");
 
         verify(userProfileRepository).findByUserId(1L);
     }
+
     @Test
     void modifyProfileUpdatesProfileWhenProfileExists() {
         // given
         User user = User.builder()
-            .email("test@example.com")
-            .passwordHash("hashed-password")
-            .userName("홍길동")
-            .build();
+                .email("test@example.com")
+                .passwordHash("hashed-password")
+                .userName("홍길동")
+                .build();
 
         ReflectionTestUtils.setField(user, "id", 1L);
 
         UserProfile profile = UserProfile.builder()
-            .gender(Gender.MALE)
-            .birthDate(LocalDate.of(1995, 1, 1))
-            .goalType(GoalType.LOSE_WEIGHT)
-            .build();
+                .gender(Gender.MALE)
+                .birthDate(LocalDate.of(1995, 1, 1))
+                .goalType(GoalType.LOSE_WEIGHT)
+                .build();
 
         user.assignProfile(profile);
 
         UserProfileDto.Request request = createProfileRequest(
-            Gender.FEMALE,
-            LocalDate.of(1998, 5, 10),
-            GoalType.MAINTAIN_WEIGHT);
+                Gender.FEMALE,
+                LocalDate.of(1998, 5, 10),
+                GoalType.MAINTAIN_WEIGHT);
 
         when(userProfileRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
 
@@ -140,23 +148,25 @@ class ProfileServiceTest {
 
         verify(userProfileRepository).findByUserId(1L);
     }
+
     @Test
     void modifyProfileThrowsUserProfileNotFoundExceptionWhenProfileDoesNotExist() {
         // given
         UserProfileDto.Request request = createProfileRequest(
-            Gender.FEMALE,
-            LocalDate.of(1998, 5, 10),
-            GoalType.MAINTAIN_WEIGHT);
+                Gender.FEMALE,
+                LocalDate.of(1998, 5, 10),
+                GoalType.MAINTAIN_WEIGHT);
 
         when(userProfileRepository.findByUserId(1L)).thenReturn(Optional.empty());
 
         // when + then
         assertThatThrownBy(() -> profileService.modifyProfile(1L, request))
-            .isInstanceOf(UserProfileNotFoundException.class)
-            .hasMessage("사용자 프로필을 찾을 수 없습니다.");
+                .isInstanceOf(UserProfileNotFoundException.class)
+                .hasMessage("사용자 프로필을 찾을 수 없습니다.");
 
         verify(userProfileRepository).findByUserId(1L);
     }
+
     private UserRegisterDto.Request createRegisterRequest() throws Exception {
         return UserRegisterDto.Request.builder()
                 .email("test@example.com")
@@ -167,57 +177,64 @@ class ProfileServiceTest {
                 .goalType(GoalType.LOSE_WEIGHT)
                 .build();
     }
+
     private UserLoginDto.Request createLoginRequest() {
         return UserLoginDto.Request
-            .builder()
-            .email("test@example.com")
-            .password("password123")
-            .build();
+                .builder()
+                .email("test@example.com")
+                .password("password123")
+                .build();
     }
+
     private UserAccountModifyDto.Request createModifyAccountRequest(String email, String userName) {
         return UserAccountModifyDto.Request
-            .builder()
-            .email(email)
-            .userName(userName)
-            .build();
+                .builder()
+                .email(email)
+                .userName(userName)
+                .build();
     }
-    private PasswordChangeDto.Request createPasswordChangeRequest(String currentPassword,String newPassword) {
+
+    private PasswordChangeDto.Request createPasswordChangeRequest(String currentPassword, String newPassword) {
         return PasswordChangeDto.Request.builder()
-            .currentPassword(currentPassword)
-            .newPassword(newPassword)
-            .build();
+                .currentPassword(currentPassword)
+                .newPassword(newPassword)
+                .build();
     }
+
     private UserProfileDto.Request createProfileRequest(
             Gender gender,
             LocalDate birthDate,
             GoalType goalType) {
         return UserProfileDto.Request.builder()
-            .gender(gender)
-            .birthDate(birthDate)
-            .goalType(goalType)
-            .build();
+                .gender(gender)
+                .birthDate(birthDate)
+                .goalType(goalType)
+                .build();
     }
+
     private BodyMeasurementDto.Request createBodyMeasurementRequest(
             LocalDate measuredDate,
             Double height,
             Double weight) {
         return BodyMeasurementDto.Request.builder()
-            .measuredDate(measuredDate)
-            .height(height)
-            .weight(weight)
-            .build();
+                .measuredDate(measuredDate)
+                .height(height)
+                .weight(weight)
+                .build();
     }
+
     private User createUserWithId(Long userId) {
         User user = User.builder()
-            .email("test@example.com")
-            .passwordHash("hashed-password")
-            .userName("홍길동")
-            .build();
+                .email("test@example.com")
+                .passwordHash("hashed-password")
+                .userName("홍길동")
+                .build();
 
         ReflectionTestUtils.setField(user, "id", userId);
 
         return user;
     }
+
     private BodyMeasurement createBodyMeasurement(
             Long measurementId,
             User user,
@@ -225,11 +242,11 @@ class ProfileServiceTest {
             Double height,
             Double weight) {
         BodyMeasurement bodyMeasurement = BodyMeasurement.builder()
-            .user(user)
-            .measuredDate(measuredDate)
-            .height(height)
-            .weight(weight)
-            .build();
+                .user(user)
+                .measuredDate(measuredDate)
+                .height(height)
+                .weight(weight)
+                .build();
 
         ReflectionTestUtils.setField(bodyMeasurement, "id", measurementId);
 

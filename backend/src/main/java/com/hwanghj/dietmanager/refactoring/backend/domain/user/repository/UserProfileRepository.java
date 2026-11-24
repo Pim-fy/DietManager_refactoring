@@ -12,7 +12,7 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserProfil
  * 사용자 id 기준 프로필 정보 조회
  */
 public interface UserProfileRepository extends JpaRepository<UserProfile, Long> {
-    
+
     // User.java의 id로 UserProfile을 찾아 Optional 형태로 UserProfile객체를 반환함.
     Optional<UserProfile> findByUserId(Long userId);
 }

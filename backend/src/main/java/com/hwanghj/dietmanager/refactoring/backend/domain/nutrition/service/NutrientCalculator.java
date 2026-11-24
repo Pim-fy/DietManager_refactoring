@@ -15,16 +15,23 @@ public final class NutrientCalculator {
         private final BigDecimal value;
         private final int missingCount;
     }
-    private NutrientCalculator() {}
+
+    private NutrientCalculator() {
+    }
+
     public static BigDecimal scale(BigDecimal nutrient, BigDecimal amount, BigDecimal basis) {
         return nutrient == null ? null : nutrient.multiply(amount).divide(basis, 2, RoundingMode.HALF_UP);
     }
+
     public static <T> Total sum(List<T> items, Function<T, BigDecimal> nutrient) {
         BigDecimal total = BigDecimal.ZERO;
         int missing = 0;
         for (T item : items) {
             BigDecimal value = nutrient.apply(item);
-            if (value == null) missing++; else total = total.add(value);
+            if (value == null)
+                missing++;
+            else
+                total = total.add(value);
         }
         return new Total(total, missing);
     }

@@ -24,31 +24,44 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/intakes")
 public class IntakeController {
     private final IntakeService service;
-    public IntakeController(IntakeService service) { this.service = service; }
+
+    public IntakeController(IntakeService service) {
+        this.service = service;
+    }
+
     @GetMapping
     public IntakeDto.DailyResponse daily(@AuthenticationPrincipal CustomUserDetails user, @RequestParam LocalDate date) {
         return service.daily(user.getUserId(), date);
     }
+
     @PostMapping
     public ResponseEntity<IntakeDto.Response> create(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody IntakeDto.CreateRequest request) {
         return ResponseEntity.status(201).body(service.create(user.getUserId(), request));
     }
+
     @PostMapping("/manual")
     public ResponseEntity<IntakeDto.Response> manual(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody IntakeDto.ManualRequest request) {
-        return ResponseEntity.status(201).body(service.createManual(user.getUserId(),request));
+        return ResponseEntity.status(201).body(service.createManual(user.getUserId(), request));
     }
+
     @PatchMapping("/{id}/nutrition")
-    public IntakeDto.Response nutrition(@AuthenticationPrincipal CustomUserDetails user,@PathVariable Long id,@Valid @RequestBody IntakeDto.NutritionInput request) {
-        return service.editNutrition(user.getUserId(),id,request);
+    public IntakeDto.Response nutrition(@AuthenticationPrincipal CustomUserDetails user, @PathVariable Long id,
+            @Valid @RequestBody IntakeDto.NutritionInput request) {
+        return service.editNutrition(user.getUserId(), id, request);
     }
+
     @PatchMapping("/{id}")
-    public IntakeDto.Response update(@AuthenticationPrincipal CustomUserDetails user, @PathVariable Long id, @Valid @RequestBody IntakeDto.UpdateRequest request) {
+    public IntakeDto.Response update(@AuthenticationPrincipal CustomUserDetails user, @PathVariable Long id,
+            @Valid @RequestBody IntakeDto.UpdateRequest request) {
         return service.update(user.getUserId(), id, request);
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@AuthenticationPrincipal CustomUserDetails user, @PathVariable Long id) {
-        service.delete(user.getUserId(), id); return ResponseEntity.noContent().build();
+        service.delete(user.getUserId(), id);
+        return ResponseEntity.noContent().build();
     }
+
     @PostMapping("/{id}/restore")
     public IntakeDto.Response restore(@AuthenticationPrincipal CustomUserDetails user, @PathVariable Long id) {
         return service.restore(user.getUserId(), id);

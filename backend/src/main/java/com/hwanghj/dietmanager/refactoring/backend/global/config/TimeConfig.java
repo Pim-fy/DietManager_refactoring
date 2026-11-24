@@ -11,11 +11,16 @@ import org.springframework.data.auditing.DateTimeProvider;
 
 @Configuration
 public class TimeConfig {
-    @Bean public Clock applicationClock() { return Clock.systemDefaultZone(); }
+    @Bean
+    public Clock applicationClock() {
+        return Clock.systemDefaultZone();
+    }
+
     @Bean
     public DateTimeProvider auditingTimeProvider(Clock clock) {
         return () -> Optional.of(LocalDateTime.now(clock));
     }
+
     @Bean
     public ValidationConfigurationCustomizer validationClock(Clock clock) {
         return configuration -> configuration.clockProvider(() -> clock);

@@ -23,7 +23,7 @@ public final class NutritionDto {
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class PreferenceRequest {
 
-        @NotNull
+        @NotNull(message = "활동량은 필수입니다.")
         private ActivityLevel activityLevel;
     }
 

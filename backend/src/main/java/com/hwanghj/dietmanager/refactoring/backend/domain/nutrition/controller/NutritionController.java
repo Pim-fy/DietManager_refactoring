@@ -16,11 +16,27 @@ import com.hwanghj.dietmanager.refactoring.backend.global.security.CustomUserDet
 
 import jakarta.validation.Valid;
 
-@RestController @RequestMapping("/api/nutrition")
+@RestController
+@RequestMapping("/api/nutrition")
 public class NutritionController {
     private final NutritionService service;
-    public NutritionController(NutritionService service) { this.service = service; }
-    @GetMapping("/preferences") public NutritionDto.Preference preference(@AuthenticationPrincipal CustomUserDetails user) { return service.preference(user.getUserId()); }
-    @PutMapping("/preferences") public NutritionDto.Preference save(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody NutritionDto.PreferenceRequest request) { return service.save(user.getUserId(), request.getActivityLevel()); }
-    @GetMapping("/recommendation") public NutritionDto.Recommendation recommendation(@AuthenticationPrincipal CustomUserDetails user, @RequestParam LocalDate date) { return service.recommendation(user.getUserId(), date); }
+
+    public NutritionController(NutritionService service) {
+        this.service = service;
+    }
+
+    @GetMapping("/preferences")
+    public NutritionDto.Preference preference(@AuthenticationPrincipal CustomUserDetails user) {
+        return service.preference(user.getUserId());
+    }
+
+    @PutMapping("/preferences")
+    public NutritionDto.Preference save(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody NutritionDto.PreferenceRequest request) {
+        return service.save(user.getUserId(), request.getActivityLevel());
+    }
+
+    @GetMapping("/recommendation")
+    public NutritionDto.Recommendation recommendation(@AuthenticationPrincipal CustomUserDetails user, @RequestParam LocalDate date) {
+        return service.recommendation(user.getUserId(), date);
+    }
 }

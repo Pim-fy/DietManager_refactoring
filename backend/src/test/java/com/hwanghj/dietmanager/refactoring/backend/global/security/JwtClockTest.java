@@ -12,7 +12,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
 
 class JwtClockTest {
-    @Test void tokenExpiresUsingInjectedTime() {
+    @Test
+    void tokenExpiresUsingInjectedTime() {
         var start = Instant.parse("2026-01-01T00:00:00Z");
         String key = "synthetic-clock-test-key-at-least-thirty-two-bytes";
         var user = User.builder().email("clock@example.test").passwordHash("synthetic").userName("clock").build();

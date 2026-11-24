@@ -4,7 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class UserProfileNotFoundException extends BusinessException {
-    
+
     public UserProfileNotFoundException() {
         super(ErrorCode.USER_PROFILE_NOT_FOUND);
     }

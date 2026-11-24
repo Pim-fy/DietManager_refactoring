@@ -32,34 +32,34 @@ public class IntakeDto {
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class NutritionInput {
 
-        @NotBlank
-        @Size(max = 500)
+        @NotBlank(message = "음식명은 필수입니다.")
+        @Size(max = 500, message = "음식명은 500자 이하여야 합니다.")
         private String foodName;
 
-        @NotNull
-        @DecimalMin("0.01")
-        @DecimalMax("1000000")
-        @Digits(integer = 7, fraction = 2)
+        @NotNull(message = "기준량은 필수입니다.")
+        @DecimalMin(value = "0.01", message = "기준량은 0.01 이상이어야 합니다.")
+        @DecimalMax(value = "1000000", message = "기준량은 1,000,000 이하여야 합니다.")
+        @Digits(integer = 7, fraction = 2, message = "기준량은 소수점 2자리까지 입력할 수 있습니다.")
         private BigDecimal baseAmount;
 
-        @DecimalMin("0")
-        @DecimalMax("1000000")
-        @Digits(integer = 7, fraction = 6)
+        @DecimalMin(value = "0", message = "칼로리는 0 이상이어야 합니다.")
+        @DecimalMax(value = "1000000", message = "칼로리는 1,000,000 이하여야 합니다.")
+        @Digits(integer = 7, fraction = 6, message = "칼로리는 소수점 6자리까지 입력할 수 있습니다.")
         private BigDecimal calories;
 
-        @DecimalMin("0")
-        @DecimalMax("1000000")
-        @Digits(integer = 7, fraction = 6)
+        @DecimalMin(value = "0", message = "탄수화물은 0 이상이어야 합니다.")
+        @DecimalMax(value = "1000000", message = "탄수화물은 1,000,000 이하여야 합니다.")
+        @Digits(integer = 7, fraction = 6, message = "탄수화물은 소수점 6자리까지 입력할 수 있습니다.")
         private BigDecimal carbohydrate;
 
-        @DecimalMin("0")
-        @DecimalMax("1000000")
-        @Digits(integer = 7, fraction = 6)
+        @DecimalMin(value = "0", message = "단백질은 0 이상이어야 합니다.")
+        @DecimalMax(value = "1000000", message = "단백질은 1,000,000 이하여야 합니다.")
+        @Digits(integer = 7, fraction = 6, message = "단백질은 소수점 6자리까지 입력할 수 있습니다.")
         private BigDecimal protein;
 
-        @DecimalMin("0")
-        @DecimalMax("1000000")
-        @Digits(integer = 7, fraction = 6)
+        @DecimalMin(value = "0", message = "지방은 0 이상이어야 합니다.")
+        @DecimalMax(value = "1000000", message = "지방은 1,000,000 이하여야 합니다.")
+        @Digits(integer = 7, fraction = 6, message = "지방은 소수점 6자리까지 입력할 수 있습니다.")
         private BigDecimal fat;
     }
 
@@ -72,25 +72,25 @@ public class IntakeDto {
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class ManualRequest {
 
-        @NotNull
+        @NotNull(message = "영양정보는 필수입니다.")
         @Valid
         private NutritionInput nutrition;
 
-        @NotBlank
-        @Pattern(regexp = "g|ml")
+        @NotBlank(message = "단위는 필수입니다.")
+        @Pattern(regexp = "g|ml", message = "단위는 g 또는 ml이어야 합니다.")
         private String unit;
 
-        @NotNull
-        @PastOrPresent
+        @NotNull(message = "섭취일은 필수입니다.")
+        @PastOrPresent(message = "섭취일은 오늘 또는 과거 날짜여야 합니다.")
         private LocalDate eatenDate;
 
-        @NotNull
+        @NotNull(message = "끼니는 필수입니다.")
         private MealType mealType;
 
-        @NotNull
-        @DecimalMin("0.01")
-        @DecimalMax("1000000")
-        @Digits(integer = 7, fraction = 2)
+        @NotNull(message = "섭취량은 필수입니다.")
+        @DecimalMin(value = "0.01", message = "섭취량은 0.01 이상이어야 합니다.")
+        @DecimalMax(value = "1000000", message = "섭취량은 1,000,000 이하여야 합니다.")
+        @Digits(integer = 7, fraction = 2, message = "섭취량은 소수점 2자리까지 입력할 수 있습니다.")
         private BigDecimal amount;
     }
 
@@ -103,21 +103,21 @@ public class IntakeDto {
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class CreateRequest {
 
-        @NotBlank
-        @Size(max = 100)
+        @NotBlank(message = "식품 코드는 필수입니다.")
+        @Size(max = 100, message = "식품 코드는 100자 이하여야 합니다.")
         private String foodCode;
 
-        @NotNull
-        @PastOrPresent
+        @NotNull(message = "섭취일은 필수입니다.")
+        @PastOrPresent(message = "섭취일은 오늘 또는 과거 날짜여야 합니다.")
         private LocalDate eatenDate;
 
-        @NotNull
+        @NotNull(message = "끼니는 필수입니다.")
         private MealType mealType;
 
-        @NotNull
-        @DecimalMin("0.01")
-        @DecimalMax("1000000")
-        @Digits(integer = 7, fraction = 2)
+        @NotNull(message = "섭취량은 필수입니다.")
+        @DecimalMin(value = "0.01", message = "섭취량은 0.01 이상이어야 합니다.")
+        @DecimalMax(value = "1000000", message = "섭취량은 1,000,000 이하여야 합니다.")
+        @Digits(integer = 7, fraction = 2, message = "섭취량은 소수점 2자리까지 입력할 수 있습니다.")
         private BigDecimal amount;
     }
 
@@ -130,17 +130,17 @@ public class IntakeDto {
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class UpdateRequest {
 
-        @NotNull
-        @PastOrPresent
+        @NotNull(message = "섭취일은 필수입니다.")
+        @PastOrPresent(message = "섭취일은 오늘 또는 과거 날짜여야 합니다.")
         private LocalDate eatenDate;
 
-        @NotNull
+        @NotNull(message = "끼니는 필수입니다.")
         private MealType mealType;
 
-        @NotNull
-        @DecimalMin("0.01")
-        @DecimalMax("1000000")
-        @Digits(integer = 7, fraction = 2)
+        @NotNull(message = "섭취량은 필수입니다.")
+        @DecimalMin(value = "0.01", message = "섭취량은 0.01 이상이어야 합니다.")
+        @DecimalMax(value = "1000000", message = "섭취량은 1,000,000 이하여야 합니다.")
+        @Digits(integer = 7, fraction = 2, message = "섭취량은 소수점 2자리까지 입력할 수 있습니다.")
         private BigDecimal amount;
     }
 

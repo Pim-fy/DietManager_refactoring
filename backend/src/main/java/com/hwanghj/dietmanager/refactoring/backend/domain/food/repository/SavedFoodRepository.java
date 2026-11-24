@@ -8,9 +8,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.entity.SavedFood;
 
-public interface SavedFoodRepository extends JpaRepository<SavedFood,Long> {
+public interface SavedFoodRepository extends JpaRepository<SavedFood, Long> {
     long countByUserIdAndFavoriteTrue(Long userId);
-    Optional<SavedFood> findByUserIdAndSnapshotFoodCode(Long userId,String code);
+
+    Optional<SavedFood> findByUserIdAndSnapshotFoodCode(Long userId, String code);
+
     List<SavedFood> findByUserIdAndFavoriteTrueOrderByIdDesc(Long userId, Pageable page);
+
     List<SavedFood> findByUserIdAndLastUsedAtIsNotNullOrderByLastUsedAtDescIdDesc(Long userId, Pageable page);
 }

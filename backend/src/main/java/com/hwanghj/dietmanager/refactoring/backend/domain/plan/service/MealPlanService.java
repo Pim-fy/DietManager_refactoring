@@ -41,7 +41,7 @@ public class MealPlanService {
     @Transactional(readOnly = true)
     public List<MealPlanDto.Response> daily(Long userId, LocalDate date) {
         return plans.findByUserIdAndPlannedDateOrderByIdAsc(userId, date).stream()
-            .map(this::response).toList();
+                .map(this::response).toList();
     }
 
     @Transactional
@@ -49,7 +49,7 @@ public class MealPlanService {
         var account = users.findById(userId).orElseThrow(UserNotFoundException::new);
         var food = foods.resolve(userId, request.getFoodCode());
         return response(plans.save(new MealPlan(account, food, request.getPlannedDate(),
-            request.getMealType(), request.getAmount())));
+                request.getMealType(), request.getAmount())));
     }
 
     @Transactional
@@ -85,7 +85,7 @@ public class MealPlanService {
         }
         var food = plan.getSnapshot().food();
         var intake = intakes.save(new IntakeRecord(plan.getUser(), food, plan.getPlannedDate(),
-            plan.getMealType(), plan.getAmount()));
+                plan.getMealType(), plan.getAmount()));
         foods.used(userId, food);
         plan.consumed(intake.getId());
         return response(plan);
@@ -104,14 +104,14 @@ public class MealPlanService {
     private MealPlanDto.Response response(MealPlan plan) {
         var food = plan.getSnapshot().food();
         return MealPlanDto.Response.builder()
-            .id(plan.getId())
-            .plannedDate(plan.getPlannedDate())
-            .mealType(plan.getMealType())
-            .amount(plan.getAmount())
-            .food(food)
-            .nutrition(IntakeMapper.preview(food, plan.getPlannedDate(), plan.getMealType(), plan.getAmount()))
-            .deleted(plan.isDeleted())
-            .intakeId(plan.getIntakeId())
-            .build();
+                .id(plan.getId())
+                .plannedDate(plan.getPlannedDate())
+                .mealType(plan.getMealType())
+                .amount(plan.getAmount())
+                .food(food)
+                .nutrition(IntakeMapper.preview(food, plan.getPlannedDate(), plan.getMealType(), plan.getAmount()))
+                .deleted(plan.isDeleted())
+                .intakeId(plan.getIntakeId())
+                .build();
     }
 }

@@ -18,64 +18,71 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRe
 public class BodyMeasurementService {
     private final UserRepository userRepository;
     private final BodyMeasurementRepository bodyMeasurementRepository;
+
     public BodyMeasurementService(UserRepository userRepository, BodyMeasurementRepository bodyMeasurementRepository) {
         this.userRepository = userRepository;
         this.bodyMeasurementRepository = bodyMeasurementRepository;
     }
+
     @Transactional
     public BodyMeasurementDto.Response addBodyMeasurement(
             Long userId,
-            BodyMeasurementDto.Request request){
+            BodyMeasurementDto.Request request) {
 
         User user = userRepository
-            .findById(userId)
-            .orElseThrow(UserNotFoundException::new);
+                .findById(userId)
+                .orElseThrow(UserNotFoundException::new);
 
         BodyMeasurement bodyMeasurement = BodyMeasurement
-            .builder()
-            .user(user)
-            .measuredDate(request.getMeasuredDate())
-            .height(request.getHeight())
-            .weight(request.getWeight())
-            .build();
+                .builder()
+                .user(user)
+                .measuredDate(request.getMeasuredDate())
+                .height(request.getHeight())
+                .weight(request.getWeight())
+                .build();
 
         BodyMeasurement savedBodyMeasurement = bodyMeasurementRepository.save(bodyMeasurement);
-        
+
         return toBodyMeasurementResponse(savedBodyMeasurement);
     }
 
     @Transactional(readOnly = true)
-    public BodyMeasurementDto.Response findLatestBodyMeasurement(Long userId){
+    public BodyMeasurementDto.Response findLatestBodyMeasurement(Long userId) {
         BodyMeasurement bodyMeasurement = bodyMeasurementRepository
-            .findTopByUserIdAndDeletedFalseOrderByMeasuredDateDescIdDesc(userId)
-            .orElseThrow(BodyMeasurementNotFoundException::new);
-        
+                .findTopByUserIdAndDeletedFalseOrderByMeasuredDateDescIdDesc(userId)
+                .orElseThrow(BodyMeasurementNotFoundException::new);
+
         return toBodyMeasurementResponse(bodyMeasurement);
     }
 
     @Transactional(readOnly = true)
-    public List<BodyMeasurementDto.Response> findBodyMeasurements(Long userId){
+    public List<BodyMeasurementDto.Response> findBodyMeasurements(Long userId) {
         return bodyMeasurementRepository
-            .findByUserIdAndDeletedFalseOrderByMeasuredDateDescIdDesc(userId)
-            .stream()
-            .map(this::toBodyMeasurementResponse)
-            .toList();
+                .findByUserIdAndDeletedFalseOrderByMeasuredDateDescIdDesc(userId)
+                .stream()
+                .map(this::toBodyMeasurementResponse)
+                .toList();
     }
 
     @Transactional
     public BodyMeasurementDto.Response updateMeasurement(Long userId, Long id, BodyMeasurementDto.Request request) {
         var record = ownedMeasurement(userId, id);
-        if (record.isDeleted()) throw new MeasurementConflictException("삭제된 신체 기록은 먼저 복구해주세요.");
+        if (record.isDeleted())
+            throw new MeasurementConflictException("삭제된 신체 기록은 먼저 복구해주세요.");
         record.update(request.getMeasuredDate(), request.getHeight(), request.getWeight());
         return toBodyMeasurementResponse(record);
     }
 
     @Transactional
-    public void deleteMeasurement(Long userId, Long id) { ownedMeasurement(userId, id).delete(); }
+    public void deleteMeasurement(Long userId, Long id) {
+        ownedMeasurement(userId, id).delete();
+    }
 
     @Transactional
     public BodyMeasurementDto.Response restoreMeasurement(Long userId, Long id) {
-        var record = ownedMeasurement(userId, id); record.restore(); return toBodyMeasurementResponse(record);
+        var record = ownedMeasurement(userId, id);
+        record.restore();
+        return toBodyMeasurementResponse(record);
     }
 
     @Transactional(readOnly = true)
@@ -87,13 +94,13 @@ public class BodyMeasurementService {
         return bodyMeasurementRepository.findByIdAndUserId(id, userId).orElseThrow(BodyMeasurementNotFoundException::new);
     }
 
-    private BodyMeasurementDto.Response toBodyMeasurementResponse(BodyMeasurement bodyMeasurement){
+    private BodyMeasurementDto.Response toBodyMeasurementResponse(BodyMeasurement bodyMeasurement) {
         return BodyMeasurementDto.Response
-            .builder()
-            .measurementId(bodyMeasurement.getId())
-            .measuredDate(bodyMeasurement.getMeasuredDate())
-            .height(bodyMeasurement.getHeight())
-            .weight(bodyMeasurement.getWeight())
-            .build();
+                .builder()
+                .measurementId(bodyMeasurement.getId())
+                .measuredDate(bodyMeasurement.getMeasuredDate())
+                .height(bodyMeasurement.getHeight())
+                .weight(bodyMeasurement.getWeight())
+                .build();
     }
 }

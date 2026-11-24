@@ -18,21 +18,22 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/users")
 public class ProfileController {
     private final ProfileService profileService;
+
     public ProfileController(ProfileService profileService) {
         this.profileService = profileService;
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<UserProfileDto.Response> findProfile(@AuthenticationPrincipal CustomUserDetails userDetails){
+    public ResponseEntity<UserProfileDto.Response> findProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            profileService.findProfile(userDetails.getUserId()));
+                profileService.findProfile(userDetails.getUserId()));
     }
 
     @PatchMapping("/profile")
     public ResponseEntity<UserProfileDto.Response> modifyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody UserProfileDto.Request request){
+            @Valid @RequestBody UserProfileDto.Request request) {
         return ResponseEntity.ok(
-            profileService.modifyProfile(userDetails.getUserId(), request));
+                profileService.modifyProfile(userDetails.getUserId(), request));
     }
 }

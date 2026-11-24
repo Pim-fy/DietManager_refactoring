@@ -4,7 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class InvalidPasswordException extends BusinessException {
-    
+
     public InvalidPasswordException() {
         super(ErrorCode.INVALID_PASSWORD);
     }

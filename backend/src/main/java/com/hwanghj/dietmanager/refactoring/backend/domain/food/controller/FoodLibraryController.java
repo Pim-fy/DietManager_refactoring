@@ -15,11 +15,27 @@ import com.hwanghj.dietmanager.refactoring.backend.global.security.CustomUserDet
 
 import jakarta.validation.Valid;
 
-@RestController @RequestMapping("/api/foods")
+@RestController
+@RequestMapping("/api/foods")
 public class FoodLibraryController {
     private final FoodLibraryService service;
-    public FoodLibraryController(FoodLibraryService service) { this.service=service; }
-    @GetMapping("/favorites") public List<FoodLibraryDto.Item> favorites(@AuthenticationPrincipal CustomUserDetails user) { return service.favorites(user.getUserId()); }
-    @GetMapping("/recent") public List<FoodLibraryDto.Item> recent(@AuthenticationPrincipal CustomUserDetails user) { return service.recent(user.getUserId()); }
-    @PutMapping("/favorites") public FoodLibraryDto.Item favorite(@AuthenticationPrincipal CustomUserDetails user,@Valid @RequestBody FoodLibraryDto.FavoriteRequest request) { return service.favorite(user.getUserId(),request.getFoodCode(),request.getFavorite()); }
+
+    public FoodLibraryController(FoodLibraryService service) {
+        this.service = service;
+    }
+
+    @GetMapping("/favorites")
+    public List<FoodLibraryDto.Item> favorites(@AuthenticationPrincipal CustomUserDetails user) {
+        return service.favorites(user.getUserId());
+    }
+
+    @GetMapping("/recent")
+    public List<FoodLibraryDto.Item> recent(@AuthenticationPrincipal CustomUserDetails user) {
+        return service.recent(user.getUserId());
+    }
+
+    @PutMapping("/favorites")
+    public FoodLibraryDto.Item favorite(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody FoodLibraryDto.FavoriteRequest request) {
+        return service.favorite(user.getUserId(), request.getFoodCode(), request.getFavorite());
+    }
 }

@@ -13,17 +13,29 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository.AuthSessionRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository.RefreshTokenRepository;
 
-@Service @EnableScheduling
+@Service
+@EnableScheduling
 public class AuthSessionCleanup {
     private final Clock clock;
     private final RefreshTokenRepository tokens;
     private final AuthSessionRepository sessions;
-    public AuthSessionCleanup(RefreshTokenRepository tokens,AuthSessionRepository sessions) { this(tokens, sessions, Clock.systemDefaultZone()); }
+
+    public AuthSessionCleanup(RefreshTokenRepository tokens, AuthSessionRepository sessions) {
+        this(tokens, sessions, Clock.systemDefaultZone());
+    }
+
     @Autowired
-    public AuthSessionCleanup(RefreshTokenRepository tokens,AuthSessionRepository sessions, Clock clock) { this.clock = clock; this.tokens=tokens; this.sessions=sessions;  }
-    @Scheduled(fixedDelay=3600000,initialDelay=3600000) @Transactional
+    public AuthSessionCleanup(RefreshTokenRepository tokens, AuthSessionRepository sessions, Clock clock) {
+        this.clock = clock;
+        this.tokens = tokens;
+        this.sessions = sessions;
+    }
+
+    @Scheduled(fixedDelay = 3600000, initialDelay = 3600000)
+    @Transactional
     public void cleanup() {
-        var now=LocalDateTime.now(clock.withZone(ZoneOffset.UTC));
-        tokens.deleteInactive(now); sessions.deleteInactive(now);
+        var now = LocalDateTime.now(clock.withZone(ZoneOffset.UTC));
+        tokens.deleteInactive(now);
+        sessions.deleteInactive(now);
     }
 }

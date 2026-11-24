@@ -53,36 +53,45 @@ import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvi
 
 @ExtendWith(MockitoExtension.class)
 class AccountServiceTest {
-    @Mock private UserRepository userRepository;
-    @Mock private PasswordEncoder passwordEncoder;
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
     private AccountService accountService;
-    @BeforeEach void setUp() { accountService = new AccountService(userRepository, passwordEncoder); }
+
+    @BeforeEach
+    void setUp() {
+        accountService = new AccountService(userRepository, passwordEncoder);
+    }
+
     @Test
     void concurrentEmailConflictUsesDomainException() {
         User user = User.builder().email("old@example.test").passwordHash("hash").userName("사용자").build();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.existsByEmail("new@example.test")).thenReturn(false);
         Mockito.doThrow(new DataIntegrityViolationException("unique email"))
-            .when(userRepository).flush();
+                .when(userRepository).flush();
         var request = UserAccountModifyDto.Request.builder().email("new@example.test").userName("사용자").build();
         assertThatThrownBy(() -> accountService.modifyAccount(1L, request)).isInstanceOf(DuplicateEmailException.class);
     }
+
     @Test
     void findAcocuntReturnsAccountWhenUserExists() {
         // given: user 객체 생성.
         User user = User
-            .builder()
-            .email("test@example.com")
-            .passwordHash("hashed-password")
-            .userName("홍길동")
-            .build();
-        
+                .builder()
+                .email("test@example.com")
+                .passwordHash("hashed-password")
+                .userName("홍길동")
+                .build();
+
         // given: 테스트용으로 private 필드인 id값을 강제로 넣음.
         ReflectionTestUtils.setField(user, "id", 1L);
 
         // given: 로그인 성공 설정.
         when(userRepository.findById(1L))
-            .thenReturn(Optional.of(user));
+                .thenReturn(Optional.of(user));
 
         // when: 테스트 실행.
         UserAccountFindDto.Response response = accountService.findAccount(1L);
@@ -96,6 +105,7 @@ class AccountServiceTest {
         // then: 계정 조회 로직 실행 확인.
         verify(userRepository).findById(1L);
     }
+
     @Test
     void findAccountthrowsExceptioniWhenUserDoesNotExist() {
         // given: 조회된 결과가 없음을 설정.
@@ -103,29 +113,30 @@ class AccountServiceTest {
 
         // when + then
         assertThatThrownBy(() -> accountService.findAccount(1L))
-            .isInstanceOf(UserNotFoundException.class)
+                .isInstanceOf(UserNotFoundException.class)
             // .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("사용자를 찾을 수 없습니다.");
+                .hasMessage("사용자를 찾을 수 없습니다.");
 
         // then
         verify(userRepository).findById(1L);
     }
+
     @Test
     void modifyAccountUpdatesAccountWhenRequestIsValid() {
         // given: 기존 user 객체 생성.
         User user = User
-            .builder()
-            .email("test@example.com")
-            .passwordHash("hashed-password")
-            .userName("홍길동")
-            .build();
+                .builder()
+                .email("test@example.com")
+                .passwordHash("hashed-password")
+                .userName("홍길동")
+                .build();
 
         ReflectionTestUtils.setField(user, "id", 1L);
 
         // given: 계정 수정 요청 DTO 생성.
         UserAccountModifyDto.Request request = createModifyAccountRequest(
-            "new@example.com",
-            "김철수");
+                "new@example.com",
+                "김철수");
 
         // given: userId로 사용자 조회 성공.
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -149,22 +160,23 @@ class AccountServiceTest {
         verify(userRepository).findById(1L);
         verify(userRepository).existsByEmail("new@example.com");
     }
+
     @Test
     void modifyAccountDoesNotCheckDuplicateEmailWhenEmailIsNotChanged() {
         // given: 기존 user 객체 생성.
         User user = User
-            .builder()
-            .email("test@example.com")
-            .passwordHash("hashed-password")
-            .userName("홍길동")
-            .build();
+                .builder()
+                .email("test@example.com")
+                .passwordHash("hashed-password")
+                .userName("홍길동")
+                .build();
 
         ReflectionTestUtils.setField(user, "id", 1L);
 
         // given: 이메일은 그대로, 사용자 이름만 변경하는 요청.
         UserAccountModifyDto.Request request = createModifyAccountRequest(
-            "test@example.com",
-            "김철수");
+                "test@example.com",
+                "김철수");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
@@ -180,29 +192,30 @@ class AccountServiceTest {
         verify(userRepository).findById(1L);
         verify(userRepository, never()).existsByEmail(anyString());
     }
+
     @Test
     void modifyAccountThrowsDuplicateEmailExceptionWhenNewEmailAlreadyExists() {
         // given
         User user = User
-            .builder()
-            .email("test@example.com")
-            .passwordHash("hashed-password")
-            .userName("홍길동")
-            .build();
+                .builder()
+                .email("test@example.com")
+                .passwordHash("hashed-password")
+                .userName("홍길동")
+                .build();
 
         ReflectionTestUtils.setField(user, "id", 1L);
 
         UserAccountModifyDto.Request request = createModifyAccountRequest(
-            "new@example.com",
-            "김철수");
+                "new@example.com",
+                "김철수");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.existsByEmail("new@example.com")).thenReturn(true);
 
         // when + then
         assertThatThrownBy(() -> accountService.modifyAccount(1L, request))
-            .isInstanceOf(DuplicateEmailException.class)
-            .hasMessage("이미 사용 중인 이메일입니다.");
+                .isInstanceOf(DuplicateEmailException.class)
+                .hasMessage("이미 사용 중인 이메일입니다.");
 
         // then: 예외 발생 시 기존 값 유지 확인.
         assertThat(user.getEmail()).isEqualTo("test@example.com");
@@ -211,32 +224,34 @@ class AccountServiceTest {
         verify(userRepository).findById(1L);
         verify(userRepository).existsByEmail("new@example.com");
     }
+
     @Test
     void modifyAccountThrowsExceptionWhenUserDoesNotExist() {
         // given
         UserAccountModifyDto.Request request = createModifyAccountRequest(
-            "new@example.com",
-            "김철수");
+                "new@example.com",
+                "김철수");
 
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when + then
         assertThatThrownBy(() -> accountService.modifyAccount(1L, request))
-            .isInstanceOf(UserNotFoundException.class)
+                .isInstanceOf(UserNotFoundException.class)
             // .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("사용자를 찾을 수 없습니다.");
+                .hasMessage("사용자를 찾을 수 없습니다.");
 
         verify(userRepository).findById(1L);
         verify(userRepository, never()).existsByEmail(anyString());
     }
+
     @Test
     void changePasswordUpdatesPasswordWhenCurrentPasswordMatches() {
         // given
         User user = User.builder()
-            .email("test@example.com")
-            .passwordHash("old-hashed-password")
-            .userName("홍길동")
-            .build();
+                .email("test@example.com")
+                .passwordHash("old-hashed-password")
+                .userName("홍길동")
+                .build();
 
         // given: 비밀번호 변경 요청 DTO 생성
         PasswordChangeDto.Request request = createPasswordChangeRequest("old-password", "new-password123");
@@ -263,6 +278,7 @@ class AccountServiceTest {
         // then: 새 비밀번호 저장 전 해싱했는지 확인.
         verify(passwordEncoder).encode("new-password123");
     }
+
     @Test
     void changePasswordThrowsUserNotFoundExceptionWhenUserDoesNotExist() {
         // given: 비밀번호 변경 요청 DTO 생성
@@ -272,22 +288,23 @@ class AccountServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when + then
-        assertThatThrownBy(() -> accountService.changePassword(1L, request))       // when: 비밀번호 변경 서비스 메서드 실행
-            .isInstanceOf(UserNotFoundException.class)      // then: 발생한 예외의 타입이 UserNotFoundException 인지 확인
-            .hasMessage("사용자를 찾을 수 없습니다.");      // then: 발생한 예외의 메시지가 "사용자를 찾을 수 없습니다." 인지 확인
-        
+        assertThatThrownBy(() -> accountService.changePassword(1L, request)) // when: 비밀번호 변경 서비스 메서드 실행
+                .isInstanceOf(UserNotFoundException.class) // then: 발생한 예외의 타입이 UserNotFoundException 인지 확인
+                .hasMessage("사용자를 찾을 수 없습니다."); // then: 발생한 예외의 메시지가 "사용자를 찾을 수 없습니다." 인지 확인
+
         verify(userRepository).findById(1L);
         verify(passwordEncoder, never()).matches(anyString(), anyString());
         verify(passwordEncoder, never()).encode(anyString());
     }
+
     @Test
     void changePasswordThrowsInvalidPasswordExceptionWhenCurrentPasswordDoesNotMatch() {
         // given
         User user = User.builder()
-            .email("test@example.com")
-            .passwordHash("old-hashed-password")
-            .userName("홍길동")
-            .build();
+                .email("test@example.com")
+                .passwordHash("old-hashed-password")
+                .userName("홍길동")
+                .build();
 
         PasswordChangeDto.Request request = createPasswordChangeRequest("wrong-password", "new-password");
 
@@ -296,9 +313,9 @@ class AccountServiceTest {
 
         // when + then
         assertThatThrownBy(() -> accountService.changePassword(1L, request))
-            .isInstanceOf(InvalidPasswordException.class)
-            .hasMessage("현재 비밀번호가 일치하지 않습니다.");
-        
+                .isInstanceOf(InvalidPasswordException.class)
+                .hasMessage("현재 비밀번호가 일치하지 않습니다.");
+
         assertThat(user.getPasswordHash()).isEqualTo("old-hashed-password");
 
         verify(userRepository).findById(1L);
@@ -306,6 +323,7 @@ class AccountServiceTest {
         verify(passwordEncoder, never()).encode(anyString());
 
     }
+
     private UserRegisterDto.Request createRegisterRequest() throws Exception {
         return UserRegisterDto.Request.builder()
                 .email("test@example.com")
@@ -316,57 +334,64 @@ class AccountServiceTest {
                 .goalType(GoalType.LOSE_WEIGHT)
                 .build();
     }
+
     private UserLoginDto.Request createLoginRequest() {
         return UserLoginDto.Request
-            .builder()
-            .email("test@example.com")
-            .password("password123")
-            .build();
+                .builder()
+                .email("test@example.com")
+                .password("password123")
+                .build();
     }
+
     private UserAccountModifyDto.Request createModifyAccountRequest(String email, String userName) {
         return UserAccountModifyDto.Request
-            .builder()
-            .email(email)
-            .userName(userName)
-            .build();
+                .builder()
+                .email(email)
+                .userName(userName)
+                .build();
     }
-    private PasswordChangeDto.Request createPasswordChangeRequest(String currentPassword,String newPassword) {
+
+    private PasswordChangeDto.Request createPasswordChangeRequest(String currentPassword, String newPassword) {
         return PasswordChangeDto.Request.builder()
-            .currentPassword(currentPassword)
-            .newPassword(newPassword)
-            .build();
+                .currentPassword(currentPassword)
+                .newPassword(newPassword)
+                .build();
     }
+
     private UserProfileDto.Request createProfileRequest(
             Gender gender,
             LocalDate birthDate,
             GoalType goalType) {
         return UserProfileDto.Request.builder()
-            .gender(gender)
-            .birthDate(birthDate)
-            .goalType(goalType)
-            .build();
+                .gender(gender)
+                .birthDate(birthDate)
+                .goalType(goalType)
+                .build();
     }
+
     private BodyMeasurementDto.Request createBodyMeasurementRequest(
             LocalDate measuredDate,
             Double height,
             Double weight) {
         return BodyMeasurementDto.Request.builder()
-            .measuredDate(measuredDate)
-            .height(height)
-            .weight(weight)
-            .build();
+                .measuredDate(measuredDate)
+                .height(height)
+                .weight(weight)
+                .build();
     }
+
     private User createUserWithId(Long userId) {
         User user = User.builder()
-            .email("test@example.com")
-            .passwordHash("hashed-password")
-            .userName("홍길동")
-            .build();
+                .email("test@example.com")
+                .passwordHash("hashed-password")
+                .userName("홍길동")
+                .build();
 
         ReflectionTestUtils.setField(user, "id", userId);
 
         return user;
     }
+
     private BodyMeasurement createBodyMeasurement(
             Long measurementId,
             User user,
@@ -374,11 +399,11 @@ class AccountServiceTest {
             Double height,
             Double weight) {
         BodyMeasurement bodyMeasurement = BodyMeasurement.builder()
-            .user(user)
-            .measuredDate(measuredDate)
-            .height(height)
-            .weight(weight)
-            .build();
+                .user(user)
+                .measuredDate(measuredDate)
+                .height(height)
+                .weight(weight)
+                .build();
 
         ReflectionTestUtils.setField(bodyMeasurement, "id", measurementId);
 

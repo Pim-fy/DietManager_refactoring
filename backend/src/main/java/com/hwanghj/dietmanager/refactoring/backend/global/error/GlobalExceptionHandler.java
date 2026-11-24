@@ -45,8 +45,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleBodyValidation(MethodArgumentNotValidException e) {
         List<ErrorResponse.FieldError> errors = e.getBindingResult().getFieldErrors().stream()
-            .map(error -> new ErrorResponse.FieldError(error.getField(), error.getDefaultMessage()))
-            .toList();
+                .map(error -> new ErrorResponse.FieldError(error.getField(), error.getDefaultMessage()))
+                .toList();
         return validation("입력값 검증에 실패했습니다.", errors);
     }
 
@@ -54,18 +54,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<ErrorResponse> handleParameterValidation(HandlerMethodValidationException e) {
         List<ErrorResponse.FieldError> errors = e.getParameterValidationResults().stream()
-            .flatMap(result -> result.getResolvableErrors().stream()
-                .map(error -> new ErrorResponse.FieldError(
-                    result.getMethodParameter().getParameterName(), error.getDefaultMessage())))
-            .toList();
+                .flatMap(result -> result.getResolvableErrors().stream()
+                        .map(error -> new ErrorResponse.FieldError(
+                                result.getMethodParameter().getParameterName(), error.getDefaultMessage())))
+                .toList();
         return validation(ErrorCode.VALIDATION_ERROR.getMessage(), errors);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException e) {
         List<ErrorResponse.FieldError> errors = e.getConstraintViolations().stream()
-            .map(violation -> new ErrorResponse.FieldError(lastNode(violation.getPropertyPath().toString()), violation.getMessage()))
-            .toList();
+                .map(violation -> new ErrorResponse.FieldError(lastNode(violation.getPropertyPath().toString()), violation.getMessage()))
+                .toList();
         return validation(ErrorCode.VALIDATION_ERROR.getMessage(), errors);
     }
 
@@ -105,10 +105,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleResponseStatus(ResponseStatusException e) {
         HttpStatus status = HttpStatus.resolve(e.getStatusCode().value());
         ErrorCode code = switch (status == null ? HttpStatus.INTERNAL_SERVER_ERROR : status) {
-            case FORBIDDEN -> ErrorCode.FORBIDDEN;
-            case NOT_FOUND -> ErrorCode.NOT_FOUND;
-            case UNAUTHORIZED -> ErrorCode.UNAUTHORIZED;
-            default -> e.getStatusCode().is4xxClientError() ? ErrorCode.VALIDATION_ERROR : ErrorCode.INTERNAL_ERROR;
+        case FORBIDDEN -> ErrorCode.FORBIDDEN;
+        case NOT_FOUND -> ErrorCode.NOT_FOUND;
+        case UNAUTHORIZED -> ErrorCode.UNAUTHORIZED;
+        default -> e.getStatusCode().is4xxClientError() ? ErrorCode.VALIDATION_ERROR : ErrorCode.INTERNAL_ERROR;
         };
         String message = e.getReason() == null ? code.getMessage() : e.getReason();
         return ResponseEntity.status(e.getStatusCode()).body(ErrorResponse.of(code.name(), message));

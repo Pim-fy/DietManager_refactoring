@@ -13,10 +13,11 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.auth.entity.RefreshTok
 
 import jakarta.persistence.LockModeType;
 
-public interface RefreshTokenRepository extends JpaRepository<RefreshToken,String> {
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, String> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select t from RefreshToken t where t.tokenHash = :hash")
     Optional<RefreshToken> locked(String hash);
+
     @Modifying
     @Query("delete from RefreshToken t where t.session.id in (select s.id from AuthSession s where s.expiresAt <= :now or s.revoked = true)")
     int deleteInactive(LocalDateTime now);

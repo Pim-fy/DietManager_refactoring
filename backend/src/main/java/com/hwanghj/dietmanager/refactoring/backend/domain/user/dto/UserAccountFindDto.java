@@ -14,5 +14,5 @@ public class UserAccountFindDto {
         private final String userName;
         private final UserRole role;
     }
-    
+
 }

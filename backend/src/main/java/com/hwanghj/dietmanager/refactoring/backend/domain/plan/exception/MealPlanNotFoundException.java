@@ -4,5 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class MealPlanNotFoundException extends BusinessException {
-    public MealPlanNotFoundException() { super(ErrorCode.MEAL_PLAN_NOT_FOUND); }
+    public MealPlanNotFoundException() {
+        super(ErrorCode.MEAL_PLAN_NOT_FOUND);
+    }
 }

@@ -4,5 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class FoodSelectionException extends BusinessException {
-    public FoodSelectionException(String message) { super(ErrorCode.FOOD_SELECTION_CONFLICT, message); }
+    public FoodSelectionException(String message) {
+        super(ErrorCode.FOOD_SELECTION_CONFLICT, message);
+    }
 }

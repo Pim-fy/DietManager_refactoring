@@ -22,11 +22,11 @@ public final class FoodLibraryDto {
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class FavoriteRequest {
 
-        @NotBlank
-        @Size(max = 100)
+        @NotBlank(message = "식품 코드는 필수입니다.")
+        @Size(max = 100, message = "식품 코드는 100자 이하여야 합니다.")
         private String foodCode;
 
-        @NotNull
+        @NotNull(message = "즐겨찾기 여부는 필수입니다.")
         private Boolean favorite;
     }
 
