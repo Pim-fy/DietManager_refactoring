@@ -7,15 +7,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.hwanghj.dietmanager.refactoring.backend.user.User;
-import com.hwanghj.dietmanager.refactoring.backend.user.UserRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import com.hwanghj.dietmanager.refactoring.backend.security.AuthSessionService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.AuthSessionService;
 /**
  * 요청마다 Authorization 헤더를 읽고, 토큰이 유효한 경우 Spring Security에 "인증된 사용자"를 등록.
  */
