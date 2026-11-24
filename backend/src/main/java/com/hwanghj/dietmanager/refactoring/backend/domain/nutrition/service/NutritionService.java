@@ -13,7 +13,9 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.Nutri
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.SettingHistory;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.repository.NutritionPreferenceRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.GoalType;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserProfileRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
 
 @Service
 public class NutritionService {
@@ -21,13 +23,15 @@ public class NutritionService {
     private final UserProfileRepository profiles;
     private final BodyMeasurementRepository measurements;
     private final SettingHistoryService histories;
+    private final UserRepository users;
 
     public NutritionService(NutritionPreferenceRepository preferences, UserProfileRepository profiles, BodyMeasurementRepository measurements,
-            SettingHistoryService histories) {
+            SettingHistoryService histories, UserRepository users) {
         this.preferences = preferences;
         this.profiles = profiles;
         this.measurements = measurements;
         this.histories = histories;
+        this.users = users;
     }
 
     @Transactional(readOnly = true)
@@ -39,6 +43,8 @@ public class NutritionService {
 
     @Transactional
     public NutritionDto.Preference save(Long userId, ActivityLevel activity) {
+        // 같은 사용자의 저장을 줄 세워 활동량·설정 이력의 처음 저장이 겹치지 않게 한다.
+        users.findWithLockById(userId).orElseThrow(UserNotFoundException::new);
         var existing = preferences.findById(userId);
         ActivityLevel previous = existing.map(NutritionPreference::getActivityLevel).orElse(null);
         var preference = existing.orElseGet(() -> new NutritionPreference(userId, activity));

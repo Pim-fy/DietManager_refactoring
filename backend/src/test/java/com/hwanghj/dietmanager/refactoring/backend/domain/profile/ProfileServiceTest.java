@@ -57,11 +57,13 @@ class ProfileServiceTest {
     private UserProfileRepository userProfileRepository;
     @Mock
     private SettingHistoryService settingHistoryService;
+    @Mock
+    private UserRepository userRepository;
     private ProfileService profileService;
 
     @BeforeEach
     void setUp() {
-        profileService = new ProfileService(userProfileRepository, settingHistoryService);
+        profileService = new ProfileService(userProfileRepository, settingHistoryService, userRepository);
     }
 
     @Test
@@ -134,6 +136,7 @@ class ProfileServiceTest {
                 LocalDate.of(1998, 5, 10),
                 GoalType.MAINTAIN_WEIGHT);
 
+        when(userRepository.findWithLockById(1L)).thenReturn(Optional.of(user));
         when(userProfileRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
 
         // when
@@ -162,6 +165,7 @@ class ProfileServiceTest {
                 LocalDate.of(1998, 5, 10),
                 GoalType.MAINTAIN_WEIGHT);
 
+        when(userRepository.findWithLockById(1L)).thenReturn(Optional.of(User.builder().email("test@example.com").passwordHash("hashed-password").userName("홍길동").build()));
         when(userProfileRepository.findByUserId(1L)).thenReturn(Optional.empty());
 
         // when + then

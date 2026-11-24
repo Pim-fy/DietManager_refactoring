@@ -30,8 +30,9 @@ public class IntakeService {
 
     @Transactional
     public IntakeDto.Response create(Long userId, IntakeDto.CreateRequest request) {
-        var user = users.findById(userId).orElseThrow(UserNotFoundException::new);
         var food = foods.resolve(userId, request.getFoodCode());
+        // 외부 식품 조회가 끝난 뒤, 다른 저장보다 먼저 users 행을 잠근다(최근 사용 식품의 처음 저장).
+        var user = users.findWithLockById(userId).orElseThrow(UserNotFoundException::new);
         foods.used(userId, food);
         return IntakeMapper.response(repository.save(new IntakeRecord(user, food, request.getEatenDate(), request.getMealType(), request.getAmount())));
     }

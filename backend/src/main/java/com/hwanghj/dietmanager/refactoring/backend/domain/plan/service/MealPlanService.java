@@ -77,6 +77,8 @@ public class MealPlanService {
 
     @Transactional
     public MealPlanDto.Response consume(Long userId, Long id) {
+        // 섭취 저장(users 공유 잠금)보다 먼저 users 행을 잠가, 최근 사용 식품 저장과 교착되지 않게 한다.
+        users.findWithLockById(userId).orElseThrow(UserNotFoundException::new);
         // 소유권 조회의 비관적 잠금을 섭취 저장·계획 전환까지 유지한다.
         var plan = owned(userId, id);
         editable(plan);

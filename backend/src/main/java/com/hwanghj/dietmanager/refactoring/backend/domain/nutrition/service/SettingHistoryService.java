@@ -17,6 +17,7 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserProfil
 
 /**
  * 목표·활동량이 바뀔 때 날짜별 이력을 남기고, 조회 날짜에 적용 중이던 설정을 찾는다.
+ * 이력을 남기는 메서드는 호출한 쪽이 먼저 users 행을 잠근 트랜잭션 안에서 부른다({@code UserRepository.findWithLockById}).
  */
 @Service
 public class SettingHistoryService {
