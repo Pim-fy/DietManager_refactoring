@@ -12,7 +12,7 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
 /**
  * 토큰 인증이 끝난 뒤, 컨트롤러에서 현재 로그인한 사용자를 꺼내기 위해 필요한 객체.
  */
-public class CustomUserDetails implements UserDetails{
+public class CustomUserDetails implements UserDetails {
     private final Long userId;
     private final String email;
     private final String password;

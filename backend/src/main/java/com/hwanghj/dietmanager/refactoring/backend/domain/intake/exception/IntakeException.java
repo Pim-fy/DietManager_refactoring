@@ -4,5 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class IntakeException extends BusinessException {
-    public IntakeException(String message) { super(ErrorCode.INTAKE_CONFLICT, message); }
+    public IntakeException(String message) {
+        super(ErrorCode.INTAKE_CONFLICT, message);
+    }
 }

@@ -4,5 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class FoodApiException extends BusinessException {
-    public FoodApiException(String message) { super(ErrorCode.FOOD_API_ERROR, message); }
+    public FoodApiException(String message) {
+        super(ErrorCode.FOOD_API_ERROR, message);
+    }
 }

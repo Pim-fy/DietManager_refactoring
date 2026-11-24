@@ -4,5 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class FoodNotFoundException extends BusinessException {
-    public FoodNotFoundException() { super(ErrorCode.FOOD_NOT_FOUND); }
+    public FoodNotFoundException() {
+        super(ErrorCode.FOOD_NOT_FOUND);
+    }
 }

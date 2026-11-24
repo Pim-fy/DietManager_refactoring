@@ -4,5 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class MeasurementConflictException extends BusinessException {
-    public MeasurementConflictException(String message) { super(ErrorCode.BODY_MEASUREMENT_CONFLICT, message); }
+    public MeasurementConflictException(String message) {
+        super(ErrorCode.BODY_MEASUREMENT_CONFLICT, message);
+    }
 }

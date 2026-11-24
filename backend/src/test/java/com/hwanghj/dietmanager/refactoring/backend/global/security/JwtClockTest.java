@@ -1,11 +1,19 @@
 package com.hwanghj.dietmanager.refactoring.backend.global.security;
-import java.time.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
-import static org.assertj.core.api.Assertions.assertThat;
+
 class JwtClockTest {
-    @Test void tokenExpiresUsingInjectedTime() {
+    @Test
+    void tokenExpiresUsingInjectedTime() {
         var start = Instant.parse("2026-01-01T00:00:00Z");
         String key = "synthetic-clock-test-key-at-least-thirty-two-bytes";
         var user = User.builder().email("clock@example.test").passwordHash("synthetic").userName("clock").build();

@@ -26,25 +26,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint((request, response, exception) -> {
-                response.setStatus(ErrorCode.UNAUTHORIZED.getStatus().value());
-                response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write(objectMapper.writeValueAsString(ErrorResponse.of(ErrorCode.UNAUTHORIZED)));
-            }))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/foods/**", "/api/intakes/**", "/api/nutrition/**", "/api/statistics/**", "/api/meal-plans/**").authenticated()
-                .requestMatchers("/api/users/register", "/api/users/login", "/api/users/refresh", "/api/users/logout", "/error").permitAll()
-                .requestMatchers(
-                        "/api/users/account", 
-                        "/api/users/password",
-                        "/api/users/profile",
-                        "/api/users/body-measurements/**"   
-                    ).authenticated()  // 토큰 필요
-                .anyRequest().authenticated()  // 새 경로는 기본적으로 인증 필요
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .build();
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint((request, response, exception) -> {
+                    response.setStatus(ErrorCode.UNAUTHORIZED.getStatus().value());
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write(objectMapper.writeValueAsString(ErrorResponse.of(ErrorCode.UNAUTHORIZED)));
+                }))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/foods/**", "/api/intakes/**", "/api/nutrition/**", "/api/statistics/**", "/api/meal-plans/**").authenticated()
+                        .requestMatchers("/api/users/register", "/api/users/login", "/api/users/refresh", "/api/users/logout", "/error").permitAll()
+                        .requestMatchers(
+                                "/api/users/account",
+                                "/api/users/password",
+                                "/api/users/profile",
+                                "/api/users/body-measurements/**")
+                        .authenticated() // 토큰 필요
+                        .anyRequest().authenticated() // 새 경로는 기본적으로 인증 필요
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 }

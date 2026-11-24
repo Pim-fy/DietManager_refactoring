@@ -1,16 +1,28 @@
 package com.hwanghj.dietmanager.refactoring.backend.global.maintenance;
-import java.nio.file.*;
+
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.util.HexFormat;
-import tools.jackson.databind.ObjectMapper;
+
 import com.hwanghj.dietmanager.refactoring.backend.global.maintenance.BackupModel.Backup;
+
+import tools.jackson.databind.ObjectMapper;
+
 final class BackupFiles {
-    private BackupFiles() {}
-    private static Path folder() { return Path.of("..", ".local-backups").toAbsolutePath().normalize(); }
+    private BackupFiles() {
+    }
+
+    private static Path folder() {
+        return Path.of("..", ".local-backups").toAbsolutePath().normalize();
+    }
+
     private static String hash(byte[] bytes) throws Exception {
         return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
     }
+
     static Path write(Backup backup) throws Exception {
         Path directory = folder();
         Files.createDirectories(directory);
@@ -20,6 +32,7 @@ final class BackupFiles {
         Files.writeString(Path.of(file + ".sha256"), hash(bytes), StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW);
         return file;
     }
+
     static Backup read(Path requested) throws Exception {
         Path file = requested.toAbsolutePath().normalize().toRealPath();
         if (!file.startsWith(folder().toRealPath()) || !file.getFileName().toString().matches("mysql-[0-9]+\\.json")) {

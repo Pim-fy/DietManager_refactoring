@@ -1,10 +1,10 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.user.exception;
 
-
 import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessException;
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
+
 public class UserNotFoundException extends BusinessException {
-    
+
     public UserNotFoundException() {
         /*
             1. GlobalExceptionHandler에서 사용할 메시지 전달.

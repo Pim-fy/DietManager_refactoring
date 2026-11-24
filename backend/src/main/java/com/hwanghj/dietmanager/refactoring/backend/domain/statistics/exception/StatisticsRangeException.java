@@ -4,5 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class StatisticsRangeException extends BusinessException {
-    public StatisticsRangeException(String message) { super(ErrorCode.VALIDATION_ERROR, message); }
+    public StatisticsRangeException(String message) {
+        super(ErrorCode.VALIDATION_ERROR, message);
+    }
 }

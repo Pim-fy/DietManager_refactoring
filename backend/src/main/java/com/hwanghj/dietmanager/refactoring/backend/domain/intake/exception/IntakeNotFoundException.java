@@ -4,5 +4,7 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 public class IntakeNotFoundException extends BusinessException {
-    public IntakeNotFoundException() { super(ErrorCode.INTAKE_NOT_FOUND); }
+    public IntakeNotFoundException() {
+        super(ErrorCode.INTAKE_NOT_FOUND);
+    }
 }

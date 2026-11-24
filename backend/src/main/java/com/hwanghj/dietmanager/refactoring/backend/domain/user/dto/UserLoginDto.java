@@ -1,5 +1,6 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.user.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserRole;
 
 import jakarta.validation.constraints.Email;
@@ -10,11 +11,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 
+/**
  * 로그인 요청/응답 DTO
  */
 public class UserLoginDto {
-    
 
     /**
      * 로그인 요청 DTO      <br>
@@ -46,7 +46,8 @@ public class UserLoginDto {
         private final String userName;
         private final UserRole role;
         private final String accessToken;
-        @com.fasterxml.jackson.annotation.JsonIgnore
+
+        @JsonIgnore
         private final String refreshToken;
     }
 }

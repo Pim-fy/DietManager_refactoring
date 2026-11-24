@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
@@ -14,7 +15,12 @@ public class ErrorResponse {
     private final List<FieldError> errors;
 
     /** 입력 검증에 실패한 항목. field는 요청 필드명 또는 파라미터명. */
-    public record FieldError(String field, String message) {}
+    @Getter
+    @AllArgsConstructor
+    public static class FieldError {
+        private final String field;
+        private final String message;
+    }
 
     public ErrorResponse(String code, String message, List<FieldError> errors) {
         this.code = code;

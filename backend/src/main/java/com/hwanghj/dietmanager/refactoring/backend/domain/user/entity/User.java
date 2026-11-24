@@ -1,6 +1,7 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.user.entity;
 
 import com.hwanghj.dietmanager.refactoring.backend.global.common.BaseTimeEntity;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,10 +30,10 @@ public class User extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false, unique = true)
     private String email;
-    
+
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
@@ -45,7 +46,10 @@ public class User extends BaseTimeEntity {
 
     @Column(nullable = false)
     private long tokenVersion;
-    public void revokeTokens() { tokenVersion++; }
+
+    public void revokeTokens() {
+        tokenVersion++;
+    }
 
     // cascade: User를 저장, 삭제 시 연결된 UserProfile도 함께 저장, 삭제.
     // orphanRemoval: User와 연결이 끊긴 UserProfile을 고아 객체로 보고 삭제.
@@ -66,7 +70,7 @@ public class User extends BaseTimeEntity {
     }
 
     public void updatePassword(String passwordHash) {
-        if(passwordHash == null || passwordHash.isBlank()) {
+        if (passwordHash == null || passwordHash.isBlank()) {
             throw new IllegalArgumentException("비밀번호 해시는 비어 있을 수 없습니다.");
         }
 
@@ -74,22 +78,21 @@ public class User extends BaseTimeEntity {
     }
 
     public void changeRole(UserRole role) {
-        if(role == null) {
+        if (role == null) {
             throw new IllegalArgumentException("권한은 null일 수 없습니다.");
         }
         this.role = role;
     }
 
     public void assignProfile(UserProfile profile) {
-        if(profile == null) {
+        if (profile == null) {
             throw new IllegalArgumentException("프로필은 null일 수 없습니다.");
         }
-        if(this.profile != null) {
+        if (this.profile != null) {
             throw new IllegalStateException("이미 프로필이 존재합니다.");
         }
         this.profile = profile;
         profile.setUser(this);
     }
 
-    
 }
