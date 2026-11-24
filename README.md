@@ -34,7 +34,7 @@
 - 새 로그인 토큰은 서버 로그아웃·갱신 토큰 재사용으로 폐기된다. 비밀번호 변경은 기존 Access·Refresh Token을 모두 무효화한다.
 
 ### 로컬 실행
-1. 백엔드 실행: `cd backend`, `./gradlew bootRun --args="--spring.profiles.active=local,maintenance"` (Windows: `gradlew.bat`). DB·JWT 설정이 담긴 `application-local.properties`가 필요하며 저장소에는 포함되지 않는다. 기본 설정에서 Flyway가 켜지고 JPA는 `validate`로 동작하므로 스키마를 다시 만들지 않는다.
+1. 백엔드 실행: `cd backend`, `./gradlew bootRun` (Windows: `gradlew.bat`). DB·JWT 설정이 담긴 `application-local.properties`가 필요하며 저장소에는 포함되지 않는다. 기본 설정에서 Flyway가 켜지고 JPA는 `validate`로 동작하므로 스키마를 다시 만들지 않는다.
 2. 프론트엔드 실행: `cd frontend`, `npm ci`, `npm run dev`.
 3. `http://localhost:5186`에서 접속한다. 개발·미리보기 포트는 5186으로 고정하며,
    사용 중이면 자동으로 다른 포트로 이동하지 않고 실행을 중단한다.
@@ -46,7 +46,7 @@
 
 ```powershell
 # backend 폴더
-.\gradlew.bat bootRun --args="--spring.profiles.active=local,maintenance --server.address=127.0.0.1 --server.port=18086 --logging.level.root=ERROR"
+.\gradlew.bat bootRun --args="--server.address=127.0.0.1 --server.port=18086 --logging.level.root=ERROR"
 # 별도 터미널의 frontend 폴더
 $env:VITE_API_PROXY_TARGET='http://127.0.0.1:18086'
 npm run dev -- --host 127.0.0.1
@@ -67,7 +67,7 @@ npm run dev -- --host 127.0.0.1
 - 활동량 5단계와 Mifflin–St Jeor 기준으로 권장 칼로리·영양소를 계산하고 실제 섭취와 비교한다.
 - 신체 기록 수정·삭제·복구, 주·월별 영양·체중 추이와 표 페이지 이동을 지원한다.
 - 식품 즐겨찾기·최근 식품과 식단 계획 저장·수정·삭제·복구·섭취 전환을 지원한다.
-- 계산 기준과 API는 `nutrition`, `plan`, `statistics` 패키지를 참고한다.
+- 계산 기준과 API는 `domain/nutrition`, `domain/plan`, `domain/statistics` 패키지를 참고한다.
 
 ## 로컬 유지보수와 검증
 - 토큰 갱신·폐기·재로그인, 로그인 실패 제한, Flyway 버전 관리, 백업·복원, MySQL 통합 테스트와 브라우저 E2E를 구현했다.
@@ -92,9 +92,12 @@ API: `GET /api/foods?keyword=김밥&page=1&size=10`, `GET /api/intakes?date=2026
 DB 스키마는 `backend/src/main/resources/db/migration`의 Flyway V1~V4로 관리한다.
 새 빈 DB에는 V1부터 순서대로 적용된다.
 
-백엔드 일반 테스트 106개와 MySQL 통합 테스트 24개가 통과했다(2026-11-23 재실행).
-Chrome E2E 테스트는 구현되어 있으며, 서버를 실행한 뒤 직접 실행해야 한다.
+백엔드 일반 테스트 119개, MySQL 통합 테스트 24개, Chrome E2E 7개가 통과했다(2026-11-24 재실행).
+E2E는 백엔드·프론트 서버를 실행한 뒤 직접 실행해야 한다.
 
 성능(쿼리 수·N+1), 부하, 전체 보안 감사는 아직 검증하지 않았다.
 
-패키지 구조와 프론트 폴더 구성은 정리 중이다.
+## 코드 구조
+- 백엔드: `global/`(error, config, common, security, maintenance)과 `domain/<기능>/`으로 나누고, 각 기능 안은 `controller`, `service`, `repository`, `entity`, `dto`, `exception` 계층으로 둔다.
+- 프론트: `src/features/<기능>/`(화면·훅·`api.js`)과 `src/shared/`(API 클라이언트, 공통 컴포넌트·훅·유틸)로 나눈다.
+- 오류 응답은 `{code, message[, errors]}` 형식이며 코드 목록은 `global/error/ErrorCode.java`에 있다.
