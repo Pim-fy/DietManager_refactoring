@@ -29,14 +29,14 @@ public class SecurityConfig {
             }))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/foods/**", "/api/intakes/**", "/api/nutrition/**", "/api/statistics/**", "/api/meal-plans/**").authenticated()
-                .requestMatchers("/api/users/register", "/api/users/login", "/api/users/refresh", "/api/users/logout").permitAll()
+                .requestMatchers("/api/users/register", "/api/users/login", "/api/users/refresh", "/api/users/logout", "/error").permitAll()
                 .requestMatchers(
                         "/api/users/account", 
                         "/api/users/password",
                         "/api/users/profile",
                         "/api/users/body-measurements/**"   
                     ).authenticated()  // 토큰 필요
-                .anyRequest().permitAll()
+                .anyRequest().authenticated()  // 새 경로는 기본적으로 인증 필요
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
