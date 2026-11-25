@@ -9,7 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,11 +31,19 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.controller.AuthCookies;
+import com.hwanghj.dietmanager.refactoring.backend.domain.auth.entity.AuthSession;
+import com.hwanghj.dietmanager.refactoring.backend.domain.auth.entity.RefreshToken;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository.AuthSessionRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository.RefreshTokenRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.service.AuthSessionCleanup;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
+import com.hwanghj.dietmanager.refactoring.backend.support.MutableClock;
 
 import jakarta.servlet.http.Cookie;
 import lombok.AllArgsConstructor;
@@ -104,6 +114,12 @@ class AuthSessionIntegrationTest {
     @Autowired
     AuthSessionCleanup cleanup;
 
+    @Autowired
+    RefreshTokenRepository refreshTokens;
+
+    @Autowired
+    UserRepository users;
+
     @Getter
     @AllArgsConstructor
     static class Login {
@@ -166,14 +182,44 @@ class AuthSessionIntegrationTest {
     }
 
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void expiredRefreshIsRejectedAndCleanedUp() throws Exception {
         var login = login();
         String id = jwt.authentication(login.getAccess()).getSessionId();
         var session = sessions.findById(id).orElseThrow();
-        ReflectionTestUtils.setField(session, "expiresAt", LocalDateTime.now(Clock.systemUTC()).minusDays(1));
+        var past = new MutableClock(Instant.parse("2000-01-01T00:00:00Z"), ZoneOffset.UTC);
+        ReflectionTestUtils.setField(session, "expiresAt", LocalDateTime.now(past));
         sessions.saveAndFlush(session);
         mvc.perform(post("/api/users/refresh").cookie(login.getRefresh())).andExpect(status().isUnauthorized());
         cleanup.cleanup();
         Assertions.assertThat(sessions.existsById(id)).isFalse();
     }
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void cleanupDeletesMultipleBatchesOfSessionsAndTokens() {
+        User user = users.save(User.builder().email(UUID.randomUUID() + "@example.test")
+                .passwordHash("test-hash").userName("cleanup").build());
+        var past = new MutableClock(Instant.parse("2000-01-01T00:00:00Z"), ZoneOffset.UTC);
+        List<AuthSession> expired = new ArrayList<>();
+        for (int i = 0; i < 501; i++)
+            expired.add(new AuthSession(user, LocalDateTime.now(past)));
+        expired = sessions.saveAll(expired);
+
+        // 하나의 세션에 토큰이 500개를 넘어도 세션을 삭제하기 전에 토큰을 모두 지운다.
+        List<RefreshToken> related = new ArrayList<>();
+        String prefix = UUID.randomUUID().toString();
+        for (int i = 0; i < 501; i++)
+            related.add(new RefreshToken(prefix + i, expired.get(0)));
+        refreshTokens.saveAll(related);
+        AuthSession active = sessions.save(new AuthSession(user, LocalDateTime.now(Clock.systemUTC())));
+        RefreshToken activeToken = refreshTokens.save(new RefreshToken(prefix + "-active", active));
+
+        cleanup.cleanup();
+
+        Assertions.assertThat(sessions.findAllById(expired.stream().map(AuthSession::getId).toList())).isEmpty();
+        Assertions.assertThat(refreshTokens.findAllById(related.stream().map(RefreshToken::getTokenHash).toList())).isEmpty();
+        Assertions.assertThat(sessions.existsById(active.getId())).isTrue();
+        Assertions.assertThat(refreshTokens.existsById(activeToken.getTokenHash())).isTrue();
+    }
+
 }
