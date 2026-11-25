@@ -2,6 +2,7 @@ import { Field, Message } from '../../shared/components/Forms'
 import { today } from '../../shared/utils/form'
 import FoodSearch from '../foods/FoodSearch'
 import FoodShelf from '../foods/FoodShelf'
+import DailyReferenceTable from '../nutrition/DailyReferenceTable'
 import NutritionTarget from '../nutrition/NutritionTarget'
 import { NutritionForm, RecordForm } from './IntakeForms'
 import IntakeRecordList from './IntakeRecordList'
@@ -43,6 +44,7 @@ export default function IntakePage({ call }) {
       <Message message={message} />
       {loading ? <p role="status">섭취 기록을 불러오는 중…</p> : loaded ? <NutritionTotals daily={daily} /> : null}
       <NutritionTarget call={call} date={date} daily={!loading && !error ? daily : null} />
+      <DailyReferenceTable />
       <button className="outline" disabled={busy} onClick={intakes.startManual}>
         음식 직접 입력
       </button>

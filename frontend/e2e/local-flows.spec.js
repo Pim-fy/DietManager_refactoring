@@ -135,6 +135,9 @@ test('식품 API 한도 안내 후 재시도', async ({ page }) => {
 
 test('음식 직접 입력·영양정보 수정·섭취량 변경·복구·새로고침', async ({ page }) => {
   await page.getByRole('button', { name: '섭취 기록', exact: true }).click()
+  const reference = page.getByRole('table', { name: '1일 영양성분 기준치' })
+  await expect(reference.getByRole('row')).toHaveCount(9)
+  await expect(reference.getByRole('row', { name: '나트륨 2,000 mg' })).toBeVisible()
   await page.getByRole('button', { name: '음식 직접 입력', exact: true }).click()
   await page.getByLabel('음식명', { exact: true }).fill('직접 음식')
   await page.getByLabel('섭취량', { exact: true }).fill('150')
