@@ -58,9 +58,14 @@ public final class DatabaseMaintenance {
             }
         } catch (Exception error) {
             // JDBC 예외에는 URL·계정이 포함될 수 있어 원문을 출력하지 않는다.
-            System.err.println("DB 유지보수 실패: " + error.getClass().getSimpleName());
-            if (error instanceof SQLException sql)
-                System.err.println("SQL 상태=" + sql.getSQLState() + ", 오류 코드=" + sql.getErrorCode());
+            Throwable cause = error;
+            if (error instanceof DatabaseBackupOperations.TableRestoreException restore) {
+                System.err.println("테이블=" + restore.table());
+                cause = restore.getCause();
+            }
+            System.err.println("DB 유지보수 실패: " + cause.getClass().getSimpleName());
+            if (cause instanceof SQLException sql)
+                System.err.println("SQL 상태=" + sql.getSQLState());
             System.exit(1);
         }
     }
