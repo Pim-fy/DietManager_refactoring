@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { Field } from '../../shared/components/Forms'
-import { today } from '../../shared/utils/form'
 import { statisticsApi } from './api'
 import { dates } from './range'
 import TrendChart from './TrendChart'
+import useTrendsQuery from './useTrendsQuery'
 
 const PAGE_SIZE = 14
 
@@ -73,12 +73,15 @@ function DailyTable({ days, page, onPage }) {
 
 export default function TrendsPage({ call }) {
   const api = useMemo(() => statisticsApi(call), [call])
-  const [anchor, setAnchor] = useState(today)
-  const [period, setPeriod] = useState('week')
+  const { period, anchor, setPeriod, setAnchor } = useTrendsQuery()
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
-  const [page, setPage] = useState(0)
+  // 날짜 표 페이지는 기간·기준 날짜가 바뀌면(뒤로가기 포함) 처음 페이지로 돌아간다.
+  const pageKey = `${period}|${anchor}`
+  const [pageState, setPageState] = useState({ key: pageKey, page: 0 })
+  const page = pageState.key === pageKey ? pageState.page : 0
+  const setPage = value => setPageState({ key: pageKey, page: value })
   const range = dates(anchor, period)
 
   useEffect(() => {
@@ -112,10 +115,7 @@ export default function TrendsPage({ call }) {
           <span>기간</span>
           <select
             value={period}
-            onChange={event => {
-              setPeriod(event.target.value)
-              setPage(0)
-            }}
+            onChange={event => setPeriod(event.target.value)}
           >
             <option value="week">주간</option>
             <option value="month">월간</option>
@@ -126,10 +126,7 @@ export default function TrendsPage({ call }) {
           type="date"
           value={anchor}
           onChange={event => {
-            if (event.target.value) {
-              setAnchor(event.target.value)
-              setPage(0)
-            }
+            if (event.target.value) setAnchor(event.target.value)
           }}
         />
       </div>

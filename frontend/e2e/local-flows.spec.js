@@ -65,7 +65,7 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('heading', { name: '대시보드', exact: true })).toBeVisible()
 })
 test.afterEach(async ({ page }) => {
-  await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:5186\/(\w+)?$/)
+  await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:5186\/(\w+)?(\?.*)?$/)
   await expect(page.locator('vite-error-overlay')).toHaveCount(0)
   expect(runtimeErrors.get(page)).toEqual([])
 })
@@ -264,8 +264,8 @@ test('음식 직접 입력·영양정보 수정·섭취량 변경·복구·새�
   await page.getByRole('button', { name: '직접 수정 음식 복구', exact: true }).click()
   await expect(page.locator('.intake-list')).toContainText('500 kcal')
   await page.reload()
-  await page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link', { name: '섭취 기록', exact: true }).click()
-  await showDate(page, '조회 날짜', date)
+  // 조회 날짜가 주소에 담겨 있어 새로고침해도 같은 날짜로 열린다.
+  await expect(page.getByLabel('조회 날짜', { exact: true })).toHaveValue(date)
   await expect(page.locator('.intake-list')).toContainText('500 kcal')
   await expect(page.getByText('직접 입력 · 영양정보 수정함', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '직접 수정 음식 영양정보 수정', exact: true }).click()
@@ -275,6 +275,73 @@ test('음식 직접 입력·영양정보 수정·섭취량 변경·복구·새�
   await page.screenshot({ path: `${screenshotFolder}/manual-nutrition-mobile.png`, fullPage: true })
 })
 
+
+const menu = page => page.getByRole('navigation', { name: '주 메뉴' })
+
+test('섭취 기록 조회 날짜는 주소에 담겨 새로고침해도 유지되고, 잘못된 값은 오늘로 바로잡는다', async ({ page }) => {
+  await menu(page).getByRole('link', { name: '섭취 기록', exact: true }).click()
+  await expect(page).toHaveURL(/\/intakes$/)
+  await showDate(page, '조회 날짜', '2020-03-15')
+  await expect(page).toHaveURL(/\/intakes\?date=2020-03-15$/)
+  await page.reload()
+  await expect(page.getByLabel('조회 날짜', { exact: true })).toHaveValue('2020-03-15')
+  await expect(page).toHaveURL(/\/intakes\?date=2020-03-15$/)
+  // 메뉴로 다시 들어오면 오늘로 열린다.
+  await menu(page).getByRole('link', { name: '식단 계획', exact: true }).click()
+  await menu(page).getByRole('link', { name: '섭취 기록', exact: true }).click()
+  await expect(page.getByLabel('조회 날짜', { exact: true })).toHaveValue(localDate())
+  await expect(page).toHaveURL(/\/intakes$/)
+  // 형식이 틀리거나 미래인 날짜는 오늘로 열고 주소도 바로잡는다.
+  for (const bad of ['abc', '2026-02-30', '2999-01-01']) {
+    await page.goto(`/intakes?date=${bad}`)
+    await expect(page.getByLabel('조회 날짜', { exact: true })).toHaveValue(localDate())
+    await expect(page).toHaveURL(/\/intakes$/)
+  }
+  // 식단 계획은 미래 날짜도 허용한다.
+  await page.goto('/plans?date=2999-01-01')
+  await expect(page.getByLabel('계획 조회 날짜', { exact: true })).toHaveValue('2999-01-01')
+  await expect(page).toHaveURL(/\/plans\?date=2999-01-01$/)
+})
+
+test('기록 추이의 기간과 기준 날짜는 주소에 담겨 새로고침해도 유지된다', async ({ page }) => {
+  await menu(page).getByRole('link', { name: '기록 추이', exact: true }).click()
+  await expect(page).toHaveURL(/\/trends$/)
+  await page.getByRole('combobox', { name: '기간', exact: true }).selectOption('month')
+  await showDate(page, '기준 날짜', '2020-03-15')
+  await expect(page).toHaveURL(/\/trends\?period=month&date=2020-03-15$/)
+  await page.reload()
+  await expect(page.getByRole('combobox', { name: '기간', exact: true })).toHaveValue('month')
+  await expect(page.getByLabel('기준 날짜', { exact: true })).toHaveValue('2020-03-15')
+  await expect(page.getByText('3월 1일 – 3월 31일')).toBeVisible()
+})
+
+test('음식 추가 창은 뒤로가기로 창만 닫히고, 한 번 더 누르면 이전 화면으로 간다', async ({ page }) => {
+  await menu(page).getByRole('link', { name: '섭취 기록', exact: true }).click()
+  await showDate(page, '조회 날짜', '2020-03-15')
+  await page.getByRole('button', { name: '음식 추가', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.goBack()
+  await expect(page.getByRole('dialog')).toBeHidden()
+  await expect(page).toHaveURL(/\/intakes\?date=2020-03-15$/)
+  await expect(page.getByRole('heading', { name: '섭취 기록', exact: true })).toBeVisible()
+  await expect(page.getByLabel('조회 날짜', { exact: true })).toHaveValue('2020-03-15')
+  await page.goBack()
+  await expect(page.getByRole('heading', { name: '대시보드', exact: true })).toBeVisible()
+})
+
+test('코드로 창을 닫으면 남은 기록 단계가 없어 뒤로가기 한 번에 이전 화면으로 간다', async ({ page }) => {
+  const dialogStep = () => page.evaluate(() => Boolean(history.state?.dialog))
+  await menu(page).getByRole('link', { name: '섭취 기록', exact: true }).click()
+  await showDate(page, '조회 날짜', '2020-03-15')
+  await page.getByRole('button', { name: '음식 추가', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  expect(await dialogStep()).toBe(true)
+  await page.getByRole('dialog').getByRole('button', { name: '닫기', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeHidden()
+  await expect.poll(dialogStep).toBe(false)
+  await page.goBack()
+  await expect(page.getByRole('heading', { name: '대시보드', exact: true })).toBeVisible()
+})
 
 test('섭취량 경고: 권장량이 없으면 1일 기준치, 있으면 권장량과 비교', async ({ page, request }) => {
   async function addManual(name, calories, carbohydrate) {

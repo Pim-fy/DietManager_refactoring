@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { formValues, today } from '../../shared/utils/form'
+import useDateParam from '../../shared/hooks/useDateParam'
+import { formValues } from '../../shared/utils/form'
 import { intakeApi } from './api'
 
 /**
@@ -9,7 +10,7 @@ import { intakeApi } from './api'
  */
 export default function useIntakes(call) {
   const api = useMemo(() => intakeApi(call), [call])
-  const [date, setDate] = useState(today)
+  const [date, setDate] = useDateParam()
   const [daily, setDaily] = useState(null)
   const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState(false)

@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
 
-const NAVIGATE_EVENT = 'app:navigate'
+/** 주소가 바뀌었음을 알리는 이벤트. popstate는 방문 기록 이동에만 오므로, 코드가 바꾼 주소는 이 이벤트로 알린다. */
+export const NAVIGATE_EVENT = 'app:navigate'
 
 function read(routes, fallback) {
   const key = window.location.pathname.split('/')[1]
   return routes.includes(key) ? key : fallback
 }
 
-/** 주소를 path로 바꾸고 모든 usePathRoute 사용처에 알린다. 같은 주소면 아무것도 하지 않는다. */
+/** 주소를 path(쿼리 포함 가능)로 바꾸고 모든 usePathRoute 사용처에 알린다. 같은 주소면 아무것도 하지 않는다. */
 export function navigate(path) {
-  if (path === window.location.pathname) return
+  if (path === `${window.location.pathname}${window.location.search}`) return
   window.history.pushState(null, '', path)
   window.dispatchEvent(new Event(NAVIGATE_EVENT))
   window.scrollTo(0, 0)
@@ -30,7 +31,9 @@ export default function usePathRoute(routes, fallback) {
   }, [routes, fallback])
 
   useEffect(() => {
-    if (window.location.pathname !== `/${route}`) window.history.replaceState(null, '', `/${route}`)
+    if (window.location.pathname !== `/${route}`) {
+      window.history.replaceState(window.history.state, '', `/${route}${window.location.search}`)
+    }
   }, [route])
 
   return route
