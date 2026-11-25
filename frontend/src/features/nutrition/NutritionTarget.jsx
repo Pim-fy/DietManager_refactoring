@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Message, RetryButton, SaveButton } from '../../shared/components/Forms'
 import { nutrients } from '../../shared/utils/nutrition'
 import { nutritionApi } from './api'
+import ExcessWarning from './ExcessWarning'
 
 const ACTIVITIES = {
   SEDENTARY: '거의 활동하지 않음 (1.2)',
@@ -112,6 +113,7 @@ export default function NutritionTarget({ call, date, daily }) {
       ) : target ? (
         <p className="help">{target.reason}</p>
       ) : null}
+      {target && daily?.date === date ? <ExcessWarning daily={daily} target={target} /> : null}
       <p className="help">
         만 19세 이상 일반 성인의 참고 추정값입니다. Mifflin–St Jeor 공식, 목표별 ±300 kcal, 탄수화물·단백질·지방 50·20·30%를 적용합니다. 과거 날짜도 현재 프로필과
         활동량을 사용합니다.

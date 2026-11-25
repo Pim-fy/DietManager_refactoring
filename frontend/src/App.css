@@ -107,3 +107,5 @@ progress { width: 100%; accent-color: var(--accent); }
   .search-form { grid-template-columns: 1fr 80px; }
   .nav-links { gap: 24px; }
 }
+.excess-warning { margin-top: 18px; }
+.excess-warning ul.message { padding-left: 32px; margin: 0; }
