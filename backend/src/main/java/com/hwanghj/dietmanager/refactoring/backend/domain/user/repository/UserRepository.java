@@ -3,8 +3,11 @@ package com.hwanghj.dietmanager.refactoring.backend.domain.user.repository;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.User;
+
+import jakarta.persistence.LockModeType;
 
 /**
  * User 엔터티의 DB 접근 담당 <br>
@@ -20,5 +23,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     boolean existsByUserName(String userName);
+
+    // 같은 사용자의 "조회 → 없으면 저장" 요청을 줄 세운다. 처음 저장이 동시에 일어나 중복키 오류(500)가 나지 않게 한다.
+    // 자식 행 INSERT가 users 행에 공유 잠금을 걸기 때문에, 트랜잭션에서 다른 저장보다 먼저 호출한다.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<User> findWithLockById(Long id);
 
 }

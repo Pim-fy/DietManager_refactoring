@@ -8,16 +8,20 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.profile.dto.UserProfil
 import com.hwanghj.dietmanager.refactoring.backend.domain.profile.exception.UserProfileNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.GoalType;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.UserProfile;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserProfileRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
 
 @Service
 public class ProfileService {
     private final UserProfileRepository userProfileRepository;
     private final SettingHistoryService settingHistoryService;
+    private final UserRepository userRepository;
 
-    public ProfileService(UserProfileRepository userProfileRepository, SettingHistoryService settingHistoryService) {
+    public ProfileService(UserProfileRepository userProfileRepository, SettingHistoryService settingHistoryService, UserRepository userRepository) {
         this.userProfileRepository = userProfileRepository;
         this.settingHistoryService = settingHistoryService;
+        this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
@@ -34,6 +38,8 @@ public class ProfileService {
     public UserProfileDto.Response modifyProfile(
             Long userId,
             UserProfileDto.Request request) {
+        // 같은 사용자의 저장을 줄 세워 설정 이력의 처음 저장이 겹치지 않게 한다.
+        userRepository.findWithLockById(userId).orElseThrow(UserNotFoundException::new);
         UserProfile userProfile = userProfileRepository
                 .findByUserId(userId)
                 .orElseThrow(UserProfileNotFoundException::new);

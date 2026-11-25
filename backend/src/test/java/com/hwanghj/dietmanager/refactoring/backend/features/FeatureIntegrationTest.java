@@ -1,5 +1,6 @@
 package com.hwanghj.dietmanager.refactoring.backend.features;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -12,7 +13,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.function.IntFunction;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +31,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.dto.FoodNutrition;
 import com.hwanghj.dietmanager.refactoring.backend.domain.food.exception.FoodSelectionException;
@@ -69,6 +81,58 @@ class FeatureIntegrationTest {
                 .baseAmount(new BigDecimal("100")).baseUnit("g").calories(new BigDecimal("200")).carbohydrate(new BigDecimal("30"))
                 .protein(new BigDecimal("10")).sourceUpdatedDate("2026-01-01").build());
         return code;
+    }
+
+    /** 같은 요청을 동시에 보내고 응답 상태 코드를 모은다. */
+    private List<Integer> concurrently(int count, IntFunction<RequestBuilder> request) throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(count);
+        try {
+            var ready = new CountDownLatch(count);
+            var go = new CountDownLatch(1);
+            List<Future<Integer>> results = new ArrayList<>();
+            for (int i = 0; i < count; i++) {
+                int index = i;
+                Callable<Integer> task = () -> {
+                    ready.countDown();
+                    go.await();
+                    return mvc.perform(request.apply(index)).andReturn().getResponse().getStatus();
+                };
+                results.add(pool.submit(task));
+            }
+            ready.await();
+            go.countDown();
+            List<Integer> statuses = new ArrayList<>();
+            for (Future<Integer> result : results)
+                statuses.add(result.get());
+            return statuses;
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    // 다른 스레드의 요청이 가입한 사용자를 볼 수 있게 테스트 트랜잭션 없이 실행한다(MySQL 테스트는 클래스 전체가 트랜잭션).
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void concurrentFirstSavesOfSameUserDoNotFail() throws Exception {
+        String auth = login("1995-01-01", "LOSE_WEIGHT");
+        var activities = ActivityLevel.values();
+        // 활동량 처음 저장(nutrition_preferences)과 오늘 설정 이력(setting_histories)
+        assertThat(concurrently(8, i -> i % 2 == 0
+                ? put("/api/nutrition/preferences").header("Authorization", auth).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"activityLevel\":\"" + activities[i % activities.length].name() + "\"}")
+                : patch("/api/users/profile").header("Authorization", auth).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"gender\":\"MALE\",\"birthDate\":\"1995-01-01\",\"goalType\":\"" + (i % 4 == 1 ? "GAIN_WEIGHT" : "MAINTAIN_WEIGHT")
+                                + "\"}")))
+                .containsOnly(200);
+        // 같은 식품의 즐겨찾기와 섭취 기록(saved_foods 처음 저장)
+        String favorite = food();
+        assertThat(concurrently(8, i -> put("/api/foods/favorites").header("Authorization", auth).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"foodCode\":\"" + favorite + "\",\"favorite\":true}"))).containsOnly(200);
+        String eaten = food();
+        assertThat(concurrently(8, i -> post("/api/intakes").header("Authorization", auth).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"foodCode\":\"" + eaten + "\",\"eatenDate\":\"2026-01-01\",\"mealType\":\"LUNCH\",\"amount\":100}")))
+                .containsOnly(201);
+        mvc.perform(get("/api/foods/favorites").header("Authorization", auth)).andExpect(jsonPath("$.length()").value(1));
     }
 
     @Test
