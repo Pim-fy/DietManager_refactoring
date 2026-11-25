@@ -54,7 +54,7 @@ public class MySqlIsolation implements ApplicationContextInitializer<Configurabl
             Files.createDirectories(directory);
             for (String file : List.of("V1__initial_schema.sql", "V2__auth_sessions.sql", "V3__food_api_usage.sql", "V4__manual_intake_nutrition.sql",
                     "V5__setting_histories.sql", "V6__login_failures.sql",
-                    "V7__login_failures_version.sql")) {
+                    "V7__login_failures_version.sql", "V8__name_users_email_index.sql")) {
                 String sql;
                 try (var input = MySqlIsolation.class.getClassLoader().getResourceAsStream("db/migration/" + file)) {
                     sql = new String(Objects.requireNonNull(input).readAllBytes(), StandardCharsets.UTF_8);

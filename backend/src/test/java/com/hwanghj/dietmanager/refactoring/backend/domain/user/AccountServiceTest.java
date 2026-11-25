@@ -8,10 +8,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.exception.ConstraintViolationException;
+import org.hibernate.exception.ConstraintViolationException.ConstraintKind;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +51,6 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.UserNot
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserProfileRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.AccountService;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.EmailUsageChecker;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.AuthenticationService;
 import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
 
@@ -60,13 +62,11 @@ class AccountServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    @Mock
-    private EmailUsageChecker emailUsageChecker;
     private AccountService accountService;
 
     @BeforeEach
     void setUp() {
-        accountService = new AccountService(userRepository, passwordEncoder, emailUsageChecker);
+        accountService = new AccountService(userRepository, passwordEncoder);
     }
 
     @Test
@@ -74,9 +74,10 @@ class AccountServiceTest {
         User user = User.builder().email("old@example.test").passwordHash("hash").userName("사용자").build();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.existsByEmail("new@example.test")).thenReturn(false);
-        Mockito.doThrow(new DataIntegrityViolationException("unique email"))
+        Mockito.doThrow(new DataIntegrityViolationException("duplicate",
+                new ConstraintViolationException("unique", new SQLException("unique", "23505"),
+                        ConstraintKind.UNIQUE, "PUBLIC.UQ_USERS_EMAIL_INDEX_4")))
                 .when(userRepository).flush();
-        when(emailUsageChecker.isTaken("new@example.test")).thenReturn(true);
         var request = UserAccountModifyDto.Request.builder().email("new@example.test").userName("사용자").build();
         assertThatThrownBy(() -> accountService.modifyAccount(1L, request)).isInstanceOf(DuplicateEmailException.class);
     }
@@ -85,11 +86,9 @@ class AccountServiceTest {
     void otherIntegrityViolationIsNotReportedAsDuplicateEmail() {
         User user = User.builder().email("old@example.test").passwordHash("hash").userName("사용자").build();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(userRepository.existsByEmail("new@example.test")).thenReturn(false);
         var failure = new DataIntegrityViolationException("other constraint");
         Mockito.doThrow(failure).when(userRepository).flush();
-        when(emailUsageChecker.isTaken("new@example.test")).thenReturn(false);
-        var request = UserAccountModifyDto.Request.builder().email("new@example.test").userName("사용자").build();
+        var request = UserAccountModifyDto.Request.builder().email("old@example.test").userName("사용자").build();
         assertThatThrownBy(() -> accountService.modifyAccount(1L, request)).isSameAs(failure);
     }
 
