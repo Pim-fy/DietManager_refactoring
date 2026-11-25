@@ -351,3 +351,20 @@ test('대시보드 요약과 세부 메뉴 이동', async ({ page, request }) =>
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: `${screenshotFolder}/dashboard-mobile.png`, fullPage: true })
 })
+
+test('시작하기 안내: 신체 기록과 활동량이 있으면 숨기고 없으면 보여준다', async ({ page }) => {
+  const setup = page.getByRole('region', { name: '권장 섭취량을 계산하려면 두 가지가 필요합니다' })
+  await expect(page.getByRole('region', { name: '일별 영양 합계' })).toBeVisible()
+  await expect(setup).toHaveCount(0)
+
+  await page.route('**/api/users/body-measurements', route => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }))
+  await page.route('**/api/nutrition/preferences', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ activityLevel: null }),
+  }))
+  await page.reload()
+  await expect(setup).toBeVisible()
+  await expect(setup.getByRole('link', { name: '신체 기록 입력하기', exact: true })).toBeVisible()
+  await expect(setup.getByRole('link', { name: '활동량 설정하기', exact: true })).toBeVisible()
+  await setup.getByRole('link', { name: '활동량 설정하기', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '내 정보', exact: true })).toBeVisible()
+})

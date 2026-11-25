@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react'
 import useResource from '../../shared/hooks/useResource'
 import { today } from '../../shared/utils/form'
 import { intakeApi } from '../intakes/api'
+import SetupChecklist from './SetupChecklist'
 import TodayIntake from './TodayIntake'
 import TodayPlans from './TodayPlans'
 import WeekCalories from './WeekCalories'
@@ -28,6 +29,7 @@ export default function DashboardPage({ call }) {
         <h1>대시보드</h1>
         <p>{longDate(date)}</p>
       </div>
+      <SetupChecklist call={call} />
       <div className="dashboard">
         <TodayIntake call={call} date={date} resource={intake} />
         <div className="dash-side">
