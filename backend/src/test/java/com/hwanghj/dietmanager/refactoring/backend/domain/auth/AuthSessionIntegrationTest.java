@@ -23,10 +23,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.assertj.core.api.Assertions;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -220,6 +222,27 @@ class AuthSessionIntegrationTest {
         Assertions.assertThat(refreshTokens.findAllById(related.stream().map(RefreshToken::getTokenHash).toList())).isEmpty();
         Assertions.assertThat(sessions.existsById(active.getId())).isTrue();
         Assertions.assertThat(refreshTokens.existsById(activeToken.getTokenHash())).isTrue();
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void duplicateEmailReportsNamedUniqueIndex() {
+        String email = UUID.randomUUID() + "@example.test";
+        users.saveAndFlush(User.builder().email(email).passwordHash("test-hash").userName("first").build());
+        User duplicate = User.builder().email(email).passwordHash("test-hash").userName("second").build();
+
+        Assertions.assertThatThrownBy(() -> users.saveAndFlush(duplicate))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .cause().isInstanceOfSatisfying(ConstraintViolationException.class, violation -> {
+                    Assertions.assertThat(violation.getKind()).isEqualTo(ConstraintViolationException.ConstraintKind.UNIQUE);
+                    String name = violation.getConstraintName();
+                    Assertions.assertThat(name).isNotNull();
+                    String index = name.substring(name.lastIndexOf('.') + 1);
+                    if ("23505".equals(violation.getSQLState()))
+                        Assertions.assertThat(index).matches("(?i)uq_users_email_INDEX_[0-9A-F]+");
+                    else
+                        Assertions.assertThat(index).isEqualToIgnoringCase("uq_users_email");
+                });
     }
 
 }

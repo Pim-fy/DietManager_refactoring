@@ -11,6 +11,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -23,15 +24,17 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Getter
-@Table(name = "users")
+@Table(name = "users", indexes = @Index(name = User.EMAIL_UNIQUE_INDEX, columnList = "email", unique = true))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseTimeEntity {
+
+    public static final String EMAIL_UNIQUE_INDEX = "uq_users_email";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String email;
 
     @Column(name = "password_hash", nullable = false, length = 255)
