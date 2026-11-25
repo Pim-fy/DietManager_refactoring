@@ -35,7 +35,7 @@ public class AuthSessionCleanup {
     @Transactional
     public void cleanup() {
         var now = LocalDateTime.now(clock.withZone(ZoneOffset.UTC));
-        tokens.deleteInactive(now);
-        sessions.deleteInactive(now);
+        tokens.deleteBySessionExpiresAtLessThanEqualOrSessionRevokedTrue(now);
+        sessions.deleteByExpiresAtLessThanEqualOrRevokedTrue(now);
     }
 }

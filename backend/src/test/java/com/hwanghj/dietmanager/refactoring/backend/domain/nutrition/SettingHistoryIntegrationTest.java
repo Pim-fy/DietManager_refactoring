@@ -8,16 +8,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,6 +29,8 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.Activ
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.SettingHistory;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.repository.SettingHistoryRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.GoalType;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
+import com.hwanghj.dietmanager.refactoring.backend.support.MutableClock;
 
 import lombok.AllArgsConstructor;
 import tools.jackson.databind.ObjectMapper;
@@ -34,6 +40,18 @@ import tools.jackson.databind.ObjectMapper;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class SettingHistoryIntegrationTest {
+    // 오늘 = 2026-03-01. 가입 시점을 과거로 만들 때는 시계를 돌려서 가입한다(생성일은 수정할 수 없는 감사 컬럼).
+    private static final Instant TODAY = Instant.parse("2026-03-01T03:00:00Z");
+
+    @TestConfiguration
+    static class ClockConfig {
+        @Bean
+        @Primary
+        MutableClock testClock() {
+            return new MutableClock(TODAY, ZoneId.systemDefault());
+        }
+    }
+
     @Autowired
     MockMvc mvc;
 
@@ -41,13 +59,18 @@ class SettingHistoryIntegrationTest {
     ObjectMapper mapper;
 
     @Autowired
-    JdbcTemplate jdbc;
+    UserRepository users;
 
     @Autowired
     SettingHistoryRepository histories;
 
     @Autowired
-    Clock clock;
+    MutableClock clock;
+
+    @BeforeEach
+    void resetClock() {
+        clock.set(TODAY);
+    }
 
     @Test
     void pastDatesUseTheSettingsInEffectOnThatDate() throws Exception {
@@ -68,8 +91,11 @@ class SettingHistoryIntegrationTest {
 
     @Test
     void firstChangeKeepsThePreviousSettingFromProfileCreation() throws Exception {
-        var login = registerAndLogin();
-        jdbc.update("UPDATE user_profiles SET created_at = ? WHERE user_id = ?", LocalDate.of(2026, 1, 1).atStartOfDay(), login.userId);
+        // 2026-01-01에 가입하고, 오늘(2026-03-01) 처음 활동량을 고른다.
+        clock.set(Instant.parse("2026-01-01T03:00:00Z"));
+        String email = register();
+        clock.set(TODAY);
+        var login = login(email);
         addMeasurement(login.auth, "2025-12-01");
 
         mvc.perform(put("/api/nutrition/preferences").header("Authorization", login.auth)
@@ -132,6 +158,10 @@ class SettingHistoryIntegrationTest {
     }
 
     private LoginResult registerAndLogin() throws Exception {
+        return login(register());
+    }
+
+    private String register() throws Exception {
         String email = UUID.randomUUID() + "@example.test";
         mvc.perform(post("/api/users/register").contentType(MediaType.APPLICATION_JSON)
                 .content("""
@@ -139,12 +169,17 @@ class SettingHistoryIntegrationTest {
                          "gender":"MALE","birthDate":"1995-01-01","goalType":"MAINTAIN_WEIGHT"}
                         """.formatted(email)))
                 .andExpect(status().isCreated());
+        return email;
+    }
+
+    private LoginResult login(String email) throws Exception {
         String response = mvc.perform(post("/api/users/login").contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"email":"%s","password":"Password123!"}
                         """.formatted(email)))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        Long userId = jdbc.queryForObject("SELECT id FROM users WHERE email = ?", Long.class, email);
+        Long userId = users.findByEmail(email).orElseThrow().getId();
         return new LoginResult("Bearer " + mapper.readTree(response).get("accessToken").asText(), userId);
     }
+
 }
