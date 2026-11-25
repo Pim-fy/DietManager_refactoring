@@ -1,7 +1,5 @@
 /* ───── 하루 섭취 합계 (영양정보 표시 형식) ───── */
 .day-label {
-  position: sticky;
-  top: 24px;
   border: 3px solid var(--ink);
   border-radius: 6px;
   overflow: hidden;
@@ -34,7 +32,3 @@
 
 /* 1일 영양성분 기준치 표 */
 .reference { margin-top: 24px; max-width: 560px; }
-
-@media (max-width: 1000px) {
-  .day-label { position: static; }
-}

@@ -598,3 +598,20 @@ test('권장 칼로리가 없는 날은 기준선을 끊고, 권장량 필드가
   await expect(chart.getByText('권장량', { exact: true })).toHaveCount(0)
   await expect(row('2020-03-09').getByRole('cell').nth(3)).toHaveText('–')
 })
+
+test('스크롤해도 대시보드의 하루 섭취 블록이 아래 내용과 겹치지 않고, 섭취 기록에서는 따라온다', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 600 })
+  await page.goto('/dashboard')
+  await expect(page.locator('.dash-meals')).toBeVisible()
+  await page.mouse.wheel(0, 300)
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(0)
+  const label = await page.locator('.day-label').boundingBox()
+  const meals = await page.locator('.dash-meals').boundingBox()
+  expect(label.y + label.height).toBeLessThanOrEqual(meals.y)
+
+  await page.goto('/intakes')
+  await expect(page.locator('.day-label')).toBeVisible()
+  await page.mouse.wheel(0, 400)
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(0)
+  await expect.poll(async () => Math.round((await page.locator('.day-label').boundingBox()).y)).toBe(24)
+})

@@ -1,5 +1,7 @@
 /* ───── 섭취 기록 (식단 계획도 끼니별 목록과 기록 폼에 함께 쓴다) ───── */
 .intake-layout { display: grid; grid-template-columns: 340px 1fr; gap: 48px; align-items: start; }
+/* 왼쪽 칸에 혼자 있는 하루 섭취 블록만 목록을 스크롤할 때 따라오게 한다(대시보드에서는 아래 내용과 겹치므로 고정하지 않음). */
+.intake-layout .day-label { position: sticky; top: 24px; }
 
 /* 끼니별 목록 */
 .meal-group { padding-bottom: 8px; }
@@ -22,6 +24,7 @@
 
 @media (max-width: 1000px) {
   .intake-layout { grid-template-columns: 1fr; gap: 32px; }
+  .intake-layout .day-label { position: static; }
 }
 @media (max-width: 720px) {
   .intake-fields { grid-template-columns: 1fr; }
