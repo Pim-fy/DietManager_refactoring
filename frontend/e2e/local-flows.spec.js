@@ -97,14 +97,14 @@ test('신체 기록 추가·수정·삭제·복구와 모바일 화면', async (
   await page.getByLabel('몸무게 (kg)').fill(String(weight))
   await page.getByRole('button', { name: '기록 저장', exact: true }).click()
   await expect(page.getByText('신체 기록을 저장했습니다.')).toBeVisible()
-  await row(weight).getByRole('button', { name: `신체 기록 ${today} 수정`, exact: true }).click()
+  await row(weight).getByRole('button', { name: `신체 기록 ${today} ${weight}kg 수정`, exact: true }).click()
   await page.getByLabel('몸무게 (kg)').fill(String(edited))
   await page.getByRole('button', { name: '기록 저장', exact: true }).click()
   await expect(page.locator('.latest')).toContainText(`${edited} kg`)
-  await row(edited).getByRole('button', { name: `신체 기록 ${today} 삭제`, exact: true }).click()
+  await row(edited).getByRole('button', { name: `신체 기록 ${today} ${edited}kg 삭제`, exact: true }).click()
   await expect(page.getByRole('heading', { name: '삭제한 신체 기록' })).toBeVisible()
   await page.locator('.undo-list p').filter({ hasText: `${today} · ${edited} kg` })
-    .getByRole('button', { name: `신체 기록 ${today} 복구`, exact: true }).click()
+    .getByRole('button', { name: `신체 기록 ${today} ${edited}kg 복구`, exact: true }).click()
   await expect(page.locator('.latest')).toContainText(`${edited} kg`)
   await page.setViewportSize({ width: 390, height: 844 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -193,6 +193,41 @@ test('식품 API 한도 안내 후 재시도', async ({ page }) => {
   await page.unroute('**/api/foods?*')
   await page.getByRole('button', { name: '검색 다시 시도' }).click()
   await expect(page.locator('.food-results li').first()).toBeVisible()
+})
+
+test('창 바깥 클릭은 닫고, 안에서 시작한 드래그는 바깥에서 놓아도 닫지 않는다', async ({ page }) => {
+  await page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link', { name: '섭취 기록', exact: true }).click()
+  await page.getByRole('button', { name: '음식 추가', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  const box = await dialog.getByLabel('식품명').boundingBox()
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(5, 5)
+  await page.mouse.up()
+  await expect(dialog).toBeVisible()
+  await page.mouse.click(5, 5)
+  await expect(dialog).toBeHidden()
+})
+
+test('다른 식품 고르기로 돌아오면 검색어와 결과가 남아 있다', async ({ page }) => {
+  // 실제 식품 API 호출을 늘리지 않도록 검색 응답을 모의한다.
+  await page.route(/\/api\/foods\?/, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+    items: [{ foodCode: 'MOCK-1', foodName: '모의 식품', makerName: null, servingSize: '100g', baseAmount: 100, baseUnit: 'g',
+      calories: 100, carbohydrate: 10, protein: 5, fat: 2 }],
+    totalCount: 1, page: 1, size: 10,
+  }) }))
+  await page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link', { name: '섭취 기록', exact: true }).click()
+  await page.getByRole('button', { name: '음식 추가', exact: true }).click()
+  await page.getByLabel('식품명').fill('모의')
+  await page.getByRole('button', { name: '검색', exact: true }).click()
+  await page.getByRole('button', { name: '모의 식품 선택', exact: true }).click()
+  await expect(page.getByLabel('섭취량 (g)')).toBeVisible()
+  await expect(page.getByRole('tab', { name: '식품 검색', exact: true })).toBeHidden()
+  await page.getByRole('button', { name: '다른 식품 고르기', exact: true }).click()
+  await expect(page.getByRole('tab', { name: '식품 검색', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByLabel('식품명')).toHaveValue('모의')
+  await expect(page.getByRole('button', { name: '모의 식품 선택', exact: true })).toBeVisible()
 })
 
 test('음식 직접 입력·영양정보 수정·섭취량 변경·복구·새로고침', async ({ page, request }) => {

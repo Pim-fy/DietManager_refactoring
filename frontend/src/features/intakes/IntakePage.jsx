@@ -1,6 +1,7 @@
 import DateStepper from '../../shared/components/DateStepper'
 import Dialog from '../../shared/components/Dialog'
 import { Message } from '../../shared/components/Forms'
+import { today } from '../../shared/utils/form'
 import { meals } from '../../shared/utils/nutrition'
 import FoodPicker from '../foods/FoodPicker'
 import DailyReferenceTable from '../nutrition/DailyReferenceTable'
@@ -15,6 +16,16 @@ function dialogTitle({ adding, selected, editing, nutritionEditing }) {
   if (nutritionEditing) return '음식명·영양정보 수정'
   if (selected) return `${meals[adding]} 섭취 기록 추가`
   return `${meals[adding]}에 음식 추가`
+}
+
+/** 현재 시각으로 정한 기본 끼니. 오늘이 아닌 날짜를 보고 있으면 아침. */
+function defaultMeal(date) {
+  if (date !== today()) return 'BREAKFAST'
+  const hour = new Date().getHours()
+  if (hour < 10) return 'BREAKFAST'
+  if (hour < 15) return 'LUNCH'
+  if (hour < 21) return 'DINNER'
+  return 'SNACK'
 }
 
 /** 계산 방식과 고정 기준치. 매일 볼 필요가 없어 접어둔다. */
@@ -41,17 +52,17 @@ export default function IntakePage({ call }) {
   const shelfRevision = `${intakes.favoriteRevision}:${daily?.items.map(item => item.id).join(',') || ''}`
 
   function dialogContent() {
-    if (editing || selected) {
+    if (editing) {
       return (
         <RecordForm
-          key={editing ? `edit-${editing.id}` : `food-${selected.foodCode}`}
+          key={`edit-${editing.id}`}
           food={selected}
           editing={editing}
           meal={adding}
           date={date}
           busy={busy}
           onSubmit={intakes.save}
-          onCancel={editing ? intakes.close : intakes.backToPicker}
+          onCancel={intakes.close}
         />
       )
     }
@@ -67,17 +78,33 @@ export default function IntakePage({ call }) {
         />
       )
     }
+    // 식품을 고른 뒤에도 picker를 숨긴 채 유지해 '다른 식품 고르기'로 돌아오면 탭·검색어·결과가 남아 있다.
     return (
-      <FoodPicker
-        call={call}
-        disabled={busy}
-        revision={shelfRevision}
-        onSelect={intakes.selectFood}
-        onFavorite={intakes.favoriteAdded}
-        manual={
-          <NutritionForm meal={adding} date={date} busy={busy} onSubmit={intakes.saveNutrition} onCancel={intakes.close} />
-        }
-      />
+      <>
+        <div hidden={Boolean(selected)}>
+          <FoodPicker
+            call={call}
+            disabled={busy}
+            revision={shelfRevision}
+            onSelect={intakes.selectFood}
+            onFavorite={intakes.favoriteAdded}
+            manual={
+              <NutritionForm meal={adding} date={date} busy={busy} onSubmit={intakes.saveNutrition} onCancel={intakes.close} />
+            }
+          />
+        </div>
+        {selected ? (
+          <RecordForm
+            key={`food-${selected.foodCode}`}
+            food={selected}
+            meal={adding}
+            date={date}
+            busy={busy}
+            onSubmit={intakes.save}
+            onCancel={intakes.backToPicker}
+          />
+        ) : null}
+      </>
     )
   }
 
@@ -87,7 +114,7 @@ export default function IntakePage({ call }) {
         <h1>섭취 기록</h1>
         <div className="page-tools">
           <DateStepper label="조회 날짜" value={date} disabled={busy} onChange={intakes.changeDate} />
-          <button className="primary" disabled={busy || !loaded} onClick={() => intakes.startAdd()}>
+          <button className="primary" disabled={busy || !loaded} onClick={() => intakes.startAdd(defaultMeal(date))}>
             음식 추가
           </button>
         </div>

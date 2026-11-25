@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import useResource from '../../shared/hooks/useResource'
 import { today } from '../../shared/utils/form'
@@ -18,7 +18,19 @@ function longDate(date) {
  * 한 영역이 실패해도 다른 영역은 그대로 보인다. 계획을 섭취로 옮기면 오늘 섭취도 다시 불러온다.
  */
 export default function DashboardPage({ call }) {
-  const [date] = useState(today)
+  const [date, setDate] = useState(today)
+  useEffect(() => {
+    // 자정이 지난 뒤 창이 다시 보이거나 포커스되면 오늘 날짜로 바꾼다.
+    const refreshDate = () => {
+      if (document.visibilityState === 'visible') setDate(today())
+    }
+    document.addEventListener('visibilitychange', refreshDate)
+    window.addEventListener('focus', refreshDate)
+    return () => {
+      document.removeEventListener('visibilitychange', refreshDate)
+      window.removeEventListener('focus', refreshDate)
+    }
+  }, [])
   const intakes = useMemo(() => intakeApi(call), [call])
   const loadIntake = useCallback(signal => intakes.daily(date, signal), [intakes, date])
   const intake = useResource(loadIntake)

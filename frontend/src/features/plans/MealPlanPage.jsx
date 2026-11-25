@@ -168,8 +168,12 @@ export default function MealPlanPage({ call }) {
             onSubmit={plans.save}
             onCancel={editing ? plans.cancel : plans.backToPicker}
           />
-        ) : dialogOpen ? (
-          <FoodPicker call={call} disabled={busy} revision={plans.favoriteRevision} onSelect={plans.selectFood} onFavorite={plans.favoriteAdded} />
+        ) : null}
+        {/* 식품을 고른 뒤에도 picker를 숨긴 채 유지해 '다른 식품 고르기'로 돌아오면 탭·검색어·결과가 남아 있다. */}
+        {plans.picking && !editing ? (
+          <div hidden={Boolean(food)}>
+            <FoodPicker call={call} disabled={busy} revision={plans.favoriteRevision} onSelect={plans.selectFood} onFavorite={plans.favoriteAdded} />
+          </div>
         ) : null}
       </Dialog>
     </>

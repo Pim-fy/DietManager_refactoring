@@ -141,10 +141,7 @@ export default function FoodSearch({ call, onSelect, onFavorite, disabled }) {
                 key={food.foodCode}
                 food={food}
                 disabled={locked}
-                onSelect={value => {
-                  onSelect(value)
-                  setResult(null)
-                }}
+                onSelect={onSelect}
                 onFavorite={favorite}
               />
             ))}

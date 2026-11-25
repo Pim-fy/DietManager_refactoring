@@ -35,13 +35,13 @@ function MeasurementRow({ item, busy, onEdit, onCommand }) {
       <td className="num">{item.weight}</td>
       <td>
         <div className="row-actions">
-          <button className="text-button" disabled={busy} aria-label={`신체 기록 ${item.measuredDate} 수정`} onClick={() => onEdit(item)}>
+          <button className="text-button" disabled={busy} aria-label={`신체 기록 ${item.measuredDate} ${item.weight}kg 수정`} onClick={() => onEdit(item)}>
             수정
           </button>
           <button
             className="text-button danger"
             disabled={busy}
-            aria-label={`신체 기록 ${item.measuredDate} 삭제`}
+            aria-label={`신체 기록 ${item.measuredDate} ${item.weight}kg 삭제`}
             onClick={() => onCommand(item.measurementId, 'delete', '신체 기록을 삭제했습니다. 삭제한 기록에서 복구할 수 있습니다.')}
           >
             삭제
@@ -65,7 +65,7 @@ function DeletedMeasurements({ deleted, busy, onCommand }) {
           <button
             className="text-button"
             disabled={busy}
-            aria-label={`신체 기록 ${item.measuredDate} 복구`}
+            aria-label={`신체 기록 ${item.measuredDate} ${item.weight}kg 복구`}
             onClick={() => onCommand(item.measurementId, 'restore', '신체 기록을 복구했습니다.')}
           >
             복구
