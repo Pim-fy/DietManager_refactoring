@@ -1,5 +1,6 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.auth;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -26,6 +27,19 @@ import com.hwanghj.dietmanager.refactoring.backend.support.MySqlIsolation;
 class MySqlAuthIntegrationTest extends AuthSessionIntegrationTest {
     @Autowired
     DataSource dataSource;
+
+    @Test
+    void verifiesLegacyBitColumnsFromBackup() throws Exception {
+        var table = new BackupModel.Table("body_measurements",
+                "CREATE TABLE `body_measurements` (`id` BIGINT PRIMARY KEY, `deleted` BIT(1), `visible` BOOLEAN) ENGINE=InnoDB",
+                List.of("id", "deleted", "visible"),
+                List.of(List.of("1", "1", "0"), List.of("2", "0", "1"),
+                        Arrays.asList("3", null, null)));
+        var backup = new BackupModel.Backup(1, List.of(table));
+        try (var connection = dataSource.getConnection()) {
+            DatabaseMaintenance.restoreAndVerify(connection, backup, false);
+        }
+    }
 
     @Test
     void restoredTablesCanBeRetainedForRecovery() throws Exception {

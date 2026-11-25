@@ -4,6 +4,7 @@ import static com.hwanghj.dietmanager.refactoring.backend.global.maintenance.Bac
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,16 +82,13 @@ final class DatabaseBackupOperations {
                         ddl = ddl.replace("`" + name + "`", "`" + prefix + name + "`");
                     // 외래키 이름은 스키마 내에서 고유해야 한다.
                     ddl = ddl.replaceAll("CONSTRAINT `([^`]+)`", "CONSTRAINT `" + prefix + "$1`");
-                    statement.execute(ddl);
-                    created.add(prefix + table.getName());
-                    String placeholders = String.join(",", Collections.nCopies(table.getColumns().size(), "?"));
-                    try (var insert = connection.prepareStatement("INSERT INTO `" + prefix + table.getName() + "` VALUES (" + placeholders + ")")) {
-                        for (var row : table.getRows()) {
-                            for (int i = 0; i < row.size(); i++)
-                                insert.setString(i + 1, row.get(i));
-                            insert.addBatch();
-                        }
-                        insert.executeBatch();
+                    String target = prefix + table.getName();
+                    try {
+                        statement.execute(ddl);
+                        created.add(target);
+                        insertRows(connection, target, table);
+                    } catch (SQLException error) {
+                        throw new TableRestoreException(table.getName(), error);
                     }
                 }
                 statement.execute("SET FOREIGN_KEY_CHECKS=1");
@@ -104,10 +102,12 @@ final class DatabaseBackupOperations {
                             row.add(rs.getString(i));
                         rows.add(row);
                     }
+                } catch (SQLException error) {
+                    throw new TableRestoreException(expected.getName(), error);
                 }
                 // 행 순서에 의존하지 않고 중복까지 보존하여 모든 컬럼 값을 비교한다.
                 if (!bag(expected.getRows()).equals(bag(rows)))
-                    throw new IllegalStateException("복원 내용 불일치: " + expected.getName());
+                    throw new TableRestoreException(expected.getName(), new IllegalStateException("복원 내용 불일치"));
             }
             System.out.println("격리된 임시 MySQL 테이블에서 백업 복원 및 전체 행 비교 완료");
             verified = true;
@@ -125,6 +125,45 @@ final class DatabaseBackupOperations {
             }
         }
         return prefix;
+    }
+
+    private static void insertRows(Connection connection, String target, Table table) throws SQLException {
+        int columnCount = table.getColumns().size();
+        String placeholders = String.join(",", Collections.nCopies(columnCount, "?"));
+        try (var statement = connection.createStatement();
+                var emptyRows = statement.executeQuery("SELECT * FROM `" + target + "` WHERE 1=0");
+                var insert = connection.prepareStatement("INSERT INTO `" + target + "` VALUES (" + placeholders + ")")) {
+            var metadata = emptyRows.getMetaData();
+            boolean[] singleBit = new boolean[columnCount];
+            for (int i = 0; i < columnCount; i++)
+                singleBit[i] = metadata.getColumnType(i + 1) == Types.BIT && metadata.getPrecision(i + 1) == 1;
+
+            for (var row : table.getRows()) {
+                for (int i = 0; i < columnCount; i++) {
+                    String value = row.get(i);
+                    // MySQL BIT(1)은 JDBC 문자열을 숫자가 아닌 바이트로 해석한다.
+                    if (singleBit[i] && value != null)
+                        insert.setInt(i + 1, Integer.parseInt(value));
+                    else
+                        insert.setString(i + 1, value);
+                }
+                insert.addBatch();
+            }
+            insert.executeBatch();
+        }
+    }
+
+    static final class TableRestoreException extends Exception {
+        private final String table;
+
+        TableRestoreException(String table, Exception cause) {
+            super(cause);
+            this.table = table;
+        }
+
+        String table() {
+            return table;
+        }
     }
 
     private static Map<List<String>, Long> bag(List<List<String>> rows) {

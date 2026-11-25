@@ -73,6 +73,8 @@ npm run dev -- --host 127.0.0.1
 - 토큰 갱신·폐기·재로그인, 로그인 실패 제한, Flyway 버전 관리, 백업·복원, MySQL 통합 테스트와 브라우저 E2E를 구현했다.
 - 식품 API 일별 사용량 저장·분당/일별 제한, 오류 안내와 검색 재시도를 제공한다.
 - 백업·복원은 `cd backend`, `./gradlew databaseMaintenance -Poperation=backup`(또는 `verify`, `migrate`, `restore`)으로 실행한다. 백업은 프로젝트 루트의 `.local-backups`에 저장되며 Git에서 제외된다.
+- 새 버전 백엔드를 시작하기 전에 DB 쓰기를 중지한다. `databaseMaintenance -Poperation=backup`으로 JSON과 SHA-256 파일을 보관하고, `-Poperation=verify`를 실행한다. `verify`는 별도 백업을 생성해 체크섬, 임시 테이블 복원, 전체 행·열 비교를 확인한다.
+- 검증에 실패하면 배포를 중단한다. 검증을 통과하면 `-Poperation=migrate`로 백업을 다시 검증하고 Flyway를 적용한 뒤 백엔드를 시작한다.
 - CI, 다중 서버 캐시·부하 테스트, HTTPS·배포 프록시·운영 승인·서버 모니터링은 이번 범위에서 제외했다.
 
 ## 식품 검색·섭취 기록
