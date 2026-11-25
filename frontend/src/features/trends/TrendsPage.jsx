@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 
 import DateStepper from '../../shared/components/DateStepper'
 import { statisticsApi } from './api'
@@ -21,6 +21,11 @@ function nutrientCell(day, key) {
   return `${day[key].value.toLocaleString('ko-KR', { maximumFractionDigits: key === 'calories' ? 0 : 1 })}${missing}`
 }
 
+/** 그날 권장 칼로리. 계산할 수 없거나 필드가 없는(구버전) 응답이면 '–' */
+function recommendedCell(day) {
+  return day.recommendedCalories == null ? '–' : Math.round(day.recommendedCalories).toLocaleString('ko-KR')
+}
+
 function DailyTable({ days, page, onPage }) {
   return (
     <section className="panel">
@@ -32,6 +37,7 @@ function DailyTable({ days, page, onPage }) {
               <th>날짜</th>
               <th className="num">섭취 건수</th>
               <th className="num">칼로리 (kcal)</th>
+              <th className="num">권장 (kcal)</th>
               <th className="num">탄수화물 (g)</th>
               <th className="num">단백질 (g)</th>
               <th className="num">지방 (g)</th>
@@ -44,9 +50,12 @@ function DailyTable({ days, page, onPage }) {
                 <td>{day.date}</td>
                 <td className="num">{day.records}</td>
                 {NUTRIENT_KEYS.map(key => (
-                  <td key={key} className={day.records ? 'num' : 'num muted'}>
-                    {nutrientCell(day, key)}
-                  </td>
+                  <Fragment key={key}>
+                    <td className={day.records ? 'num' : 'num muted'}>{nutrientCell(day, key)}</td>
+                    {key === 'calories' ? (
+                      <td className={day.recommendedCalories == null ? 'num muted' : 'num'}>{recommendedCell(day)}</td>
+                    ) : null}
+                  </Fragment>
                 ))}
                 <td className={day.weight == null ? 'num muted' : 'num'}>{day.weight ?? '–'}</td>
               </tr>
@@ -140,7 +149,7 @@ export default function TrendsPage({ call }) {
             </h2>
             <TrendChart days={current.days} type="calories" title="칼로리 추이" unit="kcal" />
             <TrendChart days={current.days} type="weight" title="체중 추이" unit="kg" />
-            <p className="help">기록이 있는 날짜만 선으로 잇고, 기록이 없는 날은 0으로 치지 않습니다. 점에 마우스를 올리면 값이 보입니다.</p>
+            <p className="help">기록이 있는 날짜만 선으로 잇고, 기록이 없는 날은 0으로 치지 않습니다. 점에 마우스를 올리면 값이 보입니다. 칼로리 그래프의 점선은 그날 적용 중이던 목표·활동량과 신체 기록으로 계산한 권장 칼로리이며, 계산할 수 없는 날은 비워 둡니다.</p>
           </section>
           <DailyTable days={current.days} page={page} onPage={setPage} />
         </>

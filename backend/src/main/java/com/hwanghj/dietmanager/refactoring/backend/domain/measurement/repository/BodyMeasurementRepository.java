@@ -26,5 +26,6 @@ public interface BodyMeasurementRepository extends JpaRepository<BodyMeasurement
 
     List<BodyMeasurement> findByUserIdAndDeletedFalseAndMeasuredDateBetweenOrderByMeasuredDateAscIdAsc(Long userId, LocalDate start, LocalDate end);
 
-    Optional<BodyMeasurement> findTopByUserIdAndDeletedFalseAndMeasuredDateLessThanEqualOrderByMeasuredDateDescIdDesc(Long userId, LocalDate date);
+    // 날짜 이전의 삭제되지 않은 신체 기록(측정일·id 오름차순). 날짜별 권장량 계산에 쓴다.
+    List<BodyMeasurement> findByUserIdAndDeletedFalseAndMeasuredDateLessThanEqualOrderByMeasuredDateAscIdAsc(Long userId, LocalDate date);
 }

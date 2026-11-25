@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { calorieTicks, recommendedValues, stepSegments } from './recommendationLine'
 import { ticks } from './ticks'
 
 const HEIGHT = 240
@@ -27,7 +28,7 @@ function useWidth() {
   return [ref, width]
 }
 
-/** 기록이 있는 날짜만 이은 선 그래프. type: calories | weight */
+/** 기록이 있는 날짜만 이은 선 그래프. type: calories | weight. 칼로리는 날짜별 권장량을 계단형 점선으로 함께 그린다. */
 export default function TrendChart({ days, type, title, unit }) {
   const [ref, measured] = useWidth()
   const values = days.map(day => {
@@ -44,7 +45,10 @@ export default function TrendChart({ days, type, title, unit }) {
     )
   }
 
-  const scale = type === 'weight' ? ticks(Math.min(...known) - 1, Math.max(...known) + 1) : ticks(0, Math.max(...known, 100))
+  // 권장량 필드가 없는(구버전) 응답이면 모두 null이라 기준선을 그리지 않는다.
+  const recommended = type === 'calories' ? recommendedValues(days) : days.map(() => null)
+  const hasRecommended = recommended.some(value => value != null)
+  const scale = type === 'weight' ? ticks(Math.min(...known) - 1, Math.max(...known) + 1) : calorieTicks(known, recommended)
   // 세로축 숫자가 길어져도(예: 150,000) 잘리지 않게 가장 긴 눈금 글자에 맞춰 왼쪽 여백을 넓힌다.
   const LEFT = Math.max(MIN_LEFT, Math.ceil(Math.max(...scale.map(value => value.toLocaleString().length)) * AXIS_CHAR_WIDTH) + 14)
   const min = scale[0]
@@ -53,15 +57,25 @@ export default function TrendChart({ days, type, title, unit }) {
   const weekly = days.length <= 7
   const x = index => LEFT + (index / Math.max(1, days.length - 1)) * (WIDTH - LEFT - RIGHT)
   const y = value => BOTTOM - ((value - min) / (max - min || 1)) * (BOTTOM - TOP)
-  const points = values.flatMap((value, index) => (value == null ? [] : [{ x: x(index), y: y(value), value, date: days[index].date }]))
+  const points = values.flatMap((value, index) =>
+    value == null ? [] : [{ x: x(index), y: y(value), value, date: days[index].date, recommended: recommended[index] }],
+  )
+  // 기준선은 날짜 사이 경계(반 칸 위치)에서 꺾이므로 x에 소수 위치를 넘긴다.
+  const targetLines = stepSegments(recommended).map(segment => segment.map(point => `${x(point.position)},${y(point.value)}`).join(' '))
   const labelEvery = weekly ? 1 : WIDTH < 500 ? 10 : 7
 
   return (
     <div className="trend" ref={ref}>
       <h3>
         {title} <span className="count">{unit}</span>
+        {hasRecommended ? (
+          <span className="trend-legend">
+            <span className="legend-intake">섭취</span>
+            <span className="legend-target">권장량</span>
+          </span>
+        ) : null}
       </h3>
-      <svg className="trend-chart" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={`${title}, 기록이 있는 날짜만 연결한 그래프`}>
+      <svg className="trend-chart" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={`${title}, 기록이 있는 날짜만 연결한 그래프${hasRecommended ? ', 점선은 날짜별 권장 칼로리' : ''}`}>
         {scale.map(value => (
           <g key={value}>
             <line className="grid" x1={LEFT} x2={WIDTH - RIGHT} y1={y(value)} y2={y(value)} />
@@ -77,11 +91,17 @@ export default function TrendChart({ days, type, title, unit }) {
             </text>
           ) : null,
         )}
+        {targetLines.map(line => (
+          <polyline key={line} className="target-line" points={line}>
+            <title>권장 칼로리</title>
+          </polyline>
+        ))}
         <polyline className="line" points={points.map(point => `${point.x},${point.y}`).join(' ')} />
         {points.map(point => (
           <circle key={point.date} className="dot" cx={point.x} cy={point.y} r="4.5">
             <title>
               {point.date} · {point.value.toLocaleString()} {unit}
+              {point.recommended != null ? ` · 권장 ${Math.round(point.recommended).toLocaleString()} ${unit}` : ''}
             </title>
           </circle>
         ))}

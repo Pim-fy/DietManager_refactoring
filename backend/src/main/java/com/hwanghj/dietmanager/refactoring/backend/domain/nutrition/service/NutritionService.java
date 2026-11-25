@@ -1,7 +1,7 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.service;
 
 import java.time.LocalDate;
-import java.time.Period;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +12,6 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.Activ
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.NutritionPreference;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.SettingHistory;
 import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.repository.NutritionPreferenceRepository;
-import com.hwanghj.dietmanager.refactoring.backend.domain.user.entity.GoalType;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.UserNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserProfileRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
@@ -56,21 +55,20 @@ public class NutritionService {
 
     @Transactional(readOnly = true)
     public NutritionDto.Recommendation recommendation(Long userId, LocalDate date) {
+        return timeline(userId, date).at(date);
+    }
+
+    /**
+     * end 날짜까지의 권장량 계산 재료(프로필, 설정 이력, end 이전 신체 기록)를 각각 한 번씩 조회한다.
+     * 날짜별 계산은 메모리에서 하므로 조회 횟수가 기간 길이와 관계없다.
+     */
+    @Transactional(readOnly = true)
+    public RecommendationTimeline timeline(Long userId, LocalDate end) {
         var profile = profiles.findByUserId(userId).orElse(null);
-        // 조회 날짜 당시의 목표·활동량. 이력이 없으면 현재 설정을 쓴다.
-        var setting = histories.at(userId, date);
-        var activity = setting.isPresent() ? setting.get().getActivityLevel() : preference(userId).getActivityLevel();
-        var measurement = measurements.findTopByUserIdAndDeletedFalseAndMeasuredDateLessThanEqualOrderByMeasuredDateDescIdDesc(userId, date).orElse(null);
-        String reason = profile == null ? "프로필을 먼저 등록해주세요."
-                : activity == null ? "활동량을 먼저 선택해주세요."
-                        : measurement == null ? "조회 날짜 이전의 신체 기록이 필요합니다." : null;
-        if (reason == null && Period.between(profile.getBirthDate(), date).getYears() < 19)
-            reason = "권장량 계산은 만 19세 이상 성인에게 제공됩니다.";
-        if (reason != null)
-            return RecommendationCalculator.unavailable(date, activity, reason);
-        int age = Period.between(profile.getBirthDate(), date).getYears();
-        GoalType goal = setting.map(SettingHistory::getGoalType).orElse(profile.getGoalType());
-        return RecommendationCalculator.calculate(measurement.getWeight(), measurement.getHeight(), age, profile.getGender(), goal, activity,
-                date, measurement.getMeasuredDate());
+        List<SettingHistory> settings = histories.all(userId);
+        // 설정 이력이 하나도 없을 때만 현재 활동량을 쓴다.
+        ActivityLevel current = settings.isEmpty() ? preference(userId).getActivityLevel() : null;
+        var bodies = measurements.findByUserIdAndDeletedFalseAndMeasuredDateLessThanEqualOrderByMeasuredDateAscIdAsc(userId, end);
+        return new RecommendationTimeline(profile, settings, current, bodies);
     }
 }

@@ -15,6 +15,7 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.intake.entity.IntakeRe
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.repository.IntakeRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.intake.service.IntakeMapper;
 import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.repository.BodyMeasurementRepository;
+import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.service.NutritionService;
 import com.hwanghj.dietmanager.refactoring.backend.domain.statistics.dto.StatisticsDto;
 import com.hwanghj.dietmanager.refactoring.backend.domain.statistics.exception.StatisticsRangeException;
 
@@ -22,10 +23,12 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.statistics.exception.S
 public class StatisticsService {
     private final IntakeRepository intakes;
     private final BodyMeasurementRepository measurements;
+    private final NutritionService nutrition;
 
-    public StatisticsService(IntakeRepository intakes, BodyMeasurementRepository measurements) {
+    public StatisticsService(IntakeRepository intakes, BodyMeasurementRepository measurements, NutritionService nutrition) {
         this.intakes = intakes;
         this.measurements = measurements;
+        this.nutrition = nutrition;
     }
 
     @Transactional(readOnly = true)
@@ -37,6 +40,8 @@ public class StatisticsService {
         Map<LocalDate, Double> weights = new HashMap<>();
         for (var record : measurements.findByUserIdAndDeletedFalseAndMeasuredDateBetweenOrderByMeasuredDateAscIdAsc(userId, start, end))
             weights.put(record.getMeasuredDate(), record.getWeight());
+        // 권장량 계산 재료는 기간 끝 기준으로 한 번만 조회하고 날짜별 계산은 메모리에서 한다.
+        var timeline = nutrition.timeline(userId, end);
         List<StatisticsDto.Day> days = new ArrayList<>();
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
             var items = grouped.getOrDefault(date, List.of());
@@ -48,6 +53,7 @@ public class StatisticsService {
                     .protein(IntakeMapper.aggregate(items, IntakeRecord::effectiveProtein))
                     .fat(IntakeMapper.aggregate(items, IntakeRecord::effectiveFat))
                     .weight(weights.get(date))
+                    .recommendedCalories(timeline.at(date).getCalories())
                     .build());
         }
         return StatisticsDto.Result.builder()
