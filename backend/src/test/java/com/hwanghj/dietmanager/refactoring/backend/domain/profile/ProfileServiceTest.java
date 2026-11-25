@@ -27,6 +27,7 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.entity.Bod
 import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.exception.BodyMeasurementNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.repository.BodyMeasurementRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.measurement.service.BodyMeasurementService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.service.SettingHistoryService;
 import com.hwanghj.dietmanager.refactoring.backend.domain.profile.dto.UserProfileDto;
 import com.hwanghj.dietmanager.refactoring.backend.domain.profile.exception.UserProfileNotFoundException;
 import com.hwanghj.dietmanager.refactoring.backend.domain.profile.service.ProfileService;
@@ -54,11 +55,13 @@ import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvi
 class ProfileServiceTest {
     @Mock
     private UserProfileRepository userProfileRepository;
+    @Mock
+    private SettingHistoryService settingHistoryService;
     private ProfileService profileService;
 
     @BeforeEach
     void setUp() {
-        profileService = new ProfileService(userProfileRepository);
+        profileService = new ProfileService(userProfileRepository, settingHistoryService);
     }
 
     @Test
@@ -147,6 +150,8 @@ class ProfileServiceTest {
         assertThat(profile.getGoalType()).isEqualTo(GoalType.MAINTAIN_WEIGHT);
 
         verify(userProfileRepository).findByUserId(1L);
+        // 목표 변경 이력에는 바뀌기 전 목표를 함께 넘긴다.
+        verify(settingHistoryService).goalChanged(profile, GoalType.LOSE_WEIGHT);
     }
 
     @Test
