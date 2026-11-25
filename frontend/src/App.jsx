@@ -11,7 +11,7 @@ export default function App() {
 
   return (
     <>
-      <header className="public-header">
+      <header className="app-header">
         <span className="brand">DietManager</span>
       </header>
       {notice ? (

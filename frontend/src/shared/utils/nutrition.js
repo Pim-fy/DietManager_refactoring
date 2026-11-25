@@ -23,8 +23,9 @@ export const DAILY_REFERENCE_VALUES = [
   ['나트륨', 2000, 'mg'],
 ]
 
-export function formatNutrition(value) {
-  return value == null ? '정보 없음' : Number(value).toLocaleString('ko-KR', { maximumFractionDigits: 2 })
+/** 영양값 표시. 화면에서는 kcal은 정수(digits 0), g은 소수 한 자리(digits 1)로 보여준다. */
+export function formatNutrition(value, digits = 2) {
+  return value == null ? '정보 없음' : Number(value).toLocaleString('ko-KR', { maximumFractionDigits: digits })
 }
 
 /** 식약처 식품명은 단어 사이가 _로 들어온다. */

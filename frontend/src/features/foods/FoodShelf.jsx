@@ -19,11 +19,11 @@ function Shelf({ shelf, items, disabled, onSelect, onRemove }) {
         <ul className="saved-foods">
           {items.map(({ food }) => (
             <li key={food.foodCode}>
-              <button className="outline" disabled={disabled} aria-label={`${shelf.label} ${food.foodName} 선택`} onClick={() => onSelect(food)}>
-                {foodLabel(food.foodName)} · {food.servingSize}
+              <button className="chip" disabled={disabled} aria-label={`${shelf.label} ${food.foodName} 선택`} onClick={() => onSelect(food)}>
+                {foodLabel(food.foodName)} <small>{food.servingSize}</small>
               </button>
               {shelf.key === 'favorites' ? (
-                <button className="outline danger" disabled={disabled} aria-label={`${food.foodName} 즐겨찾기 해제`} onClick={() => onRemove(food)}>
+                <button className="text-button danger" disabled={disabled} aria-label={`${food.foodName} 즐겨찾기 해제`} onClick={() => onRemove(food)}>
                   해제
                 </button>
               ) : null}
@@ -70,9 +70,9 @@ export default function FoodShelf({ call, onSelect, disabled, revision = 0 }) {
     }
   }
 
+
   return (
-    <section className="panel food-shelf">
-      <h2>내 식품</h2>
+    <div className="food-shelf">
       <Message message={message} />
       {message?.error ? <RetryButton onRetry={() => setRetry(value => value + 1)} /> : null}
       {!data ? (
@@ -82,6 +82,6 @@ export default function FoodShelf({ call, onSelect, disabled, revision = 0 }) {
           <Shelf key={shelf.key} shelf={shelf} items={data[shelf.key]} disabled={disabled || busy} onSelect={onSelect} onRemove={remove} />
         ))
       )}
-    </section>
+    </div>
   )
 }
