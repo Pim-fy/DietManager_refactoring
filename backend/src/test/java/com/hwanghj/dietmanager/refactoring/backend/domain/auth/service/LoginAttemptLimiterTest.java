@@ -64,13 +64,23 @@ class LoginAttemptLimiterTest {
     }
 
     @Test
-    void accountLimitIsCaseInsensitiveAndExpires() {
+    void accountAndIpLimitIsCaseInsensitiveAndExpires() {
         var limiter = limiter();
         for (int i = 0; i < 5; i++)
             limiter.attempt("ip", "User@example.test");
-        assertThatThrownBy(() -> limiter.attempt("different-ip", " user@example.test")).isInstanceOf(LoginAttemptLimiter.Limited.class);
+        assertThatThrownBy(() -> limiter.attempt("ip", " user@example.test")).isInstanceOf(LoginAttemptLimiter.Limited.class);
+        assertThatCode(() -> limiter.attempt("different-ip", " user@example.test")).doesNotThrowAnyException();
         clock.set(START.plusSeconds(600));
         assertThatCode(() -> limiter.attempt("ip", "User@example.test")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void accountLimitCoversDistributedAttempts() {
+        var limiter = limiter();
+        for (int i = 0; i < 50; i++)
+            limiter.attempt("ip-" + i, "distributed@example.test");
+        assertThatThrownBy(() -> limiter.attempt("new-ip", "distributed@example.test"))
+                .isInstanceOf(LoginAttemptLimiter.Limited.class);
     }
 
     @Test
@@ -123,8 +133,8 @@ class LoginAttemptLimiterTest {
         String plainHash = HexFormat.of()
                 .formatHex(MessageDigest.getInstance("SHA-256").digest("private@example.test".getBytes(StandardCharsets.UTF_8)));
         assertThat(failures.findAll()).extracting(LoginFailure::getKey)
-                .hasSize(2)
-                .allSatisfy(key -> assertThat(key).matches("(account|ip):[0-9a-f]{64}"))
+                .hasSize(3)
+                .allSatisfy(key -> assertThat(key).matches("(account|account-ip|ip):[0-9a-f]{64}"))
                 .noneMatch(key -> key.contains("private") || key.contains("203.0.113.7") || key.endsWith(plainHash));
     }
 
@@ -134,8 +144,8 @@ class LoginAttemptLimiterTest {
         limiter.attempt("ip", "old@example.test");
         clock.set(START.plusSeconds(601));
         limiter.attempt("ip-new", "new@example.test");
-        assertThat(limiter.cleanup()).isEqualTo(2);
-        assertThat(failures.count()).isEqualTo(2);
+        assertThat(limiter.cleanup()).isEqualTo(3);
+        assertThat(failures.count()).isEqualTo(3);
     }
 
     @Test
@@ -152,7 +162,7 @@ class LoginAttemptLimiterTest {
         }).when(racing).findByStartedAtLessThanEqual(any(LocalDateTime.class));
         var cleaner = new LoginAttemptLimiter(racing, transactionManager, clock, KEY);
         assertThat(cleaner.cleanup()).isZero();
-        assertThat(failures.findAll()).hasSize(2).allSatisfy(failure -> assertThat(failure.getCount()).isEqualTo(1));
+        assertThat(failures.findAll()).hasSize(3).allSatisfy(failure -> assertThat(failure.getCount()).isEqualTo(1));
     }
 
     @Test
@@ -169,7 +179,7 @@ class LoginAttemptLimiterTest {
             var go = new CountDownLatch(1);
             List<Future<Boolean>> results = new ArrayList<>();
             for (int i = 0; i < threads; i++) {
-                String ip = "concurrent-ip-" + i;
+                String ip = "concurrent-ip";
                 Callable<Boolean> task = () -> {
                     ready.countDown();
                     go.await();
