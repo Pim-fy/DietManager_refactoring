@@ -21,7 +21,7 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
 public class MySqlIsolation implements ApplicationContextInitializer<ConfigurableApplicationContext> {
     private static String currentPrefix;
     private static final List<String> TABLES = List.of("users", "user_profiles", "body_measurements", "intake_records",
-            "nutrition_preferences", "saved_foods", "meal_plans", "auth_sessions", "refresh_tokens", "food_api_usage", "setting_histories",
+            "nutrition_preferences", "saved_foods", "meal_plans", "auth_sessions", "refresh_tokens", "food_api_usage", "setting_histories", "login_failures",
             "flyway_schema_history");
 
     public static class Naming extends PhysicalNamingStrategyStandardImpl {
@@ -53,7 +53,7 @@ public class MySqlIsolation implements ApplicationContextInitializer<Configurabl
             Path directory = Path.of("build", "mysql-test-migrations", prefix).toAbsolutePath();
             Files.createDirectories(directory);
             for (String file : List.of("V1__initial_schema.sql", "V2__auth_sessions.sql", "V3__food_api_usage.sql", "V4__manual_intake_nutrition.sql",
-                    "V5__setting_histories.sql")) {
+                    "V5__setting_histories.sql", "V6__login_failures.sql")) {
                 String sql;
                 try (var input = MySqlIsolation.class.getClassLoader().getResourceAsStream("db/migration/" + file)) {
                     sql = new String(Objects.requireNonNull(input).readAllBytes(), StandardCharsets.UTF_8);

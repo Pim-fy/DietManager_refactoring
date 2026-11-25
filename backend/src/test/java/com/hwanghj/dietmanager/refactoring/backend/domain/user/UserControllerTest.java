@@ -75,6 +75,8 @@ class UserControllerTest {
 
     @Mock
     private BodyMeasurementService bodyMeasurementService;
+    @Mock
+    private LoginAttemptLimiter loginAttemptLimiter;
 
     // MockMvc: 실제 서버를 띄우지 않고도 HTTP 요청처럼 컨트롤러를 테스트하게 해주는 도구.
     private MockMvc mockMvc;
@@ -86,7 +88,7 @@ class UserControllerTest {
         mockMvc = MockMvcBuilders
                 // UserController만 단독 테스트 대상으로 등록.
                 // 컨트롤러에 userService를 넣어줌.
-                .standaloneSetup(new UserController(authenticationService, new LoginAttemptLimiter()), new AccountController(accountService),
+                .standaloneSetup(new UserController(authenticationService, loginAttemptLimiter), new AccountController(accountService),
                         new ProfileController(profileService), new BodyMeasurementController(bodyMeasurementService))
                 // Spring Security의 @AuthenticationPrincipal 처리기가 자동으로 붙지 않을 수 있기 때문.
                 .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
