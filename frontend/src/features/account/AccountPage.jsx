@@ -1,7 +1,9 @@
 import { useState } from 'react'
 
 import { Field, Message, ProfileFields, SaveButton } from '../../shared/components/Forms'
+import PageHeader from '../../shared/components/PageHeader'
 import { formValues } from '../../shared/utils/form'
+import './account.css'
 
 /** 섹션 하나를 저장하는 폼. section: account | profile | password */
 function EditSection({ title, section, api, onSaved, children, password = false }) {
@@ -48,9 +50,7 @@ function EditSection({ title, section, api, onSaved, children, password = false 
 export default function AccountPage({ account, profile, api, onAccount, onProfile, onPassword, children }) {
   return (
     <>
-      <div className="page-heading">
-        <h1>내 정보</h1>
-      </div>
+      <PageHeader title="내 정보" />
       <div className="account-layout">
         <EditSection title="계정 정보" section="account" api={api} onSaved={onAccount}>
           <Field label="이메일" name="email" type="email" maxLength={255} defaultValue={account.email} autoComplete="username" />

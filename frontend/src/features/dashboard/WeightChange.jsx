@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
 
 import AppLink from '../../shared/components/AppLink'
+import EmptyState from '../../shared/components/EmptyState'
 import ResourceState from '../../shared/components/ResourceState'
+import SectionHeader from '../../shared/components/SectionHeader'
 import useResource from '../../shared/hooks/useResource'
 import { formatNutrition as format } from '../../shared/utils/nutrition'
 import { measurementApi } from '../measurements/api'
@@ -26,7 +28,7 @@ function signed(value) {
 
 function Summary({ measurements, date }) {
   if (!measurements.length) {
-    return <p className="dash-empty">아직 신체 기록이 없습니다. 몸무게를 기록하면 여기서 변화를 볼 수 있습니다.</p>
+    return <EmptyState size="compact">아직 신체 기록이 없습니다. 몸무게를 기록하면 여기서 변화를 볼 수 있습니다.</EmptyState>
   }
   // 목록은 측정일 최신순이다. 비교 대상은 최근 기록보다 7일 이상 앞선 기록 중 가장 최근 것.
   const [latest] = measurements
@@ -60,10 +62,9 @@ export default function WeightChange({ call, date }) {
 
   return (
     <section className="dash-section" aria-labelledby="dash-weight-title">
-      <div className="dash-head">
-        <h2 id="dash-weight-title">몸무게 변화</h2>
+      <SectionHeader title="몸무게 변화" titleId="dash-weight-title">
         <AppLink to="/measurements">신체 기록으로</AppLink>
-      </div>
+      </SectionHeader>
       <ResourceState resource={resource} loadingText="신체 기록을 불러오는 중…">
         {resource.data ? <Summary measurements={resource.data} date={date} /> : null}
       </ResourceState>

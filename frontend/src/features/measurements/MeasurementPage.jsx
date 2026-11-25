@@ -1,8 +1,12 @@
-import { useState } from 'react'
-
+import DeletedList from '../../shared/components/DeletedList'
+import EmptyState from '../../shared/components/EmptyState'
 import { Field, Message, SaveButton } from '../../shared/components/Forms'
+import PageHeader from '../../shared/components/PageHeader'
+import Pagination from '../../shared/components/Pagination'
+import StatList from '../../shared/components/StatList'
 import { today } from '../../shared/utils/form'
 import useMeasurements from './useMeasurements'
+import './measurements.css'
 
 const PAGE_SIZE = 10
 const DELETED_PREVIEW = 5
@@ -55,66 +59,21 @@ function MeasurementRow({ item, busy, onEdit, onCommand }) {
   )
 }
 
-function DeletedMeasurements({ deleted, busy, onCommand }) {
-  const [expanded, setExpanded] = useState(false)
-  if (!deleted.length) return null
-  const hidden = deleted.length - DELETED_PREVIEW
-  const shown = expanded ? deleted : deleted.slice(0, DELETED_PREVIEW)
-  return (
-    <div className="undo-list">
-      <h3>삭제한 신체 기록</h3>
-      {shown.map(item => (
-        <p key={item.measurementId}>
-          <span>
-            {item.measuredDate} · {item.weight} kg
-          </span>
-          <button
-            className="text-button"
-            disabled={busy}
-            aria-label={`신체 기록 ${item.measuredDate} ${item.weight}kg 복구`}
-            onClick={() => onCommand(item.measurementId, 'restore', '신체 기록을 복구했습니다.')}
-          >
-            복구
-          </button>
-        </p>
-      ))}
-      {hidden > 0 ? (
-        <button className="text-button more" type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>
-          {expanded ? '접기' : `더 보기 (남은 ${hidden}개)`}
-        </button>
-      ) : null}
-    </div>
-  )
-}
-
 export default function MeasurementPage({ measurements, latest, api, onSaved }) {
   const { busy, message, editing, setEditing, deleted, retry, page, setPage, submit, command } = useMeasurements(api, onSaved)
   const pageCount = Math.ceil(measurements.length / PAGE_SIZE)
 
   return (
     <>
-      <div className="page-heading">
-        <h1>신체 기록</h1>
-      </div>
+      <PageHeader title="신체 기록" />
       {latest ? (
-        <dl className="latest">
-          <div>
-            <dt>최근 측정</dt>
-            <dd>{latest.measuredDate}</dd>
-          </div>
-          <div>
-            <dt>키</dt>
-            <dd>
-              {latest.height} <small>cm</small>
-            </dd>
-          </div>
-          <div>
-            <dt>몸무게</dt>
-            <dd>
-              {latest.weight} <small>kg</small>
-            </dd>
-          </div>
-        </dl>
+        <StatList
+          items={[
+            { label: '최근 측정', value: latest.measuredDate },
+            { label: '키', value: latest.height, unit: 'cm' },
+            { label: '몸무게', value: latest.weight, unit: 'kg' },
+          ]}
+        />
       ) : null}
       <Message message={message} />
       <MeasurementForm editing={editing} latest={latest} retry={retry} busy={busy} onSubmit={submit} onCancel={() => setEditing(null)} />
@@ -146,21 +105,27 @@ export default function MeasurementPage({ measurements, latest, api, onSaved }) 
           </table>
         </div>
         {measurements.length === 0 ? (
-          <p className="empty">아직 기록이 없습니다. 위에서 키와 몸무게를 입력해 첫 기록을 남기세요.</p>
+          <EmptyState>아직 기록이 없습니다. 위에서 키와 몸무게를 입력해 첫 기록을 남기세요.</EmptyState>
         ) : pageCount > 1 ? (
-          <div className="pagination">
-            <button className="outline" disabled={!page || busy} onClick={() => setPage(value => value - 1)}>
-              이전 기록
-            </button>
-            <span>
-              {page + 1} / {pageCount}
-            </span>
-            <button className="outline" disabled={(page + 1) * PAGE_SIZE >= measurements.length || busy} onClick={() => setPage(value => value + 1)}>
-              다음 기록
-            </button>
-          </div>
+          <Pagination
+            page={page + 1}
+            total={pageCount}
+            disabled={busy}
+            onChange={value => setPage(value - 1)}
+            previousLabel="이전 기록"
+            nextLabel="다음 기록"
+          />
         ) : null}
-        <DeletedMeasurements deleted={deleted} busy={busy} onCommand={command} />
+        <DeletedList
+          title="삭제한 신체 기록"
+          items={deleted}
+          itemKey={item => item.measurementId}
+          renderLabel={item => `${item.measuredDate} · ${item.weight} kg`}
+          restoreName={item => `신체 기록 ${item.measuredDate} ${item.weight}kg 복구`}
+          busy={busy}
+          onRestore={item => command(item.measurementId, 'restore', '신체 기록을 복구했습니다.')}
+          preview={DELETED_PREVIEW}
+        />
       </section>
     </>
   )

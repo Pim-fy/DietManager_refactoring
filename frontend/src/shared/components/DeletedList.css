@@ -1,0 +1,5 @@
+/* 삭제한 기록과 복구 */
+.undo-list { margin-top: 28px; padding: 14px 16px; background: var(--surface); border-radius: var(--radius); font-size: var(--text-md); }
+.undo-list h3 { font-size: var(--text-md); margin-bottom: 4px; }
+.undo-list .more { margin-top: 8px; }
+.undo-list p { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 0; }

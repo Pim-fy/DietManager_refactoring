@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Field, Message, ProfileFields, SaveButton } from '../../shared/components/Forms'
 import { formValues } from '../../shared/utils/form'
 import { authApi } from './api'
+import './auth.css'
 
 export default function AuthPage({ onLogin }) {
   const [register, setRegister] = useState(false)

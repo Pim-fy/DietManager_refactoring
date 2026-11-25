@@ -1,0 +1,17 @@
+/* 입력 칸과 폼 버튼 줄 */
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: var(--text-md); font-weight: 600; color: var(--ink); margin-bottom: 18px; }
+.field input, .field select {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  border: 1px solid #bfc5cc;
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  background: var(--paper);
+  font-weight: 400;
+  color: var(--text);
+}
+.field input:hover, .field select:hover { border-color: var(--muted); }
+.form-actions { display: flex; gap: 10px; margin-top: 4px; }
+.form-actions .primary { flex: 1; }

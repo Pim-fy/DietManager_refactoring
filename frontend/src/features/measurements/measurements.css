@@ -1,0 +1,6 @@
+/* ───── 신체 기록 ───── */
+.measurement-fields { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 0 16px; }
+
+@media (max-width: 720px) {
+  .measurement-fields { grid-template-columns: 1fr; }
+}

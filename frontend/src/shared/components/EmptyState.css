@@ -1,0 +1,4 @@
+/* 빈 상태. compact: 목록 안의 짧은 빈 줄 */
+.empty { padding: 40px 16px; text-align: center; color: var(--muted); }
+.empty p { margin-bottom: 16px; }
+.empty.compact { margin: 0; padding: 0; text-align: left; font-size: var(--text-md); }

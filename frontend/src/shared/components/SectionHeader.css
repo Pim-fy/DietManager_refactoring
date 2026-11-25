@@ -1,0 +1,9 @@
+/* 구역 제목. divided: 굵은 밑줄로 나누는 큰 제목(끼니 목록) */
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin-bottom: 14px; }
+.section-head h2 { margin: 0; }
+.section-meta { color: var(--muted); font-variant-numeric: tabular-nums; }
+.section-action { display: flex; align-items: center; margin-left: auto; }
+.section-head a { font-size: var(--text-md); font-weight: 600; text-decoration: none; }
+.section-head a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.section-head.divided { flex-wrap: nowrap; align-items: center; gap: 12px; margin-bottom: 0; padding-bottom: 10px; border-bottom: 2px solid var(--ink); }
+.section-head.divided h2 { font-size: var(--text-xl); }

@@ -1,0 +1,19 @@
+/* ───── 기록 추이 (그래프는 대시보드에서도 쓴다) ───── */
+.range-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-bottom: 28px; }
+.range-toolbar .tabs { margin-bottom: 0; }
+.trend + .trend { margin-top: 32px; }
+.trend-chart { width: 100%; height: auto; display: block; }
+.trend-chart .grid { stroke: var(--line); }
+.trend-chart .axis { font-size: 12px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.trend-chart .line { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.trend-chart .dot { fill: var(--paper); stroke: var(--ink); stroke-width: 2.5; }
+.trend-chart .dot:hover { fill: var(--ink); }
+.trend-chart .target-line { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.trend-legend { display: inline-flex; gap: 12px; margin-left: 12px; color: var(--muted); font-size: var(--text-sm); font-weight: 400; vertical-align: middle; }
+.trend-legend > span { display: inline-flex; align-items: center; gap: 5px; }
+.trend-legend > span::before { content: ''; width: 16px; border-top: 2.5px solid var(--ink); }
+.trend-legend .legend-target::before { border-top: 1.5px dashed var(--muted); }
+
+@media (max-width: 720px) {
+  .range-toolbar .date-stepper { flex: 1; }
+}

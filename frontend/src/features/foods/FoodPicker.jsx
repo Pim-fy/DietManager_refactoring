@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import FoodSearch from './FoodSearch'
 import FoodShelf from './FoodShelf'
+import './foods.css'
 
 /**
  * 식품 고르기 탭(식품 검색 · 내 식품, 필요하면 직접 입력).

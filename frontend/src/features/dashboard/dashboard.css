@@ -1,0 +1,50 @@
+/* ───── 대시보드 ───── */
+.dashboard {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-areas: 'intake side' 'week week';
+  gap: 48px;
+  align-items: start;
+}
+.dash-intake { grid-area: intake; }
+.dash-side { grid-area: side; min-width: 0; }
+.dash-week { grid-area: week; min-width: 0; padding-top: 32px; border-top: 1px solid var(--line); }
+.dash-section + .dash-section { margin-top: 32px; padding-top: 28px; border-top: 1px solid var(--line); }
+.dash-link { display: inline-block; margin-top: 16px; font-size: var(--text-md); font-weight: 600; text-decoration: none; }
+.dash-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.dash-meals { display: grid; grid-template-columns: repeat(4, 1fr); margin: 16px 0 0; font-variant-numeric: tabular-nums; }
+.dash-meals div { padding: 0 12px; border-left: 1px solid var(--line); }
+.dash-meals div:first-child { padding-left: 0; border-left: 0; }
+.dash-meals dt { color: var(--muted); font-size: var(--text-sm); }
+.dash-meals dd { margin: 0; color: var(--ink); font-size: var(--text-lg); font-weight: 700; }
+.dash-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.dash-list li:last-child { border-bottom: 0; }
+.dash-meal { margin-right: 8px; color: var(--muted); font-size: var(--text-sm); font-weight: 600; }
+.dash-list .text-button, .dash-done { flex-shrink: 0; white-space: nowrap; }
+.dash-done { color: var(--accent); font-size: var(--text-sm); font-weight: 600; }
+.dash-figure { margin: 0; color: var(--ink); font-size: var(--text-2xl); font-weight: 800; line-height: 1.2; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.dash-figure small { margin-left: 4px; color: var(--muted); font-size: var(--text-base); font-weight: 600; letter-spacing: 0; }
+.dash-note { margin: 6px 0 0; color: var(--muted); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
+.dash-note strong { color: var(--ink); }
+.dash-week .latest { margin-bottom: 20px; }
+
+/* 시작하기 안내 */
+.setup { margin-bottom: 32px; padding: 16px 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.setup h2 { margin: 0 0 12px; font-size: var(--text-base); }
+.setup-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.setup-step { display: flex; align-items: flex-start; gap: 12px; }
+.setup-mark { flex-shrink: 0; width: 24px; height: 24px; border: 1px solid var(--muted); border-radius: 50%; color: var(--muted); font-size: var(--text-sm); font-weight: 700; line-height: 22px; text-align: center; }
+.setup-text { display: flex; flex-direction: column; min-width: 0; }
+.setup-text a { font-weight: 600; }
+.setup-text span { color: var(--muted); font-size: var(--text-md); }
+.setup-step.done .setup-mark { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.setup-step.done strong { color: var(--muted); font-weight: 600; }
+
+@media (max-width: 1000px) {
+  .dashboard { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'intake' 'side' 'week'; gap: 40px; }
+  .dash-intake { max-width: 480px; }
+  .dash-side { padding-top: 32px; border-top: 1px solid var(--line); }
+}
+@media (max-width: 720px) {
+  .dash-intake { max-width: none; }
+}

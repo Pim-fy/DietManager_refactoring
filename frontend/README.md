@@ -34,10 +34,17 @@ npm run dev -- --host 127.0.0.1   # http://127.0.0.1:5186
 
 ```
 src/
-├─ features/<기능>/   화면, 그 기능의 API 호출(api.js), 상태 훅(use*.js)
+├─ features/<기능>/   화면, 그 기능의 API 호출(api.js), 상태 훅(use*.js), 화면 전용 스타일(<기능>.css)
 │   dashboard, intakes, plans, measurements, trends, account, auth, foods, nutrition, workspace
-├─ shared/           여러 기능이 함께 쓰는 컴포넌트·훅·유틸
-├─ index.css         색·글꼴·크기 기준값
-└─ App.css           화면 스타일
+├─ shared/
+│   ├─ components/    공통 컴포넌트와 옆에 둔 스타일(<이름>.css). 모양·배치만 맡고 데이터는 props로 받는다
+│   │   PageHeader, SectionHeader, EmptyState, RecordItem, Pagination, DeletedList, StatList,
+│   │   Dialog, DateStepper, Forms, ResourceState, AppLink
+│   ├─ styles/        common.css(제목·버튼·알림·표·탭), components.js(공통 컴포넌트 스타일을 먼저 불러옴)
+│   └─ api/, hooks/, utils/
+├─ index.css         색·글꼴·크기 기준값과 기본 스타일
+└─ App.css           화면 틀(사이드바·상단 바·하단 탭)
 e2e/                 Playwright 테스트와 고정 계정 준비(global-setup.js)
 ```
+
+스타일은 `index.css` → `shared/styles/common.css` → 공통 컴포넌트 → `App.css` → 화면 순서로 들어간다(`main.jsx`). 같은 우선순위 선택자는 나중 것이 이기므로, 화면 스타일에서 공통 컴포넌트를 바꿀 때는 `.meal-group .add`처럼 화면 클래스를 앞에 붙인다. 클래스 이름은 e2e가 요소를 찾는 데도 쓰므로 바꾸지 않는다.

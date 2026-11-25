@@ -1,0 +1,10 @@
+/* 수치 묶음: 라벨 + 큰 숫자 + 단위 */
+.latest { display: flex; gap: 48px; margin: 0 0 32px; padding: 0; }
+.latest div { display: flex; flex-direction: column; }
+.latest dt { color: var(--muted); font-size: var(--text-sm); }
+.latest dd { margin: 0; color: var(--ink); font-size: var(--text-xl); font-weight: 700; font-variant-numeric: tabular-nums; }
+.latest dd small { font-size: var(--text-md); font-weight: 500; color: var(--muted); }
+
+@media (max-width: 720px) {
+  .latest { gap: 28px; }
+}

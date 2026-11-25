@@ -1,10 +1,16 @@
 import DateStepper from '../../shared/components/DateStepper'
 import Dialog from '../../shared/components/Dialog'
+import EmptyState from '../../shared/components/EmptyState'
 import { Field, Message, RetryButton, SaveButton } from '../../shared/components/Forms'
+import PageHeader from '../../shared/components/PageHeader'
+import RecordItem from '../../shared/components/RecordItem'
+import SectionHeader from '../../shared/components/SectionHeader'
 import { today } from '../../shared/utils/form'
-import { foodLabel, formatNutrition as format, meals } from '../../shared/utils/nutrition'
+import { foodLabel, meals } from '../../shared/utils/nutrition'
 import FoodPicker from '../foods/FoodPicker'
 import useMealPlans from './useMealPlans'
+import '../intakes/intakes.css'
+import './plans.css'
 
 function MealPlanForm({ food, editing, date, busy, onSubmit, onCancel }) {
   return (
@@ -50,56 +56,45 @@ function MealPlanForm({ food, editing, date, busy, onSubmit, onCancel }) {
 
 function MealPlanItem({ item, busy, onEdit, onCommand }) {
   return (
-    <li className={item.deleted ? 'is-deleted' : undefined}>
-      <div className="item-main">
-        <strong>{foodLabel(item.food.foodName)}</strong>
-        <p>
-          {item.amount} {item.food.baseUnit}
-          {item.intakeId ? <span className="source done">섭취 기록으로 옮김</span> : null}
-          {item.deleted ? <span className="source">삭제한 계획</span> : null}
-        </p>
-      </div>
-      <div className="item-side">
-        <p className="item-kcal">
-          {item.nutrition.calories == null ? (
-            <small>칼로리 정보 없음</small>
-          ) : (
-            <>
-              {format(item.nutrition.calories, 0)}
-              <small> kcal</small>
-            </>
-          )}
-        </p>
-        <div className="row-actions">
-          {item.deleted ? (
-            <button className="text-button" disabled={busy} onClick={() => onCommand(item.id, 'restore', '계획을 복구했습니다.')}>
-              복구
+    <RecordItem
+      title={foodLabel(item.food.foodName)}
+      kcal={item.nutrition.calories}
+      deleted={item.deleted}
+      actions={
+        item.deleted ? (
+          <button className="text-button" disabled={busy} onClick={() => onCommand(item.id, 'restore', '계획을 복구했습니다.')}>
+            복구
+          </button>
+        ) : (
+          <>
+            {!item.intakeId ? (
+              <>
+                <button
+                  className="text-button strong"
+                  disabled={busy || item.plannedDate > today()}
+                  title={item.plannedDate > today() ? '계획한 날짜가 되면 섭취로 기록할 수 있습니다.' : undefined}
+                  onClick={() => onCommand(item.id, 'consume', '섭취 기록으로 저장했습니다.')}
+                >
+                  섭취로 기록
+                </button>
+                <button className="text-button" disabled={busy} onClick={() => onEdit(item)}>
+                  수정
+                </button>
+              </>
+            ) : null}
+            <button className="text-button danger" disabled={busy} onClick={() => onCommand(item.id, 'delete', '계획을 삭제했습니다.')}>
+              삭제
             </button>
-          ) : (
-            <>
-              {!item.intakeId ? (
-                <>
-                  <button
-                    className="text-button strong"
-                    disabled={busy || item.plannedDate > today()}
-                    title={item.plannedDate > today() ? '계획한 날짜가 되면 섭취로 기록할 수 있습니다.' : undefined}
-                    onClick={() => onCommand(item.id, 'consume', '섭취 기록으로 저장했습니다.')}
-                  >
-                    섭취로 기록
-                  </button>
-                  <button className="text-button" disabled={busy} onClick={() => onEdit(item)}>
-                    수정
-                  </button>
-                </>
-              ) : null}
-              <button className="text-button danger" disabled={busy} onClick={() => onCommand(item.id, 'delete', '계획을 삭제했습니다.')}>
-                삭제
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </li>
+          </>
+        )
+      }
+    >
+      <p>
+        {item.amount} {item.food.baseUnit}
+        {item.intakeId ? <span className="source done">섭취 기록으로 옮김</span> : null}
+        {item.deleted ? <span className="source">삭제한 계획</span> : null}
+      </p>
+    </RecordItem>
   )
 }
 
@@ -112,15 +107,17 @@ export default function MealPlanPage({ call }) {
 
   return (
     <>
-      <div className="page-heading with-tools">
-        <h1>식단 계획</h1>
-        <div className="page-tools">
-          <DateStepper label="계획 조회 날짜" value={date} disabled={busy} onChange={plans.changeDate} future />
-          <button className="primary" disabled={busy} onClick={plans.startAdd}>
-            계획 추가
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="식단 계획"
+        tools={
+          <>
+            <DateStepper label="계획 조회 날짜" value={date} disabled={busy} onChange={plans.changeDate} future />
+            <button className="primary" disabled={busy} onClick={plans.startAdd}>
+              계획 추가
+            </button>
+          </>
+        }
+      />
       {dialogOpen ? null : <Message message={message} />}
       {message?.error && !dialogOpen ? <RetryButton onRetry={plans.reload} disabled={busy} /> : null}
       {!loaded ? (
@@ -128,12 +125,15 @@ export default function MealPlanPage({ call }) {
           계획을 불러오는 중…
         </p>
       ) : plans.plans.items.length === 0 ? (
-        <div className="empty">
-          <p>이 날짜에 세운 계획이 없습니다.</p>
-          <button className="outline" disabled={busy} onClick={plans.startAdd}>
-            계획 추가
-          </button>
-        </div>
+        <EmptyState
+          action={
+            <button className="outline" disabled={busy} onClick={plans.startAdd}>
+              계획 추가
+            </button>
+          }
+        >
+          이 날짜에 세운 계획이 없습니다.
+        </EmptyState>
       ) : (
         <section className="meals" aria-label={`${date} 계획`}>
           {Object.entries(meals).map(([meal, label]) => {
@@ -141,9 +141,7 @@ export default function MealPlanPage({ call }) {
             if (!items.length) return null
             return (
               <div key={meal} className="meal-group">
-                <div className="meal-head">
-                  <h2>{label}</h2>
-                </div>
+                <SectionHeader title={label} divided />
                 <ul className="intake-list">
                   {items.map(item => (
                     <MealPlanItem key={item.id} item={item} busy={busy} onEdit={plans.startEdit} onCommand={plans.command} />

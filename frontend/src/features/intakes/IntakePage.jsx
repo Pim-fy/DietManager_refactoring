@@ -1,6 +1,7 @@
 import DateStepper from '../../shared/components/DateStepper'
 import Dialog from '../../shared/components/Dialog'
 import { Message } from '../../shared/components/Forms'
+import PageHeader from '../../shared/components/PageHeader'
 import { meals } from '../../shared/utils/nutrition'
 import FoodPicker from '../foods/FoodPicker'
 import DailyReferenceTable from '../nutrition/DailyReferenceTable'
@@ -10,6 +11,7 @@ import { NutritionForm, RecordForm } from './IntakeForms'
 import { defaultMeal } from './defaultMeal'
 import IntakeRecordList from './IntakeRecordList'
 import useIntakes from './useIntakes'
+import './intakes.css'
 
 function dialogTitle({ adding, selected, editing, nutritionEditing }) {
   if (editing) return '섭취 기록 수정'
@@ -100,15 +102,17 @@ export default function IntakePage({ call }) {
 
   return (
     <>
-      <div className="page-heading with-tools">
-        <h1>섭취 기록</h1>
-        <div className="page-tools">
-          <DateStepper label="조회 날짜" value={date} disabled={busy} onChange={intakes.changeDate} />
-          <button className="primary" disabled={busy || !loaded} onClick={() => intakes.startAdd(defaultMeal(date))}>
-            음식 추가
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="섭취 기록"
+        tools={
+          <>
+            <DateStepper label="조회 날짜" value={date} disabled={busy} onChange={intakes.changeDate} />
+            <button className="primary" disabled={busy || !loaded} onClick={() => intakes.startAdd(defaultMeal(date))}>
+              음식 추가
+            </button>
+          </>
+        }
+      />
       {error ? (
         <div className="message error" role="alert">
           <p>{error}</p>

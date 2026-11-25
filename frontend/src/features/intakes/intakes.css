@@ -1,0 +1,28 @@
+/* ───── 섭취 기록 (식단 계획도 끼니별 목록과 기록 폼에 함께 쓴다) ───── */
+.intake-layout { display: grid; grid-template-columns: 340px 1fr; gap: 48px; align-items: start; }
+
+/* 끼니별 목록 */
+.meal-group { padding-bottom: 8px; }
+.meal-group + .meal-group { margin-top: 20px; }
+.meal-group .add { min-height: 34px; padding: 4px 12px; font-size: var(--text-md); }
+.meal-group .empty.compact { padding: 14px 0 6px; }
+.intake-list { list-style: none; padding: 0; margin: 0; }
+
+/* 계산 방식 안내 */
+.calc-note { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); }
+.calc-note summary { cursor: pointer; color: var(--muted); font-size: var(--text-md); }
+.calc-note summary:hover { color: var(--ink); }
+.calc-note[open] summary { margin-bottom: 16px; color: var(--ink); font-weight: 600; }
+
+/* 기록 폼(추가 창) */
+.picked-food { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; background: var(--surface); border-radius: var(--radius); margin-bottom: 20px; }
+.picked-food strong { color: var(--ink); font-size: var(--text-lg); }
+.picked-food span { color: var(--muted); font-size: var(--text-md); }
+.intake-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 16px; }
+
+@media (max-width: 1000px) {
+  .intake-layout { grid-template-columns: 1fr; gap: 32px; }
+}
+@media (max-width: 720px) {
+  .intake-fields { grid-template-columns: 1fr; }
+}
