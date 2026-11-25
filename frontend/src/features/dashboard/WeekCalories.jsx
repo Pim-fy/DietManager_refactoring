@@ -1,11 +1,6 @@
-import { useCallback, useMemo } from 'react'
-
 import AppLink from '../../shared/components/AppLink'
 import ResourceState from '../../shared/components/ResourceState'
-import useResource from '../../shared/hooks/useResource'
 import { formatNutrition as format } from '../../shared/utils/nutrition'
-import { statisticsApi } from '../trends/api'
-import { dates } from '../trends/range'
 import TrendChart from '../trends/TrendChart'
 import { summarizeWeek } from './summarizeWeek'
 
@@ -42,13 +37,8 @@ function Summary({ days }) {
   )
 }
 
-/** 이번 주(월~일) 하루 칼로리 추이. */
-export default function WeekCalories({ call, date }) {
-  const api = useMemo(() => statisticsApi(call), [call])
-  const { start, end } = dates(date, 'week')
-  const load = useCallback(signal => api.range(start, end, signal), [api, start, end])
-  const resource = useResource(load)
-
+/** 이번 주(월~일) 하루 칼로리 추이. resource는 대시보드에서 불러온 이번 주 통계다. */
+export default function WeekCalories({ resource }) {
   return (
     <section className="dash-week" aria-labelledby="dash-week-title">
       <div className="dash-head">

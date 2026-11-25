@@ -97,6 +97,8 @@ test('신체 기록 추가·수정·삭제·복구와 모바일 화면', async (
   await page.getByLabel('몸무게 (kg)').fill(String(weight))
   await page.getByRole('button', { name: '기록 저장', exact: true }).click()
   await expect(page.getByText('신체 기록을 저장했습니다.')).toBeVisible()
+  // 새 기록 폼의 키 칸은 최근 기록의 키로 채워진다(방금 저장한 기록이 가장 최근이다).
+  await expect(page.getByLabel('키 (cm)')).toHaveValue('170')
   await row(weight).getByRole('button', { name: `신체 기록 ${today} ${weight}kg 수정`, exact: true }).click()
   await page.getByLabel('몸무게 (kg)').fill(String(edited))
   await page.getByRole('button', { name: '기록 저장', exact: true }).click()
@@ -306,13 +308,72 @@ test('섭취 기록 조회 날짜는 주소에 담겨 새로고침해도 유지�
 test('기록 추이의 기간과 기준 날짜는 주소에 담겨 새로고침해도 유지된다', async ({ page }) => {
   await menu(page).getByRole('link', { name: '기록 추이', exact: true }).click()
   await expect(page).toHaveURL(/\/trends$/)
-  await page.getByRole('combobox', { name: '기간', exact: true }).selectOption('month')
+  const period = page.getByRole('group', { name: '기간', exact: true })
+  await expect(period.getByRole('button', { name: '주간', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await period.getByRole('button', { name: '월간', exact: true }).click()
+  await expect(period.getByRole('button', { name: '월간', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await showDate(page, '기준 날짜', '2020-03-15')
   await expect(page).toHaveURL(/\/trends\?period=month&date=2020-03-15$/)
   await page.reload()
-  await expect(page.getByRole('combobox', { name: '기간', exact: true })).toHaveValue('month')
+  await expect(page.getByRole('group', { name: '기간', exact: true }).getByRole('button', { name: '월간', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByLabel('기준 날짜', { exact: true })).toHaveValue('2020-03-15')
   await expect(page.getByText('3월 1일 – 3월 31일')).toBeVisible()
+})
+
+test('기록 추이 ‹ › 이동은 주간은 7일, 월간은 한 달 단위로 범위를 바꾼다', async ({ page }) => {
+  await page.goto('/trends?date=2020-03-15')
+  const range = page.locator('.heading-inline p')
+  await expect(range).toHaveText('3월 9일 – 3월 15일')
+  await page.getByRole('button', { name: '이전 주', exact: true }).click()
+  await expect(range).toHaveText('3월 2일 – 3월 8일')
+  await expect(page).toHaveURL(/\/trends\?date=2020-03-08$/)
+  await page.getByRole('button', { name: '다음 주', exact: true }).click()
+  await page.getByRole('button', { name: '다음 주', exact: true }).click()
+  await expect(range).toHaveText('3월 16일 – 3월 22일')
+  await expect(page).toHaveURL(/\/trends\?date=2020-03-22$/)
+
+  await page.getByRole('group', { name: '기간', exact: true }).getByRole('button', { name: '월간', exact: true }).click()
+  await expect(range).toHaveText('3월 1일 – 3월 31일')
+  await page.getByRole('button', { name: '이전 달', exact: true }).click()
+  await expect(range).toHaveText('2월 1일 – 2월 29일')
+  await expect(page).toHaveURL(/\/trends\?(?=.*period=month)(?=.*date=2020-02-22(&|$))/)
+  await page.getByRole('button', { name: '다음 달', exact: true }).click()
+  await page.getByRole('button', { name: '다음 달', exact: true }).click()
+  await expect(range).toHaveText('4월 1일 – 4월 30일')
+  await expect(page).toHaveURL(/\/trends\?(?=.*period=month)(?=.*date=2020-04-22(&|$))/)
+})
+
+test('모바일: 하단 탭은 5개이고 내 정보는 상단 바에서 연다', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  const tabs = menu(page).getByRole('link')
+  await expect(tabs).toHaveText(['대시보드', '섭취 기록', '식단 계획', '신체 기록', '기록 추이'])
+  await expect(menu(page).getByRole('link', { name: '내 정보', exact: true })).toHaveCount(0)
+  const account = page.locator('a.header-account')
+  await expect(account).toBeVisible()
+  await account.click()
+  await expect(page.getByRole('heading', { name: '내 정보', exact: true })).toBeVisible()
+  await expect(account).toHaveAttribute('aria-current', 'page')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await expect(account).toBeHidden()
+  await expect(menu(page).getByRole('link', { name: '내 정보', exact: true })).toHaveAttribute('aria-current', 'page')
+})
+
+test('삭제한 신체 기록은 5개만 보이고 더 보기로 펼쳤다 접는다', async ({ page }) => {
+  const deleted = Array.from({ length: 7 }, (_, index) => ({
+    measurementId: 9000 + index, measuredDate: `2019-01-${String(20 - index).padStart(2, '0')}`, height: 170, weight: 60 + index, deleted: true,
+  }))
+  await page.route('**/api/users/body-measurements/deleted', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify(deleted),
+  }))
+  await menu(page).getByRole('link', { name: '신체 기록', exact: true }).click()
+  const list = page.locator('.undo-list')
+  await expect(list.locator('p')).toHaveCount(5)
+  await list.getByRole('button', { name: '더 보기 (남은 2개)', exact: true }).click()
+  await expect(list.locator('p')).toHaveCount(7)
+  await expect(list.getByRole('button', { name: /복구$/ })).toHaveCount(7)
+  await list.getByRole('button', { name: '접기', exact: true }).click()
+  await expect(list.locator('p')).toHaveCount(5)
 })
 
 test('음식 추가 창은 뒤로가기로 창만 닫히고, 한 번 더 누르면 이전 화면으로 간다', async ({ page }) => {
@@ -449,7 +510,8 @@ test('대시보드 요약과 세부 메뉴 이동', async ({ page, request }) =>
 
   await page.setViewportSize({ width: 390, height: 844 })
   await expect(summary).toBeVisible()
-  await expect(nav.getByRole('link', { name: '내 정보', exact: true })).toBeVisible()
+  await expect(page.locator('a.header-account')).toBeVisible()
+  await expect(nav.getByRole('link')).toHaveCount(5)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: `${screenshotFolder}/dashboard-mobile.png`, fullPage: true })
 })

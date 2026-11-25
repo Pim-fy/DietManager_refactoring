@@ -41,6 +41,7 @@
 .shell-nav a[aria-current='page'] { color: var(--ink); font-weight: 700; background: var(--surface); }
 .menu-icon { width: 20px; height: 20px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .shell-header .logout { margin-top: auto; padding: 9px 12px; text-align: left; }
+.header-account { display: none; }
 
 /* ───── 페이지 골격 ───── */
 .workspace { width: 100%; max-width: var(--page); margin: 0 auto; padding: 40px 32px 96px; }
@@ -208,6 +209,7 @@ thead th { border-bottom-color: var(--ink); }
 .item-kcal small { font-size: var(--text-sm); font-weight: 500; color: var(--muted); }
 .undo-list { margin-top: 28px; padding: 14px 16px; background: var(--surface); border-radius: var(--radius); font-size: var(--text-md); }
 .undo-list h3 { font-size: var(--text-md); margin-bottom: 4px; }
+.undo-list .more { margin-top: 8px; }
 .undo-list p { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 0; }
 .plan-note { margin-top: 28px; }
 .calc-note { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); }
@@ -278,8 +280,8 @@ thead th { border-bottom-color: var(--ink); }
 .measurement-fields { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 0 16px; }
 
 /* ───── 기록 추이 ───── */
-.range-toolbar { display: flex; align-items: end; gap: 16px; max-width: 480px; }
-.range-toolbar .field { flex: 1; }
+.range-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-bottom: 28px; }
+.range-toolbar .tabs { margin-bottom: 0; }
 .trend + .trend { margin-top: 32px; }
 .trend-chart { width: 100%; height: auto; display: block; }
 .trend-chart .grid { stroke: var(--line); }
@@ -363,6 +365,10 @@ thead th { border-bottom-color: var(--ink); }
   .shell-header { position: static; height: auto; flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; padding: 0 16px; border-right: 0; border-bottom: 1px solid var(--line); }
   .shell-header .brand { padding: 0; }
   .shell-header .logout { margin-top: 0; padding: 8px 0; }
+  .header-account { display: block; margin-left: auto; padding: 8px 0; color: var(--muted); font-size: var(--text-md); text-decoration: none; }
+  .header-account:hover, .header-account[aria-current='page'] { color: var(--ink); }
+  .header-account[aria-current='page'] { font-weight: 700; }
+  .shell-nav .account-tab { display: none; }
   .shell-nav {
     position: fixed;
     z-index: 10;
@@ -370,7 +376,7 @@ thead th { border-bottom-color: var(--ink); }
     bottom: 0;
     left: 0;
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 0;
     padding: 0 2px env(safe-area-inset-bottom);
     border-top: 1px solid var(--line);
@@ -392,7 +398,7 @@ thead th { border-bottom-color: var(--ink); }
   .row-actions { flex-wrap: nowrap; }
   .food-results .row-actions { justify-content: flex-end; }
   .latest { gap: 28px; }
-  .range-toolbar { display: block; }
+  .range-toolbar .date-stepper { flex: 1; }
   .sheet { width: 100vw; max-width: 100vw; max-height: 92vh; margin: auto 0 0; border-radius: 14px 14px 0 0; }
   .sheet-body { padding: 16px 16px 24px; }
   .auth-page { display: block; padding: 32px 16px; }

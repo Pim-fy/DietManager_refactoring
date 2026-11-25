@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import { Field } from '../../shared/components/Forms'
+import DateStepper from '../../shared/components/DateStepper'
 import { statisticsApi } from './api'
 import { dates } from './range'
 import TrendChart from './TrendChart'
@@ -111,24 +111,15 @@ export default function TrendsPage({ call }) {
         </p>
       </div>
       <div className="range-toolbar">
-        <label className="field">
-          <span>기간</span>
-          <select
-            value={period}
-            onChange={event => setPeriod(event.target.value)}
-          >
-            <option value="week">주간</option>
-            <option value="month">월간</option>
-          </select>
-        </label>
-        <Field
-          label="기준 날짜"
-          type="date"
-          value={anchor}
-          onChange={event => {
-            if (event.target.value) setAnchor(event.target.value)
-          }}
-        />
+        <div className="tabs" role="group" aria-label="기간">
+          <button type="button" aria-pressed={period === 'week'} onClick={() => setPeriod('week')}>
+            주간
+          </button>
+          <button type="button" aria-pressed={period === 'month'} onClick={() => setPeriod('month')}>
+            월간
+          </button>
+        </div>
+        <DateStepper label="기준 날짜" value={anchor} future unit={period} onChange={value => value && setAnchor(value)} />
       </div>
       {error ? (
         <div className="message error" role="alert">
