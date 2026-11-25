@@ -11,7 +11,8 @@ import TrendChart from '../trends/TrendChart'
 function Summary({ days }) {
   const recorded = days.filter(day => day.records > 0)
   if (!recorded.length) return <p className="dash-empty">이번 주에는 아직 섭취 기록이 없습니다.</p>
-  const average = recorded.reduce((sum, day) => sum + (day.calories.value ?? 0), 0) / recorded.length
+  const withCalories = recorded.filter(day => day.records > day.calories.missingCount)
+  const average = withCalories.reduce((sum, day) => sum + day.calories.value, 0) / withCalories.length
 
   return (
     <>
@@ -26,8 +27,14 @@ function Summary({ days }) {
         <div>
           <dt>기록한 날 평균</dt>
           <dd>
-            {format(Math.round(average), 0)}
-            <small> kcal</small>
+            {withCalories.length ? (
+              <>
+                {format(Math.round(average), 0)}
+                <small> kcal</small>
+              </>
+            ) : (
+              <small>칼로리 정보가 있는 기록이 없습니다</small>
+            )}
           </dd>
         </div>
       </dl>

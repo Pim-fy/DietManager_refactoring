@@ -73,7 +73,11 @@ export default function DaySummary({ date, daily, target, targetError, onTargetR
         </tbody>
       </table>
       <div className="day-label-foot">
-        {daily.items.length ? <ExcessWarning daily={daily} target={target} /> : <p>아직 기록이 없습니다. 끼니별로 먹은 음식을 추가하세요.</p>}
+        {!daily.items.length ? (
+          <p>아직 기록이 없습니다. 끼니별로 먹은 음식을 추가하세요.</p>
+        ) : target && !targetError ? (
+          <ExcessWarning daily={daily} target={target} />
+        ) : null}
         {missing ? <p>영양정보가 없는 기록 {missing}건은 합계에서 빠져 있어 실제 섭취량은 더 많을 수 있습니다.</p> : null}
         {targetError ? (
           <p>

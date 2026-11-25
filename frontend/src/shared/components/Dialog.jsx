@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react'
 
-/** 브라우저 기본 모달(dialog). Esc·닫기 버튼·바깥 클릭으로 onClose를 부른다. */
+/** 브라우저 기본 모달(dialog). Esc·닫기 버튼·바깥 클릭(누른 곳과 뗀 곳이 모두 바깥)으로 onClose를 부른다. */
 export default function Dialog({ open, title, onClose, children }) {
   const ref = useRef(null)
+  const pressedBackdrop = useRef(false)
 
   useEffect(() => {
     const dialog = ref.current
@@ -19,8 +20,12 @@ export default function Dialog({ open, title, onClose, children }) {
         event.preventDefault()
         onClose()
       }}
+      onPointerDown={event => {
+        pressedBackdrop.current = event.target === ref.current
+      }}
       onClick={event => {
-        if (event.target === ref.current) onClose()
+        if (pressedBackdrop.current && event.target === ref.current) onClose()
+        pressedBackdrop.current = false
       }}
     >
       {open ? (
