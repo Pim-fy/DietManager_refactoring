@@ -60,10 +60,12 @@ public class LoginAttemptLimiter {
     }
 
     static final long WINDOW_SECONDS = 600;
-    static final int ACCOUNT_LIMIT = 5;
+    static final int ACCOUNT_IP_LIMIT = 5;
+    static final int ACCOUNT_LIMIT = 50;
     static final int IP_LIMIT = 30;
 
     private static final String ACCOUNT = "account:";
+    private static final String ACCOUNT_IP = "account-ip:";
     private static final String IP = "ip:";
 
     private final LoginFailureRepository failures;
@@ -148,15 +150,14 @@ public class LoginAttemptLimiter {
 
     /** 로그인에 성공했을 때 호출한다. */
     public void succeeded(String ip, String email) {
-        String accountKey = accountKey(email);
         String ipKey = ipKey(ip);
         transaction.executeWithoutResult(status -> {
             for (String key : limits(ip, email).keySet()) {
                 failures.findWithLockByKey(key).ifPresent(failure -> {
-                    if (key.equals(accountKey))
-                        failures.delete(failure);
-                    else if (key.equals(ipKey))
+                    if (key.equals(ipKey))
                         failure.decrement();
+                    else
+                        failures.delete(failure);
                 });
             }
         });
@@ -185,17 +186,15 @@ public class LoginAttemptLimiter {
     /** 키 → 한도. TreeMap이라 키 문자열 순서로 정렬된다. */
     private TreeMap<String, Integer> limits(String ip, String email) {
         var limits = new TreeMap<String, Integer>();
-        limits.put(accountKey(email), ACCOUNT_LIMIT);
+        String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
+        limits.put(ACCOUNT + hmac(normalizedEmail), ACCOUNT_LIMIT);
+        limits.put(ACCOUNT_IP + hmac(ip + "\0" + normalizedEmail), ACCOUNT_IP_LIMIT);
         limits.put(ipKey(ip), IP_LIMIT);
         return limits;
     }
 
     private LocalDateTime now() {
         return LocalDateTime.now(clock.withZone(ZoneOffset.UTC));
-    }
-
-    private String accountKey(String email) {
-        return ACCOUNT + hmac(email.trim().toLowerCase(Locale.ROOT));
     }
 
     private String ipKey(String ip) {
