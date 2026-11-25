@@ -48,6 +48,7 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.user.exception.UserNot
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserProfileRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRepository;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.AccountService;
+import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.EmailUsageChecker;
 import com.hwanghj.dietmanager.refactoring.backend.domain.user.service.AuthenticationService;
 import com.hwanghj.dietmanager.refactoring.backend.global.security.JwtTokenProvider;
 
@@ -58,11 +59,14 @@ class AccountServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private EmailUsageChecker emailUsageChecker;
     private AccountService accountService;
 
     @BeforeEach
     void setUp() {
-        accountService = new AccountService(userRepository, passwordEncoder);
+        accountService = new AccountService(userRepository, passwordEncoder, emailUsageChecker);
     }
 
     @Test
@@ -72,8 +76,21 @@ class AccountServiceTest {
         when(userRepository.existsByEmail("new@example.test")).thenReturn(false);
         Mockito.doThrow(new DataIntegrityViolationException("unique email"))
                 .when(userRepository).flush();
+        when(emailUsageChecker.isTaken("new@example.test")).thenReturn(true);
         var request = UserAccountModifyDto.Request.builder().email("new@example.test").userName("사용자").build();
         assertThatThrownBy(() -> accountService.modifyAccount(1L, request)).isInstanceOf(DuplicateEmailException.class);
+    }
+
+    @Test
+    void otherIntegrityViolationIsNotReportedAsDuplicateEmail() {
+        User user = User.builder().email("old@example.test").passwordHash("hash").userName("사용자").build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.existsByEmail("new@example.test")).thenReturn(false);
+        var failure = new DataIntegrityViolationException("other constraint");
+        Mockito.doThrow(failure).when(userRepository).flush();
+        when(emailUsageChecker.isTaken("new@example.test")).thenReturn(false);
+        var request = UserAccountModifyDto.Request.builder().email("new@example.test").userName("사용자").build();
+        assertThatThrownBy(() -> accountService.modifyAccount(1L, request)).isSameAs(failure);
     }
 
     @Test

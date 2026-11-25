@@ -18,10 +18,12 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.user.repository.UserRe
 public class AccountService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailUsageChecker emailUsageChecker;
 
-    public AccountService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AccountService(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailUsageChecker emailUsageChecker) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailUsageChecker = emailUsageChecker;
     }
 
     @Transactional(readOnly = true)
@@ -49,10 +51,14 @@ public class AccountService {
         user.updateAccount(request.getEmail(), request.getUserName());
 
         // 동시 이메일 변경은 사전 중복 조회만으로 막을 수 없으므로 DB 제약까지 확인한다.
+        // 이메일이 실제로 다른 사용자에게 있을 때만 이메일 중복으로 바꾸고, 그 밖의 제약 위반은 그대로 던진다.
         try {
             userRepository.flush();
         } catch (DataIntegrityViolationException e) {
-            throw new DuplicateEmailException();
+            if (emailUsageChecker.isTaken(request.getEmail())) {
+                throw new DuplicateEmailException();
+            }
+            throw e;
         }
 
         return toAccountModifyResponse(user);

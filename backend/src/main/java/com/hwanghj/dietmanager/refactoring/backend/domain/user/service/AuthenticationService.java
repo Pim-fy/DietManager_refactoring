@@ -19,11 +19,14 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthSessionService sessions;
+    private final EmailUsageChecker emailUsageChecker;
 
-    public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthSessionService sessions) {
+    public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthSessionService sessions,
+            EmailUsageChecker emailUsageChecker) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.sessions = sessions;
+        this.emailUsageChecker = emailUsageChecker;
     }
 
     @Transactional
@@ -58,8 +61,12 @@ public class AuthenticationService {
             // User저장. 연결된 UserProfile도 자동으로 같이 저장됨.
             userRepository.save(user);
         // DataIntegrityViolationException: DB 무결성 제약조건이 깨졌을 때 Spring이 던지는 예외.
+            // 동시에 같은 이메일로 가입한 경우만 이메일 중복으로 바꾸고, 그 밖의 제약 위반은 그대로 던진다.
         } catch (DataIntegrityViolationException e) {
-            throw new DuplicateEmailException();
+            if (emailUsageChecker.isTaken(request.getEmail())) {
+                throw new DuplicateEmailException();
+            }
+            throw e;
         }
 
         // 응답 반환
