@@ -32,12 +32,12 @@ import com.hwanghj.dietmanager.refactoring.backend.global.error.BusinessExceptio
 import com.hwanghj.dietmanager.refactoring.backend.global.error.ErrorCode;
 
 /**
- * 로그인 시도 제한. 10분 안에 계정별 5회, 접속 주소별 30회까지 비밀번호를 검사한다.
+ * 로그인 시도 제한. 10분 안에 계정·주소 조합별 5회, 계정별 50회, 접속 주소별 30회까지 비밀번호를 검사한다.
  *
  * <ol>
- * <li>{@link #attempt}: 비밀번호 검사 전에 계정·주소 기록 행을 잠그고, 한도 안이면 시도를 1 늘려 바로 커밋한다.
+ * <li>{@link #attempt}: 비밀번호 검사 전에 각 제한 기록 행을 잠그고, 한도 안이면 시도를 1 늘려 바로 커밋한다.
  * 동시 요청은 행 잠금 때문에 줄을 서고, 앞 요청이 늘린 횟수를 보고 판단한다.</li>
- * <li>{@link #succeeded}: 로그인에 성공하면 계정 기록을 지우고 주소 시도를 1 되돌린다(주소 횟수 = 실패 횟수).</li>
+ * <li>{@link #succeeded}: 로그인에 성공하면 계정과 해당 계정·주소 조합 기록을 지우고 주소 시도를 1 되돌린다(주소 횟수 = 실패 횟수).</li>
  * </ol>
  *
  * 키는 이메일·IP를 서버 비밀키로 만든 HMAC-SHA256으로 저장한다(키가 없으면 되돌릴 수 없음).
@@ -163,24 +163,26 @@ public class LoginAttemptLimiter {
         });
     }
 
-    /**
-     * 제한 시간이 지난 기록을 10분마다 정리한다.
-     * 한 행씩 지우고, 그사이 로그인 시도가 같은 행을 바꿨으면(version 충돌) 그 행은 건너뛴다.
-     */
+    /** 제한 시간이 지난 기록을 10분마다 묶음으로 정리한다. */
     @Scheduled(fixedDelay = WINDOW_SECONDS * 1000, initialDelay = WINDOW_SECONDS * 1000)
     public int cleanup() {
         LocalDateTime windowStart = now().minusSeconds(WINDOW_SECONDS);
-        List<LoginFailure> expired = failures.findByStartedAtLessThanEqual(windowStart);
         int deleted = 0;
-        for (LoginFailure failure : expired) {
+        while (true) {
             try {
-                transaction.executeWithoutResult(status -> failures.delete(failure));
-                deleted++;
+                int batchSize = newTransaction.execute(status -> {
+                    List<LoginFailure> expired = failures.findTop500ByStartedAtLessThanEqualOrderByKey(windowStart);
+                    for (LoginFailure failure : expired)
+                        failures.delete(failure);
+                    return expired.size();
+                });
+                if (batchSize == 0)
+                    return deleted;
+                deleted += batchSize;
             } catch (OptimisticLockingFailureException changed) {
-                // 정리 대상을 읽은 뒤 로그인 시도가 새 기간으로 갱신한 행
+                // 묶음을 롤백하고 다시 조회한다. 로그인으로 새 기간이 시작된 행은 다음 조회에서 빠진다.
             }
         }
-        return deleted;
     }
 
     /** 키 → 한도. TreeMap이라 키 문자열 순서로 정렬된다. */

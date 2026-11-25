@@ -23,5 +23,5 @@ public interface LoginFailureRepository extends JpaRepository<LoginFailure, Stri
     Optional<LoginFailure> findWithLockByKey(String key);
 
     // 정리 대상(제한 시간이 지난 기록)
-    List<LoginFailure> findByStartedAtLessThanEqual(LocalDateTime windowStart);
+    List<LoginFailure> findTop500ByStartedAtLessThanEqualOrderByKey(LocalDateTime windowStart);
 }

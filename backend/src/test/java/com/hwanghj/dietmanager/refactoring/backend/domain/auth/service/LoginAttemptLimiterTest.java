@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -28,6 +30,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.entity.LoginFailure;
 import com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository.LoginFailureRepository;
@@ -149,17 +153,37 @@ class LoginAttemptLimiterTest {
     }
 
     @Test
+    void cleanupCommitsAtMostFiveHundredDeletesPerTransaction() {
+        LocalDateTime startedAt = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
+        List<LoginFailure> expired = new ArrayList<>();
+        for (int i = 0; i < 501; i++)
+            expired.add(new LoginFailure("expired-" + i, startedAt));
+        failures.saveAllAndFlush(expired);
+        clock.set(START.plusSeconds(601));
+
+        var manager = mock(PlatformTransactionManager.class, AdditionalAnswers.delegatesTo(transactionManager));
+        var cleaner = new LoginAttemptLimiter(failures, manager, clock, KEY);
+        assertThat(cleaner.cleanup()).isEqualTo(501);
+        assertThat(failures.count()).isZero();
+        // 500건, 1건, 정리 대상이 없음을 확인하는 마지막 조회.
+        verify(manager, times(3)).commit(any());
+    }
+
+    @Test
     void cleanupSkipsRecordChangedAfterRead() {
         var limiter = limiter();
         limiter.attempt("ip", "race@example.test");
         clock.set(START.plusSeconds(601));
         // 정리 작업이 만료 행을 읽은 직후, 같은 계정의 로그인 시도가 그 행을 새 기간으로 갱신한다.
         LoginFailureRepository racing = mock(LoginFailureRepository.class, AdditionalAnswers.delegatesTo(failures));
+        var concurrent = new TransactionTemplate(transactionManager);
+        concurrent.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         doAnswer(invocation -> {
-            List<LoginFailure> expired = failures.findByStartedAtLessThanEqual(invocation.getArgument(0));
-            limiter.attempt("ip", "race@example.test");
+            List<LoginFailure> expired = failures.findTop500ByStartedAtLessThanEqualOrderByKey(invocation.getArgument(0));
+            if (!expired.isEmpty())
+                concurrent.executeWithoutResult(status -> limiter.attempt("ip", "race@example.test"));
             return expired;
-        }).when(racing).findByStartedAtLessThanEqual(any(LocalDateTime.class));
+        }).when(racing).findTop500ByStartedAtLessThanEqualOrderByKey(any(LocalDateTime.class));
         var cleaner = new LoginAttemptLimiter(racing, transactionManager, clock, KEY);
         assertThat(cleaner.cleanup()).isZero();
         assertThat(failures.findAll()).hasSize(3).allSatisfy(failure -> assertThat(failure.getCount()).isEqualTo(1));

@@ -1,6 +1,7 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.auth.repository;
 
-import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,6 +17,5 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Stri
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<RefreshToken> findWithLockByTokenHash(String tokenHash);
 
-    // 만료됐거나 폐기된 세션의 토큰 삭제. 세션보다 먼저 지운다.
-    long deleteBySessionExpiresAtLessThanEqualOrSessionRevokedTrue(LocalDateTime now);
+    List<RefreshToken> findTop500BySessionIdInOrderByTokenHash(Collection<String> sessionIds);
 }
