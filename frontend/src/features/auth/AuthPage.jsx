@@ -40,11 +40,11 @@ export default function AuthPage({ onLogin }) {
     <main className="auth-page">
       <div className="auth-intro">
         <h1>
-          나의 건강 기록을
+          오늘 먹은 것을
           <br />
-          차근차근.
+          영양정보로 확인하세요.
         </h1>
-        <p>계정과 신체 기록을 한곳에서 관리하세요.</p>
+        <p>끼니별로 기록하면 칼로리와 탄수화물·단백질·지방을 권장량과 비교해 보여줍니다.</p>
       </div>
       <section className="panel auth-panel" aria-label={register ? '회원가입' : '로그인'}>
         <div className="tabs">

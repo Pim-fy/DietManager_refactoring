@@ -10,6 +10,8 @@ export default function useAuth() {
   const logout = useCallback((message = '') => {
     authApi.logout().catch(() => {})
     clearSession()
+    // 다음 로그인은 기본 화면에서 시작한다.
+    window.history.replaceState(null, '', '/')
     setToken('')
     setNotice(message)
   }, [])

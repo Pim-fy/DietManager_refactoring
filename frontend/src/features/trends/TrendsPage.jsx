@@ -1,32 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { Field } from '../../shared/components/Forms'
-import { dateString, today } from '../../shared/utils/form'
+import { today } from '../../shared/utils/form'
 import { statisticsApi } from './api'
+import { dates } from './range'
 import TrendChart from './TrendChart'
 
 const PAGE_SIZE = 14
+
+/** '2026-11-23' → '11월 23일' */
+function shortDate(value) {
+  const [, month, day] = value.split('-')
+  return `${Number(month)}월 ${Number(day)}일`
+}
 const NUTRIENT_KEYS = ['calories', 'carbohydrate', 'protein', 'fat']
 
-/** 기준 날짜가 속한 주(월~일) 또는 달의 시작·끝 날짜. */
-function dates(anchor, period) {
-  const start = new Date(`${anchor}T12:00:00`)
-  const end = new Date(start)
-  if (period === 'week') {
-    start.setDate(start.getDate() - ((start.getDay() + 6) % 7))
-    end.setTime(start.getTime())
-    end.setDate(end.getDate() + 6)
-  } else {
-    start.setDate(1)
-    end.setMonth(end.getMonth() + 1, 0)
-  }
-  return { start: dateString(start), end: dateString(end) }
-}
-
 function nutrientCell(day, key) {
-  if (!day.records) return '기록 없음'
-  const missing = day[key].missingCount ? ` (누락 ${day[key].missingCount}건)` : ''
-  return `${day[key].value.toLocaleString()}${missing}`
+  if (!day.records) return '–'
+  const missing = day[key].missingCount ? ` (정보 없는 ${day[key].missingCount}건 제외)` : ''
+  return `${day[key].value.toLocaleString('ko-KR', { maximumFractionDigits: key === 'calories' ? 0 : 1 })}${missing}`
 }
 
 function DailyTable({ days, page, onPage }) {
@@ -38,39 +30,43 @@ function DailyTable({ days, page, onPage }) {
           <thead>
             <tr>
               <th>날짜</th>
-              <th>섭취 건수</th>
-              <th>칼로리</th>
-              <th>탄수화물</th>
-              <th>단백질</th>
-              <th>지방</th>
-              <th>체중</th>
+              <th className="num">섭취 건수</th>
+              <th className="num">칼로리 (kcal)</th>
+              <th className="num">탄수화물 (g)</th>
+              <th className="num">단백질 (g)</th>
+              <th className="num">지방 (g)</th>
+              <th className="num">체중 (kg)</th>
             </tr>
           </thead>
           <tbody>
             {days.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map(day => (
               <tr key={day.date}>
                 <td>{day.date}</td>
-                <td>{day.records}</td>
+                <td className="num">{day.records}</td>
                 {NUTRIENT_KEYS.map(key => (
-                  <td key={key}>{nutrientCell(day, key)}</td>
+                  <td key={key} className={day.records ? 'num' : 'num muted'}>
+                    {nutrientCell(day, key)}
+                  </td>
                 ))}
-                <td>{day.weight ?? '기록 없음'}</td>
+                <td className={day.weight == null ? 'num muted' : 'num'}>{day.weight ?? '–'}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <div className="pagination">
-        <button className="outline" disabled={!page} onClick={() => onPage(page - 1)}>
-          이전 날짜
-        </button>
-        <span>
-          {page + 1} / {Math.ceil(days.length / PAGE_SIZE)}
-        </span>
-        <button className="outline" disabled={(page + 1) * PAGE_SIZE >= days.length} onClick={() => onPage(page + 1)}>
-          다음 날짜
-        </button>
-      </div>
+      {days.length > PAGE_SIZE ? (
+        <div className="pagination">
+          <button className="outline" disabled={!page} onClick={() => onPage(page - 1)}>
+            이전 날짜
+          </button>
+          <span>
+            {page + 1} / {Math.ceil(days.length / PAGE_SIZE)}
+          </span>
+          <button className="outline" disabled={(page + 1) * PAGE_SIZE >= days.length} onClick={() => onPage(page + 1)}>
+            다음 날짜
+          </button>
+        </div>
+      ) : null}
     </section>
   )
 }
@@ -105,9 +101,11 @@ export default function TrendsPage({ call }) {
 
   return (
     <>
-      <div className="page-heading">
+      <div className="page-heading heading-inline">
         <h1>기록 추이</h1>
-        <p>주·월별 영양 섭취와 체중 변화를 확인하세요.</p>
+        <p>
+          {shortDate(range.start)} – {shortDate(range.end)}
+        </p>
       </div>
       <div className="range-toolbar">
         <label className="field">
@@ -143,16 +141,18 @@ export default function TrendsPage({ call }) {
           </button>
         </div>
       ) : !current ? (
-        <p role="status">기록을 불러오는 중…</p>
+        <p className="loading" role="status">
+          기록을 불러오는 중…
+        </p>
       ) : (
         <>
           <section className="panel">
             <h2>
-              {current.start} ~ {current.end}
+              <span className="visually-hidden">기간별 그래프</span>
             </h2>
             <TrendChart days={current.days} type="calories" title="칼로리 추이" unit="kcal" />
             <TrendChart days={current.days} type="weight" title="체중 추이" unit="kg" />
-            <p className="help">기록이 있는 날짜만 연결합니다. 기록이 없는 날은 0으로 추정하지 않습니다.</p>
+            <p className="help">기록이 있는 날짜만 선으로 잇고, 기록이 없는 날은 0으로 치지 않습니다. 점에 마우스를 올리면 값이 보입니다.</p>
           </section>
           <DailyTable days={current.days} page={page} onPage={setPage} />
         </>

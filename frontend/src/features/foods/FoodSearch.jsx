@@ -13,19 +13,22 @@ function FoodResult({ food, disabled, onSelect, onFavorite }) {
       <div>
         <strong>{foodLabel(food.foodName)}</strong>
         <p>
-          {food.makerName || '식약처 식품영양성분 DB'} · 기준 {food.servingSize || '정보 없음'}
+          {food.makerName || '식약처 식품영양성분 DB'}, {food.servingSize || '기준량 정보 없음'} 기준
         </p>
         <p className="food-macros">
-          {nutrient(food.calories)} kcal · 탄수화물 {nutrient(food.carbohydrate)} g · 단백질 {nutrient(food.protein)} g · 지방 {nutrient(food.fat)} g
+          <span>{nutrient(food.calories, 0)} kcal</span>
+          <span>탄수화물 {nutrient(food.carbohydrate, 1)} g</span>
+          <span>단백질 {nutrient(food.protein, 1)} g</span>
+          <span>지방 {nutrient(food.fat, 1)} g</span>
         </p>
         {!usable ? <p className="unit-warning">기준량 단위를 확인할 수 없어 기록할 수 없습니다.</p> : null}
       </div>
       <div className="row-actions">
+        <button className="text-button" disabled={disabled || !usable} onClick={() => onFavorite(food)} aria-label={`${food.foodName} 즐겨찾기 추가`}>
+          즐겨찾기
+        </button>
         <button className="outline" disabled={disabled || !usable} onClick={() => onSelect(food)} aria-label={`${food.foodName} 선택`}>
           선택
-        </button>
-        <button className="outline" disabled={disabled || !usable} onClick={() => onFavorite(food)} aria-label={`${food.foodName} 즐겨찾기 추가`}>
-          즐겨찾기
         </button>
       </div>
     </li>
@@ -108,10 +111,10 @@ export default function FoodSearch({ call, onSelect, onFavorite, disabled }) {
   }
 
   const locked = busy || disabled
+  const remaining = usage ? usage.dayLimit - usage.calls : null
 
   return (
-    <section className="panel">
-      <h2>식품 찾기</h2>
+    <div className="food-search">
       <form className="search-form" onSubmit={submit}>
         <Field label="식품명" name="keyword" maxLength={100} placeholder="예: 밥, 닭가슴살" />
         <button className="primary" disabled={locked}>
@@ -124,15 +127,13 @@ export default function FoodSearch({ call, onSelect, onFavorite, disabled }) {
           검색 다시 시도
         </button>
       ) : null}
-      {usage ? (
-        <p className="help">
-          오늘 외부 API 호출 {usage.calls.toLocaleString()} / {usage.dayLimit.toLocaleString()}회 · 분당 최대 {usage.minuteLimit}회 (검색 캐시는 호출 제외)
-        </p>
+      {remaining != null && remaining <= usage.dayLimit * 0.1 ? (
+        <p className="unit-warning">오늘 새로 검색할 수 있는 횟수가 {Math.max(0, remaining).toLocaleString()}회 남았습니다. 이미 검색한 식품은 횟수와 상관없이 다시 볼 수 있습니다.</p>
       ) : null}
       {result ? (
         <>
           <p className="search-count" role="status">
-            검색 결과 {result.totalCount.toLocaleString()}건 · {result.page}페이지
+            검색 결과 {result.totalCount.toLocaleString()}건
           </p>
           <ul className="food-results">
             {result.items.map(food => (
@@ -168,8 +169,8 @@ export default function FoodSearch({ call, onSelect, onFavorite, disabled }) {
           </div>
         </>
       ) : (
-        <p className="help">식품을 검색하고 실제로 먹은 양을 입력하세요. 영양값은 식품별 기준량에 따라 계산합니다.</p>
+        <p className="help">식품을 고른 뒤 실제로 먹은 양을 입력하면 영양값을 계산합니다.</p>
       )}
-    </section>
+    </div>
   )
 }

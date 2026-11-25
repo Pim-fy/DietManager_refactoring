@@ -25,7 +25,7 @@ export default function MeasurementWorkspace({ call }) {
   const resource = useResource(load)
 
   return (
-    <ResourceState resource={resource}>
+    <ResourceState resource={resource} loadingText="신체 기록을 불러오는 중…">
       {resource.data && <MeasurementPage {...resource.data} api={api} onSaved={resource.refresh} />}
     </ResourceState>
   )

@@ -7,6 +7,7 @@ export default function useMealPlans(call) {
   const api = useMemo(() => planApi(call), [call])
   const [date, setDate] = useState(today)
   const [plans, setPlans] = useState(null)
+  const [picking, setPicking] = useState(false)
   const [selected, setSelected] = useState(null)
   const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -35,6 +36,7 @@ export default function useMealPlans(call) {
     setBusy(true)
     try {
       await action()
+      setPicking(false)
       setSelected(null)
       setEditing(null)
       setMessage({ text })
@@ -66,24 +68,36 @@ export default function useMealPlans(call) {
     changeDate: value => {
       if (!value) return
       setDate(value)
+      setPicking(false)
       setSelected(null)
       setEditing(null)
     },
     plans,
+    picking,
     selected,
     editing,
     busy,
     message,
     reload: () => setRetry(value => value + 1),
+    startAdd: () => {
+      setPicking(true)
+      setSelected(null)
+      setEditing(null)
+      setMessage(null)
+    },
     selectFood: food => {
       setSelected(food)
       setEditing(null)
     },
+    backToPicker: () => setSelected(null),
     startEdit: plan => {
+      setPicking(false)
       setEditing(plan)
       setSelected(null)
+      setMessage(null)
     },
     cancel: () => {
+      setPicking(false)
       setSelected(null)
       setEditing(null)
     },

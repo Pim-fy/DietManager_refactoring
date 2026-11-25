@@ -1,37 +1,96 @@
-import { Field, Message } from '../../shared/components/Forms'
-import { today } from '../../shared/utils/form'
-import FoodSearch from '../foods/FoodSearch'
-import FoodShelf from '../foods/FoodShelf'
+import DateStepper from '../../shared/components/DateStepper'
+import Dialog from '../../shared/components/Dialog'
+import { Message } from '../../shared/components/Forms'
+import { meals } from '../../shared/utils/nutrition'
+import FoodPicker from '../foods/FoodPicker'
 import DailyReferenceTable from '../nutrition/DailyReferenceTable'
-import NutritionTarget from '../nutrition/NutritionTarget'
+import DaySummary from '../nutrition/DaySummary'
+import useRecommendation from '../nutrition/useRecommendation'
 import { NutritionForm, RecordForm } from './IntakeForms'
 import IntakeRecordList from './IntakeRecordList'
-import NutritionTotals from './NutritionTotals'
 import useIntakes from './useIntakes'
+
+function dialogTitle({ adding, selected, editing, nutritionEditing }) {
+  if (editing) return '섭취 기록 수정'
+  if (nutritionEditing) return '음식명·영양정보 수정'
+  if (selected) return `${meals[adding]} 섭취 기록 추가`
+  return `${meals[adding]}에 음식 추가`
+}
+
+/** 계산 방식과 고정 기준치. 매일 볼 필요가 없어 접어둔다. */
+function CalculationNote() {
+  return (
+    <details className="calc-note">
+      <summary>권장량과 기준치는 어떻게 계산하나요?</summary>
+      <p className="help">
+        권장 섭취량은 만 19세 이상 일반 성인의 참고 추정값입니다. Mifflin–St Jeor 공식으로 안정 시 대사량을 구하고 활동량을 곱한 뒤, 목표에 따라 ±300 kcal를
+        더합니다. 탄수화물·단백질·지방은 칼로리의 50·20·30%로 나눕니다. 지난 날짜는 그날 적용 중이던 목표와 활동량으로 계산합니다.
+      </p>
+      <DailyReferenceTable />
+    </details>
+  )
+}
 
 export default function IntakePage({ call }) {
   const intakes = useIntakes(call)
   const { date, daily, loading, busy, error, message, forms } = intakes
-  const { selected, editing, manual, nutritionEditing } = forms
+  const { adding, selected, editing, nutritionEditing } = forms
+  const recommendation = useRecommendation(call, date)
   const loaded = daily && daily.date === date && !error
+  const dialogOpen = Boolean(adding || editing || nutritionEditing)
   const shelfRevision = `${intakes.favoriteRevision}:${daily?.items.map(item => item.id).join(',') || ''}`
+
+  function dialogContent() {
+    if (editing || selected) {
+      return (
+        <RecordForm
+          key={editing ? `edit-${editing.id}` : `food-${selected.foodCode}`}
+          food={selected}
+          editing={editing}
+          meal={adding}
+          date={date}
+          busy={busy}
+          onSubmit={intakes.save}
+          onCancel={editing ? intakes.close : intakes.backToPicker}
+        />
+      )
+    }
+    if (nutritionEditing) {
+      return (
+        <NutritionForm
+          key={nutritionEditing.id}
+          editing={nutritionEditing}
+          date={date}
+          busy={busy}
+          onSubmit={intakes.saveNutrition}
+          onCancel={intakes.close}
+        />
+      )
+    }
+    return (
+      <FoodPicker
+        call={call}
+        disabled={busy}
+        revision={shelfRevision}
+        onSelect={intakes.selectFood}
+        onFavorite={intakes.favoriteAdded}
+        manual={
+          <NutritionForm meal={adding} date={date} busy={busy} onSubmit={intakes.saveNutrition} onCancel={intakes.close} />
+        }
+      />
+    )
+  }
 
   return (
     <>
-      <div className="page-heading">
+      <div className="page-heading with-tools">
         <h1>섭취 기록</h1>
-        <p>먹은 음식을 기록하고 하루 영양 섭취량을 확인하세요.</p>
-      </div>
-      <div className="date-toolbar">
-        <Field
-          label="조회 날짜"
-          name="date"
-          type="date"
-          max={today()}
-          value={date}
-          disabled={busy}
-          onChange={event => intakes.changeDate(event.target.value)}
-        />
+        <div className="page-tools">
+          <DateStepper label="조회 날짜" value={date} disabled={busy} onChange={intakes.changeDate} />
+          <button className="primary" disabled={busy || !loaded} onClick={() => intakes.startAdd()}>
+            음식 추가
+          </button>
+        </div>
       </div>
       {error ? (
         <div className="message error" role="alert">
@@ -41,47 +100,40 @@ export default function IntakePage({ call }) {
           </button>
         </div>
       ) : null}
-      <Message message={message} />
-      {loading ? <p role="status">섭취 기록을 불러오는 중…</p> : loaded ? <NutritionTotals daily={daily} /> : null}
-      <NutritionTarget call={call} date={date} daily={!loading && !error ? daily : null} />
-      <DailyReferenceTable />
-      <button className="outline" disabled={busy} onClick={intakes.startManual}>
-        음식 직접 입력
-      </button>
-      {manual || nutritionEditing ? (
-        <NutritionForm
-          key={nutritionEditing?.id || 'manual'}
-          editing={nutritionEditing}
-          date={date}
-          busy={busy}
-          onSubmit={intakes.saveNutrition}
-          onCancel={intakes.cancelNutrition}
-        />
+      {dialogOpen ? null : <Message message={message} />}
+      {loading ? (
+        <p className="loading" role="status">
+          섭취 기록을 불러오는 중…
+        </p>
       ) : null}
-      <FoodSearch call={call} disabled={busy} onFavorite={intakes.favoriteAdded} onSelect={intakes.selectFood} />
-      <FoodShelf call={call} disabled={busy} revision={shelfRevision} onSelect={intakes.selectFood} />
-      {selected || editing ? (
-        <RecordForm
-          key={editing ? `edit-${editing.id}` : `food-${selected.foodCode}`}
-          food={selected}
-          editing={editing}
-          date={date}
-          busy={busy}
-          onSubmit={intakes.save}
-          onCancel={intakes.cancelRecord}
-        />
+      {loaded && !loading ? (
+        <div className="intake-layout">
+          <DaySummary
+            date={date}
+            daily={daily}
+            target={recommendation.target}
+            targetError={recommendation.error}
+            onTargetRetry={recommendation.retry}
+          />
+          <IntakeRecordList
+            date={date}
+            daily={daily}
+            loading={loading}
+            error={error}
+            busy={busy}
+            onAdd={intakes.startAdd}
+            onEdit={intakes.startEdit}
+            onNutritionEdit={intakes.startNutritionEdit}
+            onDelete={intakes.remove}
+            onRestore={intakes.restore}
+          />
+        </div>
       ) : null}
-      <IntakeRecordList
-        date={date}
-        daily={daily}
-        loading={loading}
-        error={error}
-        busy={busy}
-        onEdit={intakes.startEdit}
-        onNutritionEdit={intakes.startNutritionEdit}
-        onDelete={intakes.remove}
-        onRestore={intakes.restore}
-      />
+      <CalculationNote />
+      <Dialog open={dialogOpen} title={dialogOpen ? dialogTitle(forms) : ''} onClose={intakes.close}>
+        <Message message={message} />
+        {dialogOpen ? dialogContent() : null}
+      </Dialog>
     </>
   )
 }

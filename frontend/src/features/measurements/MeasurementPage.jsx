@@ -31,18 +31,18 @@ function MeasurementRow({ item, busy, onEdit, onCommand }) {
   return (
     <tr>
       <td>{item.measuredDate}</td>
-      <td>{item.height}</td>
-      <td>{item.weight}</td>
+      <td className="num">{item.height}</td>
+      <td className="num">{item.weight}</td>
       <td>
         <div className="row-actions">
-          <button className="outline" disabled={busy} aria-label={`신체 기록 ${item.measurementId} 수정`} onClick={() => onEdit(item)}>
+          <button className="text-button" disabled={busy} aria-label={`신체 기록 ${item.measuredDate} 수정`} onClick={() => onEdit(item)}>
             수정
           </button>
           <button
-            className="outline danger"
+            className="text-button danger"
             disabled={busy}
-            aria-label={`신체 기록 ${item.measurementId} 삭제`}
-            onClick={() => onCommand(item.measurementId, 'delete', '신체 기록을 삭제했습니다. 아래에서 복구할 수 있습니다.')}
+            aria-label={`신체 기록 ${item.measuredDate} 삭제`}
+            onClick={() => onCommand(item.measurementId, 'delete', '신체 기록을 삭제했습니다. 삭제한 기록에서 복구할 수 있습니다.')}
           >
             삭제
           </button>
@@ -56,14 +56,16 @@ function DeletedMeasurements({ deleted, busy, onCommand }) {
   if (!deleted.length) return null
   return (
     <div className="undo-list">
-      <h3>삭제된 신체 기록</h3>
+      <h3>삭제한 신체 기록</h3>
       {deleted.map(item => (
         <p key={item.measurementId}>
-          {item.measuredDate} · {item.weight} kg{' '}
+          <span>
+            {item.measuredDate} · {item.weight} kg
+          </span>
           <button
-            className="outline"
+            className="text-button"
             disabled={busy}
-            aria-label={`신체 기록 ${item.measurementId} 복구`}
+            aria-label={`신체 기록 ${item.measuredDate} 복구`}
             onClick={() => onCommand(item.measurementId, 'restore', '신체 기록을 복구했습니다.')}
           >
             복구
@@ -82,15 +84,26 @@ export default function MeasurementPage({ measurements, latest, api, onSaved }) 
     <>
       <div className="page-heading">
         <h1>신체 기록</h1>
-        <p>키와 몸무게 변화를 기록하세요.</p>
       </div>
       {latest ? (
-        <p className="latest">
-          최근 기록 · {latest.measuredDate}{' '}
-          <strong>
-            {latest.height} cm / {latest.weight} kg
-          </strong>
-        </p>
+        <dl className="latest">
+          <div>
+            <dt>최근 측정</dt>
+            <dd>{latest.measuredDate}</dd>
+          </div>
+          <div>
+            <dt>키</dt>
+            <dd>
+              {latest.height} <small>cm</small>
+            </dd>
+          </div>
+          <div>
+            <dt>몸무게</dt>
+            <dd>
+              {latest.weight} <small>kg</small>
+            </dd>
+          </div>
+        </dl>
       ) : null}
       <Message message={message} />
       <MeasurementForm editing={editing} retry={retry} busy={busy} onSubmit={submit} onCancel={() => setEditing(null)} />
@@ -103,9 +116,15 @@ export default function MeasurementPage({ measurements, latest, api, onSaved }) 
             <thead>
               <tr>
                 <th scope="col">측정일</th>
-                <th scope="col">키 (cm)</th>
-                <th scope="col">몸무게 (kg)</th>
-                <th scope="col">관리</th>
+                <th scope="col" className="num">
+                  키 (cm)
+                </th>
+                <th scope="col" className="num">
+                  몸무게 (kg)
+                </th>
+                <th scope="col">
+                  <span className="visually-hidden">관리</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -116,12 +135,8 @@ export default function MeasurementPage({ measurements, latest, api, onSaved }) 
           </table>
         </div>
         {measurements.length === 0 ? (
-          <p className="empty">
-            아직 기록이 없습니다.
-            <br />
-            <span>첫 번째 신체 기록을 추가해보세요.</span>
-          </p>
-        ) : (
+          <p className="empty">아직 기록이 없습니다. 위에서 키와 몸무게를 입력해 첫 기록을 남기세요.</p>
+        ) : pageCount > 1 ? (
           <div className="pagination">
             <button className="outline" disabled={!page || busy} onClick={() => setPage(value => value - 1)}>
               이전 기록
@@ -133,7 +148,7 @@ export default function MeasurementPage({ measurements, latest, api, onSaved }) 
               다음 기록
             </button>
           </div>
-        )}
+        ) : null}
         <DeletedMeasurements deleted={deleted} busy={busy} onCommand={command} />
       </section>
     </>

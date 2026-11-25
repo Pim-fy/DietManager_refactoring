@@ -44,12 +44,12 @@ function EditSection({ title, section, api, onSaved, children, password = false 
   )
 }
 
-export default function AccountPage({ account, profile, api, onAccount, onProfile, onPassword }) {
+/** children은 프로필 아래에 붙는 설정 영역(활동량). */
+export default function AccountPage({ account, profile, api, onAccount, onProfile, onPassword, children }) {
   return (
     <>
       <div className="page-heading">
         <h1>내 정보</h1>
-        <p>계정 정보와 프로필을 관리하세요.</p>
       </div>
       <div className="account-layout">
         <EditSection title="계정 정보" section="account" api={api} onSaved={onAccount}>
@@ -59,6 +59,7 @@ export default function AccountPage({ account, profile, api, onAccount, onProfil
         <EditSection title="프로필 정보" section="profile" api={api} onSaved={onProfile}>
           <ProfileFields profile={profile} />
         </EditSection>
+        {children}
         <EditSection title="비밀번호 변경" section="password" api={api} onSaved={onPassword} password>
           <Field label="현재 비밀번호" name="currentPassword" type="password" autoComplete="current-password" />
           <Field label="새 비밀번호" name="newPassword" type="password" minLength={8} maxLength={64} autoComplete="new-password" />
