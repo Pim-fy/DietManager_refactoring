@@ -35,8 +35,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException e) {
         ErrorCode code = e.getErrorCode();
         ResponseEntity.BodyBuilder builder = ResponseEntity.status(code.getStatus());
-        if (code.getRetryAfterSeconds() > 0) {
-            builder.header(HttpHeaders.RETRY_AFTER, String.valueOf(code.getRetryAfterSeconds()));
+        if (e.getRetryAfterSeconds() > 0) {
+            builder.header(HttpHeaders.RETRY_AFTER, String.valueOf(e.getRetryAfterSeconds()));
         }
         return builder.body(ErrorResponse.of(code.name(), e.getMessage()));
     }

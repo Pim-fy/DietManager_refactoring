@@ -19,4 +19,9 @@ public abstract class BusinessException extends RuntimeException {
     public ErrorCode getErrorCode() {
         return errorCode;
     }
+
+    /** Retry-After 헤더 값(초). 0이면 보내지 않는다. 남은 시간을 계산하는 예외는 재정의한다. */
+    public long getRetryAfterSeconds() {
+        return errorCode.getRetryAfterSeconds();
+    }
 }
