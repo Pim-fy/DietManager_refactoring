@@ -289,6 +289,11 @@ thead th { border-bottom-color: var(--ink); }
 .trend-chart .line { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
 .trend-chart .dot { fill: var(--paper); stroke: var(--ink); stroke-width: 2.5; }
 .trend-chart .dot:hover { fill: var(--ink); }
+.trend-chart .target-line { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.trend-legend { display: inline-flex; gap: 12px; margin-left: 12px; color: var(--muted); font-size: var(--text-sm); font-weight: 400; vertical-align: middle; }
+.trend-legend > span { display: inline-flex; align-items: center; gap: 5px; }
+.trend-legend > span::before { content: ''; width: 16px; border-top: 2.5px solid var(--ink); }
+.trend-legend .legend-target::before { border-top: 1.5px dashed var(--muted); }
 
 /* ───── 대시보드 ───── */
 .heading-inline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 16px; max-width: none; }

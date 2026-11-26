@@ -2,7 +2,7 @@ package com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.service;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.Optional;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,11 +50,10 @@ public class SettingHistoryService {
         record(profile.getUser().getId(), baselineDate(profile), goal, previousActivity, goal, activity);
     }
 
-    /** 조회 날짜에 적용 중이던 설정. 모든 이력보다 이전 날짜면 가장 오래된 이력, 이력이 없으면 비어 있다. */
+    /** 사용자의 전체 설정 이력(적용일 오름차순). 날짜별 적용 설정은 {@link RecommendationTimeline}이 고른다. */
     @Transactional(readOnly = true)
-    public Optional<SettingHistory> at(Long userId, LocalDate date) {
-        return histories.findTopByUserIdAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(userId, date)
-                .or(() -> histories.findTopByUserIdOrderByEffectiveDateAsc(userId));
+    public List<SettingHistory> all(Long userId) {
+        return histories.findByUserIdOrderByEffectiveDateAsc(userId);
     }
 
     /**

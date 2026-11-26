@@ -1,5 +1,6 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.statistics.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -14,7 +15,7 @@ import lombok.NoArgsConstructor;
 public final class StatisticsDto {
 
     /**
-     * 하루 영양 합계와 체중
+     * 하루 영양 합계, 체중, 권장 칼로리
      */
     @Getter
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,6 +29,8 @@ public final class StatisticsDto {
         private IntakeDto.Total protein;
         private IntakeDto.Total fat;
         private Double weight;
+        // 그날의 권장 칼로리(권장량 API의 calories와 같은 값). 계산할 수 없으면 null
+        private BigDecimal recommendedCalories;
     }
 
     /**

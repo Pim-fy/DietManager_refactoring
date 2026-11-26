@@ -532,3 +532,69 @@ test('시작하기 안내: 신체 기록과 활동량이 있으면 숨기고 없
   await setup.getByRole('link', { name: '활동량 설정하기', exact: true }).click()
   await expect(page.getByRole('heading', { name: '내 정보', exact: true })).toBeVisible()
 })
+
+const calorieChart = page => page.locator('.trend').filter({ has: page.locator('h3', { hasText: '칼로리' }) })
+
+test('기록 추이·대시보드 칼로리 그래프에 날짜별 권장 칼로리 기준선을 그린다', async ({ page }) => {
+  const today = localDate()
+  // 실제 통계 응답에서 권장량은 그대로 두고 오늘 섭취만 채워 그래프가 항상 그려지게 한다(데이터는 만들지 않는다).
+  let todayRecommended
+  await page.route('**/api/statistics?*', async route => {
+    const response = await route.fetch()
+    const body = await response.json()
+    for (const day of body.days) {
+      if (day.date !== today) continue
+      todayRecommended = day.recommendedCalories
+      Object.assign(day, { records: 1, calories: { value: 1500, missingCount: 0 } })
+    }
+    await route.fulfill({ response, json: body })
+  })
+
+  await page.goto('/trends')
+  // 고정 계정은 신체 기록·활동량이 있어 오늘 권장량이 계산된다.
+  await expect.poll(() => todayRecommended).toEqual(expect.any(Number))
+  const chart = calorieChart(page)
+  await expect(chart.locator('.target-line')).not.toHaveCount(0)
+  await expect(chart.getByText('섭취', { exact: true })).toBeVisible()
+  await expect(chart.getByText('권장량', { exact: true })).toBeVisible()
+  await expect(chart.locator('circle.dot title').filter({ hasText: '권장' })).not.toHaveCount(0)
+  await expect(page.getByRole('columnheader', { name: '권장 (kcal)', exact: true })).toBeVisible()
+
+  await menu(page).getByRole('link', { name: '대시보드', exact: true }).click()
+  const week = page.getByRole('region', { name: '이번 주 칼로리 추이' })
+  await expect(week.locator('.target-line')).not.toHaveCount(0)
+  await expect(week.getByText('권장량', { exact: true })).toBeVisible()
+})
+
+test('권장 칼로리가 없는 날은 기준선을 끊고, 권장량 필드가 없는 응답이면 기준선을 생략한다', async ({ page }) => {
+  // 2020-03-09(월)~03-15(일). 셋째·넷째 날은 권장량을 계산할 수 없는 날이다.
+  const recommended = [2000, 2000, null, null, 1800, 1800, 1800]
+  let legacy = false
+  await page.route('**/api/statistics?*', route => {
+    const params = new URL(route.request().url()).searchParams
+    const start = params.get('start')
+    const total = value => ({ value, missingCount: 0 })
+    const days = recommended.map((value, index) => {
+      const date = new Date(Date.parse(`${start}T00:00:00Z`) + index * 86400000).toISOString().slice(0, 10)
+      const day = { date, records: 1, calories: total(1500 + index * 50), carbohydrate: total(100), protein: total(50), fat: total(30), weight: null }
+      return legacy ? day : { ...day, recommendedCalories: value }
+    })
+    return route.fulfill({ json: { start, end: params.get('end'), days } })
+  })
+
+  await page.goto('/trends?date=2020-03-15')
+  const chart = calorieChart(page)
+  await expect(chart.locator('.target-line')).toHaveCount(2)
+  await expect(chart.getByText('권장량', { exact: true })).toBeVisible()
+  const row = date => page.getByRole('row').filter({ has: page.getByRole('cell', { name: date, exact: true }) })
+  await expect(row('2020-03-09').getByRole('cell').nth(3)).toHaveText('2,000')
+  await expect(row('2020-03-11').getByRole('cell').nth(3)).toHaveText('–')
+  await expect(row('2020-03-13').getByRole('cell').nth(3)).toHaveText('1,800')
+
+  legacy = true
+  await page.reload()
+  await expect(chart.locator('circle.dot')).toHaveCount(7)
+  await expect(chart.locator('.target-line')).toHaveCount(0)
+  await expect(chart.getByText('권장량', { exact: true })).toHaveCount(0)
+  await expect(row('2020-03-09').getByRole('cell').nth(3)).toHaveText('–')
+})

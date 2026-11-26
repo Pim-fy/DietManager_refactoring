@@ -71,6 +71,7 @@ npm run dev -- --host 127.0.0.1
 ## 권장량·기록 추이·식단 계획
 - 활동량 5단계와 Mifflin–St Jeor 기준으로 권장 칼로리·영양소를 계산하고 실제 섭취와 비교한다.
 - 신체 기록 수정·삭제·복구, 주·월별 영양·체중 추이와 표 페이지 이동을 지원한다.
+- 통계 API(`/api/statistics`)는 날짜별 항목에 그날의 권장 칼로리(`recommendedCalories`, 계산할 수 없으면 null)를 함께 내려주며, 칼로리 그래프에 계단형 점선 기준선으로 표시한다.
 - 식품 즐겨찾기·최근 식품과 식단 계획 저장·수정·삭제·복구·섭취 전환을 지원한다.
 - 계산 기준과 API는 `domain/nutrition`, `domain/plan`, `domain/statistics` 패키지를 참고한다.
 

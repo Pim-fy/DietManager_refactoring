@@ -1,6 +1,7 @@
 package com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,11 +10,8 @@ import com.hwanghj.dietmanager.refactoring.backend.domain.nutrition.entity.Setti
 
 public interface SettingHistoryRepository extends JpaRepository<SettingHistory, Long> {
 
-    // 조회 날짜에 적용 중인 설정: 그 날짜 이전 이력 중 가장 최근
-    Optional<SettingHistory> findTopByUserIdAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(Long userId, LocalDate date);
-
-    // 가장 오래된 이력. 조회 날짜가 모든 이력보다 이전일 때 쓴다.
-    Optional<SettingHistory> findTopByUserIdOrderByEffectiveDateAsc(Long userId);
+    // 사용자의 전체 설정 이력(적용일 오름차순). 날짜별 적용 설정은 RecommendationTimeline이 메모리에서 고른다.
+    List<SettingHistory> findByUserIdOrderByEffectiveDateAsc(Long userId);
 
     Optional<SettingHistory> findByUserIdAndEffectiveDate(Long userId, LocalDate date);
 
