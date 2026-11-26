@@ -55,19 +55,22 @@ export default function Workspace({ token, onLogout }) {
 
   return (
     <div className="shell">
-      {/* 넓은 화면: 왼쪽 사이드바. 좁은 화면: 위쪽 바(브랜드·로그아웃) + 아래 고정 탭 바(메뉴). 메뉴는 하나만 두고 배치만 바꾼다. */}
+      {/* 넓은 화면: 왼쪽 사이드바(메뉴 6개). 좁은 화면: 위쪽 바(브랜드·내 정보·로그아웃) + 아래 고정 탭 바(메뉴 5개). 내 정보 링크는 폭에 따라 한쪽만 보인다. */}
       <header className="shell-header">
         <AppLink className="brand" to="/dashboard">
           DietManager
         </AppLink>
         <nav aria-label="주 메뉴" className="shell-nav">
           {MENU.map(([key, label]) => (
-            <AppLink key={key} to={`/${key}`} aria-current={page === key ? 'page' : undefined}>
+            <AppLink key={key} to={`/${key}`} className={key === 'account' ? 'account-tab' : undefined} aria-current={page === key ? 'page' : undefined}>
               <MenuIcon name={key} />
               <span>{label}</span>
             </AppLink>
           ))}
         </nav>
+        <AppLink className="header-account" to="/account" aria-current={page === 'account' ? 'page' : undefined}>
+          내 정보
+        </AppLink>
         <button className="logout" onClick={() => onLogout()}>
           로그아웃
         </button>

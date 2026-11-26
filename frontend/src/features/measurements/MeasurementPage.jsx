@@ -1,17 +1,20 @@
+import { useState } from 'react'
+
 import { Field, Message, SaveButton } from '../../shared/components/Forms'
 import { today } from '../../shared/utils/form'
 import useMeasurements from './useMeasurements'
 
 const PAGE_SIZE = 10
+const DELETED_PREVIEW = 5
 
-function MeasurementForm({ editing, retry, busy, onSubmit, onCancel }) {
+function MeasurementForm({ editing, latest, retry, busy, onSubmit, onCancel }) {
   return (
     <section className="panel">
       <h2>{editing ? '신체 기록 수정' : '신체 기록 추가'}</h2>
       <form key={editing?.measurementId || `new-${retry}`} onSubmit={onSubmit}>
         <fieldset className="measurement-fields" disabled={busy}>
           <Field label="측정일" name="measuredDate" type="date" max={today()} defaultValue={editing?.measuredDate || today()} />
-          <Field label="키 (cm)" name="height" type="number" min="0.000001" step="any" defaultValue={editing?.height || ''} inputMode="decimal" />
+          <Field label="키 (cm)" name="height" type="number" min="0.000001" step="any" defaultValue={(editing ? editing.height : latest?.height) || ''} inputMode="decimal" />
           <Field label="몸무게 (kg)" name="weight" type="number" min="0.000001" step="any" defaultValue={editing?.weight || ''} inputMode="decimal" />
         </fieldset>
         <div className="form-actions">
@@ -53,11 +56,14 @@ function MeasurementRow({ item, busy, onEdit, onCommand }) {
 }
 
 function DeletedMeasurements({ deleted, busy, onCommand }) {
+  const [expanded, setExpanded] = useState(false)
   if (!deleted.length) return null
+  const hidden = deleted.length - DELETED_PREVIEW
+  const shown = expanded ? deleted : deleted.slice(0, DELETED_PREVIEW)
   return (
     <div className="undo-list">
       <h3>삭제한 신체 기록</h3>
-      {deleted.map(item => (
+      {shown.map(item => (
         <p key={item.measurementId}>
           <span>
             {item.measuredDate} · {item.weight} kg
@@ -72,6 +78,11 @@ function DeletedMeasurements({ deleted, busy, onCommand }) {
           </button>
         </p>
       ))}
+      {hidden > 0 ? (
+        <button className="text-button more" type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>
+          {expanded ? '접기' : `더 보기 (남은 ${hidden}개)`}
+        </button>
+      ) : null}
     </div>
   )
 }
@@ -106,7 +117,7 @@ export default function MeasurementPage({ measurements, latest, api, onSaved }) 
         </dl>
       ) : null}
       <Message message={message} />
-      <MeasurementForm editing={editing} retry={retry} busy={busy} onSubmit={submit} onCancel={() => setEditing(null)} />
+      <MeasurementForm editing={editing} latest={latest} retry={retry} busy={busy} onSubmit={submit} onCancel={() => setEditing(null)} />
       <section className="panel">
         <h2>
           기록 내역 <span className="count">{measurements.length}건</span>

@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { ticks } from './ticks'
 
 const HEIGHT = 240
-const LEFT = 52
+const MIN_LEFT = 52
+const AXIS_CHAR_WIDTH = 7.5
 const RIGHT = 16
 const TOP = 16
 const BOTTOM = 208
@@ -44,6 +45,8 @@ export default function TrendChart({ days, type, title, unit }) {
   }
 
   const scale = type === 'weight' ? ticks(Math.min(...known) - 1, Math.max(...known) + 1) : ticks(0, Math.max(...known, 100))
+  // 세로축 숫자가 길어져도(예: 150,000) 잘리지 않게 가장 긴 눈금 글자에 맞춰 왼쪽 여백을 넓힌다.
+  const LEFT = Math.max(MIN_LEFT, Math.ceil(Math.max(...scale.map(value => value.toLocaleString().length)) * AXIS_CHAR_WIDTH) + 14)
   const min = scale[0]
   const max = scale.at(-1)
   const WIDTH = measured || 900
