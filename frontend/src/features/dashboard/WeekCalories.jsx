@@ -7,12 +7,11 @@ import { formatNutrition as format } from '../../shared/utils/nutrition'
 import { statisticsApi } from '../trends/api'
 import { dates } from '../trends/range'
 import TrendChart from '../trends/TrendChart'
+import { summarizeWeek } from './summarizeWeek'
 
 function Summary({ days }) {
-  const recorded = days.filter(day => day.records > 0)
+  const { recorded, withCalories, average } = summarizeWeek(days)
   if (!recorded.length) return <p className="dash-empty">이번 주에는 아직 섭취 기록이 없습니다.</p>
-  const withCalories = recorded.filter(day => day.records > day.calories.missingCount)
-  const average = withCalories.reduce((sum, day) => sum + day.calories.value, 0) / withCalories.length
 
   return (
     <>

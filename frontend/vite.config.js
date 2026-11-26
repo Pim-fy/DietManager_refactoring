@@ -8,5 +8,6 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: { port: 5186, strictPort: true, proxy: { '/api': target } },
     preview: { port: 5186, strictPort: true, proxy: { '/api': target } },
+    test: { include: ['src/**/*.test.js'] },
   }
 })

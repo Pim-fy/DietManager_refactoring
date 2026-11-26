@@ -20,6 +20,7 @@ npm run dev -- --host 127.0.0.1   # http://127.0.0.1:5186
 | `npm run dev` | 개발 서버 |
 | `npm run build` | 배포용 빌드(`dist/`) |
 | `npm run lint` | 코드 검사 |
+| `npm run test` | 단위 테스트(Vitest, 계산 로직) |
 | `npm run test:e2e` | Playwright 브라우저 테스트(백엔드·프론트 서버를 먼저 실행) |
 
 ## E2E 테스트

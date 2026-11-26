@@ -1,13 +1,13 @@
 import DateStepper from '../../shared/components/DateStepper'
 import Dialog from '../../shared/components/Dialog'
 import { Message } from '../../shared/components/Forms'
-import { today } from '../../shared/utils/form'
 import { meals } from '../../shared/utils/nutrition'
 import FoodPicker from '../foods/FoodPicker'
 import DailyReferenceTable from '../nutrition/DailyReferenceTable'
 import DaySummary from '../nutrition/DaySummary'
 import useRecommendation from '../nutrition/useRecommendation'
 import { NutritionForm, RecordForm } from './IntakeForms'
+import { defaultMeal } from './defaultMeal'
 import IntakeRecordList from './IntakeRecordList'
 import useIntakes from './useIntakes'
 
@@ -16,16 +16,6 @@ function dialogTitle({ adding, selected, editing, nutritionEditing }) {
   if (nutritionEditing) return '음식명·영양정보 수정'
   if (selected) return `${meals[adding]} 섭취 기록 추가`
   return `${meals[adding]}에 음식 추가`
-}
-
-/** 현재 시각으로 정한 기본 끼니. 오늘이 아닌 날짜를 보고 있으면 아침. */
-function defaultMeal(date) {
-  if (date !== today()) return 'BREAKFAST'
-  const hour = new Date().getHours()
-  if (hour < 10) return 'BREAKFAST'
-  if (hour < 15) return 'LUNCH'
-  if (hour < 21) return 'DINNER'
-  return 'SNACK'
 }
 
 /** 계산 방식과 고정 기준치. 매일 볼 필요가 없어 접어둔다. */

@@ -1,10 +1,5 @@
-import { dateString, today } from '../utils/form'
-
-function shift(value, days) {
-  const date = new Date(`${value}T12:00:00`)
-  date.setDate(date.getDate() + days)
-  return dateString(date)
-}
+import { today } from '../utils/form'
+import { shift } from './shiftDate'
 
 /** 하루씩 이동하는 날짜 선택. future가 false면 오늘 이후로 갈 수 없다. */
 export default function DateStepper({ label, value, onChange, disabled, future = false }) {
