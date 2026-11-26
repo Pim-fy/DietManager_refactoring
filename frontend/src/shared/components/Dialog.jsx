@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
 
+import './Dialog.css'
+
 function withoutDialog(state) {
   const rest = { ...state }
   delete rest.dialog

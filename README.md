@@ -66,6 +66,7 @@ npm run dev -- --host 127.0.0.1
 - Spring 컨텍스트 테스트는 `test` 프로필의 격리된 H2 메모리 DB와 테스트 전용 서명 키를 사용한다.
   개인 MySQL 데이터와 운영 JWT 키가 필요하지 않다.
 - 실행: `cd backend`, `./gradlew test` (Windows: `gradlew.bat test`). MySQL 통합 테스트는 로컬 MySQL이 필요하며 기존 테이블과 분리된 임시 테이블을 사용한다: `./gradlew mysqlTest`. 브라우저 E2E는 서버 실행 후 `cd frontend`, `npm run test:e2e`.
+- 프론트 계산 로직(초과 계산, 날짜 범위·이동, 그래프 눈금·기준선 등)은 Vitest 단위 테스트로 확인한다: `cd frontend`, `npm run test`. 서버가 필요 없다.
 - E2E는 고정 테스트 계정 하나로 반복 실행한다. `frontend/.env.local`에 `E2E_EMAIL`, `E2E_PASSWORD`를 넣으며, 계정이 없으면 첫 실행 때 가입한다. 프론트는 `127.0.0.1:5186`으로 접속할 수 있게 `npm run dev -- --host 127.0.0.1`로 실행한다.
 
 ## 권장량·기록 추이·식단 계획
@@ -100,7 +101,7 @@ API: `GET /api/foods?keyword=김밥&page=1&size=10`, `GET /api/intakes?date=2026
 DB 스키마는 `backend/src/main/resources/db/migration`의 Flyway V1~V8로 관리한다.
 새 빈 DB에는 V1부터 순서대로 적용된다.
 
-백엔드 일반 테스트 137개, MySQL 통합 테스트 29개, Chrome E2E 12개가 통과했다(2026-11-25 재실행).
+백엔드 일반 테스트 141개, MySQL 통합 테스트 33개, 프론트 단위 테스트 85개, Chrome E2E 21개가 통과했다(2026-11-25 재실행).
 E2E는 백엔드·프론트 서버를 실행한 뒤 직접 실행해야 한다.
 
 성능(쿼리 수·N+1), 부하, 전체 보안 감사는 아직 검증하지 않았다.

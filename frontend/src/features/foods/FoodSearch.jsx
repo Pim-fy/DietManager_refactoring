@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import EmptyState from '../../shared/components/EmptyState'
 import { Field, Message } from '../../shared/components/Forms'
+import Pagination from '../../shared/components/Pagination'
 import { foodLabel, formatNutrition as nutrient } from '../../shared/utils/nutrition'
 import { foodApi } from './api'
 
@@ -147,23 +149,18 @@ export default function FoodSearch({ call, onSelect, onFavorite, disabled }) {
             ))}
           </ul>
           {result.items.length === 0 ? (
-            <p className="empty">
+            <EmptyState>
               검색 결과가 없습니다.
               <br />
               <span>다른 식품명으로 검색해보세요.</span>
-            </p>
+            </EmptyState>
           ) : null}
-          <div className="pagination">
-            <button className="outline" disabled={locked || result.page <= 1} onClick={() => search(query, result.page - 1)}>
-              이전
-            </button>
-            <span>
-              {result.page} / {Math.max(1, Math.ceil(result.totalCount / result.size))}
-            </span>
-            <button className="outline" disabled={locked || result.page * result.size >= result.totalCount} onClick={() => search(query, result.page + 1)}>
-              다음
-            </button>
-          </div>
+          <Pagination
+            page={result.page}
+            total={Math.max(1, Math.ceil(result.totalCount / result.size))}
+            disabled={locked}
+            onChange={value => search(query, value)}
+          />
         </>
       ) : (
         <p className="help">식품을 고른 뒤 실제로 먹은 양을 입력하면 영양값을 계산합니다.</p>

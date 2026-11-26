@@ -1,0 +1,81 @@
+/* 여러 화면이 함께 쓰는 제목·버튼·알림·표·탭. 공통 컴포넌트와 화면 스타일보다 먼저 불러온다(main.jsx). */
+h2 { font-size: var(--text-lg); letter-spacing: -0.3px; margin-bottom: 16px; }
+h3 { font-size: var(--text-base); margin-bottom: 12px; }
+.panel { padding: 28px 0; border-top: 1px solid var(--line); }
+.panel:first-of-type { border-top: 0; padding-top: 0; }
+.help { color: var(--muted); font-size: var(--text-md); line-height: 1.7; max-width: 68ch; }
+.count { color: var(--muted); font-size: var(--text-md); font-weight: 400; margin-left: 6px; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.loading { color: var(--muted); }
+
+/* ───── 버튼 ───── */
+.primary {
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  padding: 10px 20px;
+  white-space: nowrap;
+}
+.primary:hover:not(:disabled) { background: var(--accent-strong); }
+.outline {
+  min-height: 40px;
+  border: 1px solid #bfc5cc;
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+.outline:hover:not(:disabled) { border-color: var(--ink); }
+.text-button {
+  border: 0;
+  background: none;
+  padding: 4px 2px;
+  color: var(--muted);
+  font-size: var(--text-md);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+}
+.text-button:hover:not(:disabled) { color: var(--ink); text-decoration-color: currentColor; }
+.text-button.strong { color: var(--accent); font-weight: 700; }
+.danger, .text-button.danger { color: var(--danger); }
+.row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px 12px; }
+[aria-busy='true'] { cursor: progress; }
+
+/* ───── 알림 ───── */
+.message { font-size: var(--text-md); line-height: 1.6; padding: 12px 14px; border-radius: var(--radius); margin: 0 0 20px; }
+.message p { margin: 0 0 8px; }
+.error { color: var(--danger); background: var(--danger-soft); }
+.success { color: var(--accent-strong); background: var(--accent-soft); }
+.unit-warning { color: var(--warn); font-size: var(--text-sm); }
+
+/* ───── 표 ───── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
+th { font-size: var(--text-sm); font-weight: 600; color: var(--muted); }
+th, td { padding: 12px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+thead th { border-bottom-color: var(--ink); }
+
+/* ───── 탭 ───── */
+.tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+.tabs button {
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  padding: 10px 0;
+  background: none;
+  color: var(--muted);
+  font-size: var(--text-md);
+}
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected='true'], .tabs button[aria-pressed='true'] { color: var(--ink); border-bottom-color: var(--ink); font-weight: 700; }
+
+@media (max-width: 720px) {
+  .row-actions { flex-wrap: nowrap; }
+  th, td { padding: 10px 10px; }
+}

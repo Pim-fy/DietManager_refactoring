@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 
+import EmptyState from '../../shared/components/EmptyState'
 import { calorieTicks, recommendedValues, stepSegments } from './recommendationLine'
 import { ticks } from './ticks'
+import './trends.css'
 
 const HEIGHT = 240
 const MIN_LEFT = 52
@@ -40,7 +42,7 @@ export default function TrendChart({ days, type, title, unit }) {
     return (
       <div className="trend" ref={ref}>
         <h3>{title}</h3>
-        <p className="empty">이 기간의 기록이 없습니다.</p>
+        <EmptyState>이 기간의 기록이 없습니다.</EmptyState>
       </div>
     )
   }

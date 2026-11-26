@@ -1,10 +1,13 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 
 import DateStepper from '../../shared/components/DateStepper'
+import PageHeader from '../../shared/components/PageHeader'
+import Pagination from '../../shared/components/Pagination'
 import { statisticsApi } from './api'
 import { dates } from './range'
 import TrendChart from './TrendChart'
 import useTrendsQuery from './useTrendsQuery'
+import './trends.css'
 
 const PAGE_SIZE = 14
 
@@ -64,17 +67,13 @@ function DailyTable({ days, page, onPage }) {
         </table>
       </div>
       {days.length > PAGE_SIZE ? (
-        <div className="pagination">
-          <button className="outline" disabled={!page} onClick={() => onPage(page - 1)}>
-            이전 날짜
-          </button>
-          <span>
-            {page + 1} / {Math.ceil(days.length / PAGE_SIZE)}
-          </span>
-          <button className="outline" disabled={(page + 1) * PAGE_SIZE >= days.length} onClick={() => onPage(page + 1)}>
-            다음 날짜
-          </button>
-        </div>
+        <Pagination
+          page={page + 1}
+          total={Math.ceil(days.length / PAGE_SIZE)}
+          onChange={value => onPage(value - 1)}
+          previousLabel="이전 날짜"
+          nextLabel="다음 날짜"
+        />
       ) : null}
     </section>
   )
@@ -113,12 +112,7 @@ export default function TrendsPage({ call }) {
 
   return (
     <>
-      <div className="page-heading heading-inline">
-        <h1>기록 추이</h1>
-        <p>
-          {shortDate(range.start)} – {shortDate(range.end)}
-        </p>
-      </div>
+      <PageHeader title="기록 추이" meta={`${shortDate(range.start)} – ${shortDate(range.end)}`} />
       <div className="range-toolbar">
         <div className="tabs" role="group" aria-label="기간">
           <button type="button" aria-pressed={period === 'week'} onClick={() => setPeriod('week')}>

@@ -1,6 +1,7 @@
 import AppLink from '../../shared/components/AppLink'
 import { formatNutrition as format, nutrients } from '../../shared/utils/nutrition'
 import ExcessWarning from './ExcessWarning'
+import './nutrition.css'
 
 function percent(value, target) {
   return Math.round((value / target) * 100)

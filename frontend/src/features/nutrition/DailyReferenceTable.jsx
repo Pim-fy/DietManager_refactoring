@@ -1,4 +1,5 @@
 import { DAILY_REFERENCE_VALUES } from '../../shared/utils/nutrition'
+import './nutrition.css'
 
 /** 1일 영양성분 기준치 고정 참고표. 개인별 권장량과 구분해서 보여준다. */
 export default function DailyReferenceTable() {

@@ -1,4 +1,5 @@
 import { findExcess } from './excess'
+import './nutrition.css'
 
 /** 화면의 다른 영양값과 같이 kcal은 정수, g은 소수 한 자리, 비율(%)은 소수 한 자리로 보여준다. */
 function format(value, unit) {

@@ -1,0 +1,34 @@
+/* ───── 하루 섭취 합계 (영양정보 표시 형식) ───── */
+.day-label {
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  overflow: hidden;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.day-label-head { display: flex; justify-content: space-between; align-items: baseline; background: var(--ink); color: #fff; padding: 10px 16px; }
+.day-label-head h2 { color: #fff; font-size: var(--text-lg); font-weight: 800; margin: 0; }
+.day-label-head span { font-size: var(--text-md); }
+.day-label-head strong { font-size: var(--text-lg); font-weight: 800; }
+.day-label-calories { padding: 14px 16px 16px; border-bottom: 8px solid var(--ink); }
+.kcal { font-size: var(--text-hero); font-weight: 800; line-height: 1; letter-spacing: -2px; margin: 0; }
+.kcal small { font-size: var(--text-lg); font-weight: 700; letter-spacing: 0; margin-left: 6px; }
+.kcal-target { font-size: var(--text-md); margin: 10px 0 8px; }
+.meter { height: 8px; background: var(--surface); border: 1px solid var(--ink); border-radius: 4px; overflow: hidden; }
+.meter span { display: block; height: 100%; background: var(--ink); }
+.meter.over span { background: var(--danger); }
+.macro-table th, .macro-table td { padding: 9px 16px; border-bottom: 1px solid var(--ink); font-size: var(--text-md); }
+.macro-table thead th { font-size: var(--text-sm); color: var(--ink); padding-top: 8px; padding-bottom: 6px; }
+.macro-table tbody th { color: var(--ink); font-weight: 700; font-size: var(--text-md); }
+.macro-table td { text-align: right; }
+.macro-table .target-cell { color: var(--muted); }
+.macro-table .percent-cell { font-weight: 700; width: 56px; padding-left: 0; }
+.macro-table tr.over td, .macro-table tr.over th { color: var(--danger); }
+.day-label-foot { padding: 12px 16px 14px; font-size: var(--text-sm); line-height: 1.6; }
+.day-label-foot p { margin: 6px 0 0; }
+.excess-warning p, .excess-warning ul { margin: 0; }
+.excess-warning ul { color: var(--danger); font-weight: 700; padding-left: 18px; }
+.excess-warning p[role='status'] { font-weight: 700; }
+
+/* 1일 영양성분 기준치 표 */
+.reference { margin-top: 24px; max-width: 560px; }

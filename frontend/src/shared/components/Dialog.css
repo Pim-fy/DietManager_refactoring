@@ -1,0 +1,19 @@
+/* 추가·수정 창(dialog). 좁은 화면에서는 아래에서 올라오는 시트 */
+.sheet {
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(820px, calc(100vh - 48px));
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: 0 24px 64px rgb(0 0 0 / 28%);
+  color: var(--text);
+}
+.sheet::backdrop { background: rgb(20 24 28 / 45%); }
+.sheet-body { padding: 20px 24px 28px; }
+.sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.sheet-header h2 { margin: 0; font-size: var(--text-xl); }
+
+@media (max-width: 720px) {
+  .sheet { width: 100vw; max-width: 100vw; max-height: 92vh; margin: auto 0 0; border-radius: 14px 14px 0 0; }
+  .sheet-body { padding: 16px 16px 24px; }
+}

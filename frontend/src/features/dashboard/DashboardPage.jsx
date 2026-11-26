@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import PageHeader from '../../shared/components/PageHeader'
 import useResource from '../../shared/hooks/useResource'
 import { today } from '../../shared/utils/form'
 import { intakeApi } from '../intakes/api'
@@ -10,6 +11,7 @@ import TodayIntake from './TodayIntake'
 import TodayPlans from './TodayPlans'
 import WeekCalories from './WeekCalories'
 import WeightChange from './WeightChange'
+import './dashboard.css'
 
 function longDate(date) {
   return new Date(`${date}T12:00:00`).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })
@@ -47,10 +49,7 @@ export default function DashboardPage({ call }) {
 
   return (
     <>
-      <div className="page-heading heading-inline">
-        <h1>대시보드</h1>
-        <p>{longDate(date)}</p>
-      </div>
+      <PageHeader title="대시보드" meta={longDate(date)} />
       <SetupChecklist call={call} />
       <div className="dashboard">
         <TodayIntake call={call} date={date} resource={intake} />

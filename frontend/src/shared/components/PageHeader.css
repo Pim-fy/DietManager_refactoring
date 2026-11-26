@@ -1,0 +1,15 @@
+/* 페이지 제목. heading-inline: 제목 옆 보조 정보, with-tools: 오른쪽 도구 */
+.page-heading { margin-bottom: 28px; max-width: 720px; }
+.page-heading.with-tools { max-width: none; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 32px; }
+.page-heading h1 { font-size: var(--text-2xl); letter-spacing: -1px; margin-bottom: 8px; }
+.page-heading p { color: var(--muted); margin-bottom: 0; max-width: 60ch; }
+.page-tools { display: flex; align-items: center; gap: 12px; }
+.heading-inline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 16px; max-width: none; }
+.heading-inline h1 { margin-bottom: 0; }
+.heading-inline p { font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 720px) {
+  .page-heading h1 { font-size: 26px; }
+  .page-tools { width: 100%; }
+  .page-tools .date-stepper { flex: 1; }
+}

@@ -1,5 +1,6 @@
 import AppLink from '../../shared/components/AppLink'
 import ResourceState from '../../shared/components/ResourceState'
+import SectionHeader from '../../shared/components/SectionHeader'
 import { formatNutrition as format, meals } from '../../shared/utils/nutrition'
 import DaySummary from '../nutrition/DaySummary'
 import useRecommendation from '../nutrition/useRecommendation'
@@ -21,9 +22,7 @@ export default function TodayIntake({ call, date, resource }) {
   if (!daily || resource.error) {
     return (
       <section className="dash-intake" aria-labelledby="dash-intake-title">
-        <div className="dash-head">
-          <h2 id="dash-intake-title">하루 섭취</h2>
-        </div>
+        <SectionHeader title="하루 섭취" titleId="dash-intake-title" />
         <ResourceState resource={resource} loadingText="오늘 섭취 기록을 불러오는 중…" />
       </section>
     )
