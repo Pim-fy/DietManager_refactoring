@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import { formValues, today } from '../../shared/utils/form'
+import useDateParam from '../../shared/hooks/useDateParam'
+import { formValues } from '../../shared/utils/form'
 import { planApi } from './api'
 
 export default function useMealPlans(call) {
   const api = useMemo(() => planApi(call), [call])
-  const [date, setDate] = useState(today)
+  const [date, setDate] = useDateParam({ future: true })
   const [plans, setPlans] = useState(null)
   const [picking, setPicking] = useState(false)
   const [selected, setSelected] = useState(null)
