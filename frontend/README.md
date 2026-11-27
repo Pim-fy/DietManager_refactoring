@@ -1,6 +1,6 @@
 # DietManager 프론트엔드
 
-React 19 + Vite. 백엔드 실행과 전체 구성은 저장소 루트의 `README.md`를 참고한다.
+React 19 + Vite. 프로젝트 소개는 저장소 루트의 `README.md`, 백엔드 API는 `API.md`를 참고한다.
 
 ## 실행
 
